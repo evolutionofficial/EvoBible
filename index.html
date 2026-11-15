@@ -27,11 +27,11 @@
     <button class="ib" id="btnSet" aria-label="Pengaturan tampilan"><svg class="ico" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
   </div></header>
   <main class="inner">
+    <button class="sbanner" id="seasonBanner" type="button" aria-haspopup="dialog" hidden></button>
     <p class="greet" id="greet"></p>
     <article class="votd" id="votd" aria-label="Ayat hari ini"></article>
     <button class="cont big" id="cont"></button>
     <button class="pick" id="pick" type="button">Pilih kitab lain</button>
-    <section class="season" id="seasonCard" aria-label="Masa gerejawi" hidden></section>
     <section class="feel" aria-labelledby="feelH">
       <h2 id="feelH">Bagaimana harimu?</h2>
       <form class="sfield" id="homeForm" role="search">
@@ -126,6 +126,8 @@
   <div class="sh-body" id="booksBody"></div>
 </div></div>
 
+<div class="scrim top" id="shSeason" hidden><div class="drawer" role="dialog" aria-modal="true" aria-label="Masa gerejawi"><div id="drBody"></div>
+  <button class="drclose" data-close type="button"><svg class="ico" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg>Tutup</button></div></div>
 <div class="scrim" id="shCat" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hCat">
   <div class="sh-head"><h2 id="hCat"></h2><button class="ib" data-close aria-label="Tutup"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="sh-body"><p class="vnote" id="catSub"></p><div class="tiles" id="catList"></div></div>

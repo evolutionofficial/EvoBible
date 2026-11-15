@@ -179,15 +179,48 @@ var ORN = {
   function ornSvg(id) { return '<svg class="orn-svg" viewBox="0 0 120 120" aria-hidden="true">' + ORN[id] + "</svg>"; }
   function activeSeasonId() { if (PV) return PV; if (settings.sea === "off") return null; var v = seasonView(); return v ? v.cur.id : null; }
   function bookIdx(n) { for (var i = 0; i < BOOKS.length; i++) if (BOOKS[i].n === n) return i; return -1; }
-  function renderSeasonCard() {
-    var el = $("seasonCard"), v = seasonView();
+  function idOfRef(b, c, v) { for (var i = 0; i < texts.length; i++) if (bOf[i] === b && cOf[i] === c && vOf[i] === v) return i; return -1; }
+  function renderBanner() {
+    var el = $("seasonBanner"), v = seasonView();
     if (!v) { el.hidden = true; return; }
-    var id = v.cur.id, m = SEA[id], bi = bookIdx(m.v[0]), ref = bi >= 0 ? m.v[0] + " " + m.v[1] + ":" + m.v[2] : "";
+    var id = v.cur.id;
     el.hidden = false;
-    el.innerHTML = '<div class="si"><div class="tag">' + (PV ? "Pratinjau tema" : "Masa gerejawi saat ini") + "</div><h3>" + esc(sname(id)) + '</h3><div class="sd">' + esc(srange(v.cur)) + '</div><p class="sp">' + esc(m.d) + "</p>"
-      + (v.next ? '<div class="sn">Berikutnya: <b>' + esc(sname(v.next.id)) + "</b> · " + esc(dnDate(v.next.s)) + "</div>" : "")
-      + (ref ? '<button class="sref" type="button" data-sref="' + id + '">Renungkan: ' + esc(ref) + "</button>" : "")
-      + '</div><div class="stile" style="background:linear-gradient(165deg,' + m.g[0] + "," + m.g[1] + ');--oc:' + m.oc + '">' + ornSvg(id) + "</div>";
+    el.innerHTML = '<span class="bt">' + ornSvg(id) + '</span><span class="bx"><b>' + esc(sname(id)) + '</b><small>' + (PV ? "Pratinjau \u00B7 " : "") + esc(srange(v.cur)) + '</small></span><svg class="ico" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>';
+  }
+  function openSeason() {
+    var v = seasonView(); if (!v) return;
+    var id = v.cur.id, m = SEA[id], bi = bookIdx(m.v[0]), vid = bi >= 0 ? idOfRef(bi, m.v[1], m.v[2]) : -1;
+    $("drBody").innerHTML = '<div class="drhead"><div class="drt"><div class="tag">' + (PV ? "Pratinjau tema" : "Masa gerejawi saat ini") + "</div><h3>" + esc(sname(id)) + '</h3><div class="sd">' + esc(srange(v.cur)) + '</div></div><div class="stile">' + ornSvg(id) + "</div></div>"
+      + '<div class="drbody"><p class="sp">' + esc(m.d) + "</p>"
+      + (v.next ? '<div class="sn">Berikutnya: <b>' + esc(sname(v.next.id)) + "</b> \u00B7 " + esc(dnDate(v.next.s)) + "</div>" : "")
+      + (vid >= 0 ? '<div class="drverse"><div class="lab">Renungan masa ini</div><p class="vt">' + esc(clean(texts[vid])) + '</p><div class="vr">' + esc(refOf(vid)) + '</div><button class="sref" type="button" data-sref="' + id + '">Baca pasalnya</button></div>' : "")
+      + "</div>";
+    $("drBody").querySelector(".stile").style.cssText = "background:linear-gradient(165deg," + m.g[0] + "," + m.g[1] + ");--oc:" + m.oc;
+    show("shSeason");
+  }
+  $("seasonBanner").onclick = openSeason;
+  $("sBadge").onclick = openSeason;
+  $("shSeason").addEventListener("click", function (e) { var t = e.target.closest("[data-sref]"); if (!t) return; var m = SEA[t.dataset.sref].v; hide(); openRef(bookIdx(m[0]), m[1], m[2]); });
+  (function () { var y0 = null; var dr = $("shSeason"); dr.addEventListener("touchstart", function (e) { y0 = e.touches[0].clientY; }, { passive: true }); dr.addEventListener("touchend", function (e) { if (y0 !== null && e.changedTouches[0].clientY - y0 < -50) hide(); y0 = null; }); })();
+
+  /* ---------- Katolik: Injil harian ---------- */
+  var KAT0 = dn(2026, 10, 16), KAT = ["Lk 18:35-43","Lk 19:1-10","Lk 19:11-28","Lk 19:41-44","Lk 19:45-48","Lk 20:27-40","Mt 25:31-46","Lk 21:1-4","Lk 21:5-11","Lk 21:12-19","Lk 21:20-28","Lk 21:29-33","Lk 21:34-36","Mk 13:33-37","Mt 4:18-22","Lk 10:21-24","Mt 15:29-37","Mt 7:21","Mt 9:27-31","Mt 9:35","Mk 1:1-8","Lk 5:17-26","Lk 1:26-38","Mt 11:28-30","Mt 11:11-15","Mt 11:16-19","Lk 1:26-38","Jn 1:6-8","Mt 21:23-27","Mt 21:28-32","Lk 7:18-23","Mt 1:1-17","Mt 1:18-25","Lk 1:5-25","Lk 1:26-38","Lk 1:39-45","Lk 1:46-56","Lk 1:57-66","Lk 1:67-79","Jn 1:1-18","Mt 10:17-22","Lk 2:22-40","Mt 2:13-18","Lk 2:22-35","Lk 2:36-40","Jn 1:1-18","Lk 2:16-21","Jn 1:19-28","Mt 2:1-12","Mt 4:12-17","Mk 6:34-44","Mk 6:45-52","Lk 4:14-22","Lk 5:12-16","Jn 3:22-30","Mk 1:7-11","Mk 1:14-20","Mk 1:21-28","Mk 1:29-39","Mk 1:40-45","Mk 2:1-12","Mk 2:13-17","Jn 1:35-42","Mk 2:18-22","Mk 2:23-28","Mk 3:1-6","Mk 3:7-12","Mk 3:13-19","Mk 3:20-21","Mk 1:14-20","Mk 16:15-18","Mk 3:31-35","Mk 4:1-20","Mk 4:21-25","Mk 4:26-34","Mk 4:35-41","Mk 1:21-28","Mk 5:1-20","Lk 2:22-40","Mk 6:1-6","Mk 6:7-13","Mk 6:14-29","Mk 6:30-34","Mk 1:29-39","Mk 6:53-56","Mk 7:1-13","Mt 6:1-6","Lk 9:22-25","Mt 9:14-15","Lk 5:27-32","Mk 1:12-15","Mt 25:31-46","Mt 6:7-15","Lk 11:29-32","Mt 7:7-12","Mt 5:20-26","Mt 5:43-48","Mk 9:2-10","Mt 16:13-19","Mt 23:1-12","Mt 20:17-28","Lk 16:19-31","Mt 21:33-43","Lk 15:1-3","Jn 2:13-25","Lk 4:24-30","Mt 18:21-35","Mt 5:17-19","Lk 11:14-23","Mk 12:28-34","Lk 18:9-14","Jn 3:14-21","Jn 4:43-54","Jn 5:1-16","Jn 5:17-30","Jn 5:31-47","Jn 7:1-2","Jn 7:40-53","Jn 12:20-33","Jn 8:1-11","Jn 8:21-30","Jn 8:31-42","Jn 8:51-59","Mt 1:16","Jn 11:45-56","Mk 14:1-15","Jn 12:1-11","Jn 13:21-33","Mt 26:14-25","Jn 13:1-15","Jn 18:1—19:42","Mk 16:1-7","Jn 20:1-9","Mt 28:8-15","Jn 20:11-18","Lk 24:13-35","Lk 24:35-48","Jn 21:1-14","Mk 16:9-15","Jn 20:19-31","Lk 1:26-38","Jn 3:7-15","Jn 3:16-21","Jn 3:31-36","Jn 6:1-15","Jn 6:16-21","Lk 24:35-48","Jn 6:22-29","Jn 6:30-35","Jn 6:35-40","Jn 6:44-51","Jn 6:52-59","Jn 6:60-69","Jn 10:11-18","Jn 10:1-10","Jn 10:22-30","Jn 12:44-50","Jn 13:16-20","Jn 14:1-6","Jn 14:7-14","Jn 15:1-8","Jn 14:21-26","Jn 14:27-31","Jn 15:1-8","Jn 15:9-11","Jn 15:12-17","Jn 15:18-21","Jn 15:9-17","Jn 14:6-14","Jn 16:5-11","Jn 16:12-15","Mk 16:15-20","Jn 16:20-23","Jn 16:23-28","Jn 17:11-19","Jn 16:29-33","Jn 17:1-11","Jn 17:11-19","Jn 17:20-26","Jn 15:9-17","Jn 21:20-25","Jn 20:19-23","Jn 19:25-34","Mk 9:30-37","Mk 9:38-40","Mk 9:41-50","Mk 10:1-12","Mk 10:13-16","Mt 28:16-20","Mk 10:17-27","Mk 10:28-31","Mk 10:32-45","Mk 10:46-52","Mk 11:11-26","Mk 11:27-33","Mk 14:12-16","Lk 1:39-56","Mk 12:13-17","Mk 12:18-27","Mk 12:28-34","Jn 19:31-37","Mk 12:38-44","Mk 3:20-35","Mt 5:1-12","Mt 5:13-16","Mt 5:17-19","Mt 5:20-26","Mt 5:27-32","Mt 5:33-37","Mk 4:26-34","Mt 5:38-42","Mt 5:43-48","Mt 6:1-6","Mt 6:7-15","Mt 6:19-23","Mt 6:24-34","Mk 4:35-41","Mt 7:1-5","Mt 7:6","Mt 7:15-20","Lk 1:57-66","Mt 8:1-4","Mt 8:5-17","Mk 5:21-43","Mt 8:18-22","Mt 16:13-19","Mt 8:28-34","Mt 9:1-8","Mt 9:9-13","Jn 20:24-29","Mk 6:1-6","Mt 9:18-26","Mt 9:32-38","Mt 10:1-7","Mt 10:7-15","Mt 10:16-23","Mt 10:24-33","Mk 6:7-13","Mt 10:34—11:1","Mt 11:20-24","Mt 11:25-27","Mt 11:28-30","Mt 12:1-8","Mt 12:14-21","Mk 6:30-34","Mt 12:38-42","Mt 12:46-50","Mt 13:1-9","Jn 20:1-2","Mt 13:18-23","Mt 13:24-30","Jn 6:1-15","Mt 13:31-35","Mt 13:36-43","Mt 13:44-46","Jn 11:19-27","Mt 13:54-58","Mt 14:1-12","Jn 6:24-35","Mt 14:13-21","Mt 14:22-36","Mt 15:21-28","Mt 16:13-23","Mk 9:2-10","Mt 17:14-20","Jn 6:41-51","Mt 17:22-27","Jn 12:24-26","Mt 18:15-20","Mt 18:21","Mt 19:3-12","Mt 19:13-15","Lk 1:39-56","Mt 19:16-22","Mt 19:23-30","Mt 20:1-16","Mt 22:1-14","Mt 22:34-40","Mt 23:1-12","Jn 6:60-69","Mt 23:13-22","Jn 1:45-51","Mt 23:27-32","Mt 24:42-51","Mt 25:1-13","Mt 25:14-30","Mk 7:1-8","Lk 4:16-30","Lk 4:31-37","Lk 4:38-44","Lk 5:1-11","Lk 5:33-39","Lk 6:1-5","Mk 7:31-37","Lk 6:6-11","Lk 6:12-19","Mt 1:1-16","Lk 6:27-38","Lk 6:39-42","Lk 6:43-49","Mk 8:27-35","Lk 7:1-10","Jn 3:13-17","Jn 19:25-27","Lk 7:36-50","Lk 8:1-3","Lk 8:4-15","Mk 9:30-37","Lk 8:16-18","Mt 9:9-13","Lk 9:1-6","Lk 9:7-9","Lk 9:18-22","Lk 9:43-45","Mk 9:38-43","Lk 9:46-50","Lk 9:51-56","Jn 1:47-51","Lk 10:1-12","Lk 10:13-16","Mt 18:1-5","Mk 10:2-16","Lk 10:25-37","Lk 10:38-42","Lk 11:1-4","Lk 11:5-13","Lk 11:15-26","Lk 11:27-28","Mk 10:17-30","Lk 11:29-32","Lk 11:37-41","Lk 11:42-46","Lk 11:47-54","Lk 12:1-7","Lk 12:8-12","Mk 10:35-45","Lk 10:1-9","Lk 12:35-38","Lk 12:39-48","Lk 12:49-53","Lk 12:54-59","Lk 13:1-9","Mk 10:46-52","Lk 13:10-17","Lk 13:18-21","Lk 13:22-30","Lk 6:12-16","Lk 14:1-6","Lk 14:1","Mk 12:28-34","Mt 5:1-12","Jn 6:37-40","Lk 14:25-33","Lk 15:1-10","Lk 16:1-8","Lk 16:9-15","Mk 12:38-44","Lk 17:1-6","Jn 2:13-22","Lk 17:11-19","Lk 17:20-25","Lk 17:26-37","Lk 18:1-8","Mk 13:24-32","Lk 18:35-43","Lk 19:1-10","Lk 19:11-28","Lk 19:41-44","Lk 19:45-48","Lk 20:27-40","Jn 18:33-37","Lk 21:1-4","Lk 21:5-11","Lk 21:12-19","Lk 17:11-19","Lk 21:29-33","Lk 21:34-36","Lk 21:25-28","Mt 8:5-11","Mt 4:18-22","Mt 15:29-37","Mt 7:21","Mt 9:27-31","Mt 9:35","Lk 3:1-6","Lk 5:17-26","Mt 18:12-14","Lk 1:26-38","Mt 11:11-15","Mt 11:16-19","Mt 17:9","Lk 3:10-18","Mt 21:23-27","Mt 21:28-32","Lk 7:18-23","Lk 7:24-30","Mt 1:1-17","Mt 1:18-25","Lk 1:39-45","Lk 1:26-38","Lk 1:39-45","Lk 1:46-56","Lk 1:57-66","Lk 1:67-79","Jn 1:1-18","Lk 2:41-52","Jn 20:1","Mt 2:13-18","Lk 2:22-35","Lk 2:36-40","Jn 1:1-18"], KAB = { Mt: "Matius", Mk: "Markus", Lk: "Lukas", Jn: "Yohanes" };
+  function katParse(s) {
+    var m = /^(Mt|Mk|Lk|Jn) (\d+):(\d+)(?:-(\d+))?(?:—(\d+):(\d+))?/.exec(s || ""); if (!m) return null;
+    var b = bookIdx(KAB[m[1]]); if (b < 0) return null;
+    var c = +m[2], v1 = +m[3], n = BOOKS[b].ch[c - 1].v.length, v2 = m[4] ? +m[4] : (m[5] ? n : v1);
+    if (v2 > n) v2 = n;
+    var label = KAB[m[1]] + " " + c + ":" + v1 + (m[5] ? "—" + m[5] + ":" + m[6] : (m[4] ? "-" + m[4] : ""));
+    return { b: b, c: c, v1: v1, v2: v2, label: label };
+  }
+  function katToday() { var i = todayDn() - KAT0; return i >= 0 && i < KAT.length ? katParse(KAT[i]) : null; }
+  function katText(g, max) {
+    var out = "";
+    for (var v = g.v1; v <= g.v2; v++) { var id = idOfRef(g.b, g.c, v); if (id < 0) continue; var t = clean(texts[id]); if (max && out && (out + " " + t).length > max) return out + " …"; out += (out ? " " : "") + t; }
+    return out;
+  }
+  function katVotd(g) {
+    return '<div class="lab">Injil hari ini · bacaan Misa</div><p class="vt">' + esc(katText(g, 230)) + '</p><div class="vr">' + esc(g.label) + '</div><div class="acts"><button data-kat="read">Baca dan dengarkan</button><button data-kat="copy">Salin</button></div>';
   }
   function applySeason() {
     var id = activeSeasonId(), root = document.documentElement;
@@ -200,7 +233,7 @@ var ORN = {
     $("pvbar").hidden = !PV;
     if (PV) $("pvName").textContent = sname(PV);
   }
-  function refreshSeason() { applySeason(); renderSeasonCard(); if (S.view === "home") renderHome(); }
+  function refreshSeason() { applySeason(); renderBanner(); if (S.view === "home") renderHome(); }
   function syncSeasonUI() {
     Array.prototype.forEach.call($("calSeg").children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.k === settings.cal)); });
     Array.prototype.forEach.call($("seaSeg").children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.k === settings.sea)); });
@@ -229,7 +262,7 @@ var ORN = {
 
   /* ---------- sheets ---------- */
   function show(id) { hide(); $(id).hidden = false; open = id; }
-  function hide() { ["shBooks", "shSet", "shVoice", "shCat"].forEach(function (i) { $(i).hidden = true; }); open = null; }
+  function hide() { ["shBooks", "shSet", "shVoice", "shCat", "shSeason"].forEach(function (i) { $(i).hidden = true; }); open = null; }
   document.addEventListener("click", function (e) {
     if (e.target.closest("[data-close]")) hide(); else if (e.target.classList && e.target.classList.contains("scrim")) hide();
   });
@@ -239,7 +272,7 @@ var ORN = {
   var VIEWS = { home: "vHome", search: "vSearch", read: "vRead", saved: "vSaved" };
   var NAMES = { home: "beranda", search: "cari", read: "baca", saved: "sorotan" };
   function go(v) { var h = NAMES[v]; if (location.hash.slice(1) === h) route(); else location.hash = h; }
-  function openRef(b, c, v) { var h = BOOKS[b].a + "-" + c + (v ? "-" + v : ""); if (location.hash.slice(1) === h) route(); else location.hash = h; }
+  function openRef(b, c, v, v2) { var h = BOOKS[b].a + "-" + c + (v ? "-" + v + (v2 && v2 > v ? "-" + v2 : "") : ""); if (location.hash.slice(1) === h) route(); else location.hash = h; }
   function showView(v) {
     S.view = v;
     Object.keys(VIEWS).forEach(function (k) { $(VIEWS[k]).hidden = k !== v; });
@@ -248,11 +281,11 @@ var ORN = {
   }
   function route() {
     if (open !== "shVoice") hide();
-    var h = decodeURIComponent(location.hash.slice(1)), m = /^([A-Za-z0-9]+)-(\d+)(?:-(\d+))?$/.exec(h);
+    var h = decodeURIComponent(location.hash.slice(1)), m = /^([A-Za-z0-9]+)-(\d+)(?:-(\d+)(?:-(\d+))?)?$/.exec(h);
     if (m) {
       for (var i = 0; i < BOOKS.length; i++) if (BOOKS[i].a === m[1]) {
         var c = Math.min(Math.max(1, +m[2]), BOOKS[i].ch.length), v = m[3] ? Math.min(+m[3], BOOKS[i].ch[c - 1].v.length) : 0;
-        showView("read"); renderChapter(i, c, v); return;
+        showView("read"); renderChapter(i, c, v, m[4] ? Math.min(+m[4], BOOKS[i].ch[c - 1].v.length) : 0); return;
       }
     }
     if (h === "cari") { showView("search"); renderSearch(); if (!S.q && !S.theme) { try { $("q").focus(); } catch (e) {} } window.scrollTo(0, 0); return; }
@@ -292,18 +325,20 @@ var ORN = {
     $("greet").textContent = greeting();
     var id = votdId(), th = themeOfVerse(id);
     $("votd").innerHTML = '<div class="lab">Ayat hari ini' + (th ? " · " + esc(th.n) : "") + '</div><p class="vt">' + esc(clean(texts[id])) + '</p><div class="vr">' + esc(refOf(id)) + '</div><div class="acts"><button data-act="read" data-id="' + id + '">Baca pasalnya</button><button data-act="copy" data-id="' + id + '">Salin</button></div>' + (activeSeasonId() ? '<div class="orn">' + ornSvg(activeSeasonId()) + "</div>" : "");
+    var kg = settings.cal === "katolik" ? katToday() : null;
+    if (kg) { $("votd").innerHTML = katVotd(kg) + (activeSeasonId() ? '<div class="orn">' + ornSvg(activeSeasonId()) + "</div>" : ""); $("votd").dataset.kat = "1"; } else delete $("votd").dataset.kat;
     var last = lsGet("evo.last", null), cont = $("cont");
     var ok = last && BOOKS[last.b] && BOOKS[last.b].ch[last.c - 1];
     if (!ok) last = { b: 0, c: 1 };
     cont.dataset.b = last.b; cont.dataset.c = last.c;
     cont.innerHTML = '<svg class="ico" viewBox="0 0 24 24" style="color:var(--accent)"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg><span class="t"><small>' + (ok ? "Lanjutkan membaca" : "Mulai membaca") + '</small><b>' + esc(BOOKS[last.b].n) + " " + last.c + "</b></span>";
-    renderCats(); renderSeasonCard();
+    renderCats(); renderBanner();
     renderInstall();
   }
   $("homeForm").onsubmit = function (e) { e.preventDefault(); var q = $("hq").value.trim(); if (!q) return; $("hq").blur(); startSearch(q); };
   $("vHome").addEventListener("click", function (e) {
     var t;
-    if ((t = e.target.closest("[data-sref]"))) { var m = SEA[t.dataset.sref].v; openRef(bookIdx(m[0]), m[1], m[2]); return; }
+    if ((t = e.target.closest("[data-kat]"))) { var kg = katToday(); if (!kg) return; if (t.dataset.kat === "copy") copyText(katText(kg, 0) + "\n\n" + kg.label + " (AYT)"); else openRef(kg.b, kg.c, kg.v1, kg.v2); return; }
     if ((t = e.target.closest("[data-cat]"))) { openCat(+t.dataset.cat); return; }
     if ((t = e.target.closest("[data-tema]"))) { openTheme(t.dataset.tema); return; }
     if ((t = e.target.closest("[data-act]"))) { var id = +t.dataset.id; if (t.dataset.act === "copy") copyText(verseCopy(id)); else openRef(bOf[id], cOf[id], vOf[id]); return; }
@@ -452,7 +487,7 @@ var ORN = {
   $("svCopy").onclick = function () { var ids = $("svBody").dataset.ids.split(",").filter(Boolean).map(Number); copyText(ids.map(function (id) { return clean(texts[id]) + "\n" + refOf(id) + " (AYT)"; }).join("\n\n"), "Semua sorotan disalin"); };
 
   /* ---------- baca ---------- */
-  function renderChapter(b, c, vFocus) {
+  function renderChapter(b, c, vFocus, vEnd) {
     var bk = BOOKS[b], ch = bk.ch[c - 1];
     S.b = b; S.c = c; clearSel(true);
     $("locText").textContent = bk.n + " " + c; $("chBook").textContent = bk.n; $("chNum").textContent = "Pasal " + c;
@@ -468,6 +503,7 @@ var ORN = {
     lsSet("evo.last", { b: b, c: c });
     if (T.on) markVerse();
     if (vFocus && $("v" + vFocus)) { var el = $("v" + vFocus); el.scrollIntoView({ block: "center" }); el.classList.add("flash"); } else window.scrollTo(0, 0);
+    if (vFocus && vEnd > vFocus) { for (var n = vFocus; n <= vEnd; n++) { var e2 = $("v" + n); if (e2) { S.sel.push(n); e2.classList.add("sel"); } } updateSel(); }
   }
   function setNav(btn, t) { btn.hidden = !t; if (t) btn.querySelector("b").textContent = BOOKS[t[0]].n + " " + t[1]; btn._t = t; }
   function prevOf(b, c) { if (c > 1) return [b, c - 1]; if (b > 0) return [b - 1, BOOKS[b - 1].ch.length]; return null; }

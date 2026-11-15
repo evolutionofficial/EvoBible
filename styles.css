@@ -374,3 +374,35 @@ svg { display: block; }
 .previewing .selbar { bottom: calc(var(--tabh) + env(safe-area-inset-bottom, 0px) + 76px); }
 .sbadge { overflow: hidden; }
 .votd > .orn { opacity: .38; }
+
+/* ---- banner & laci masa gerejawi ---- */
+.season { display: none; }
+.sbanner { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 12px; padding: 8px 14px 8px 8px; border-radius: 16px; text-align: left; background: var(--hero); color: var(--hfg); box-shadow: 0 1px 0 rgba(255, 255, 255, .08) inset; }
+.sbanner .bt { flex: none; width: 38px; height: 38px; padding: 3px; border-radius: 12px; background: rgba(255, 255, 255, .16); --oc: var(--soc, #f5cf6b); }
+.sbanner .bx { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+.sbanner b { font-size: 15.5px; font-weight: 800; letter-spacing: -.005em; }
+.sbanner small { font-size: 12.5px; font-weight: 600; opacity: .85; }
+.sbanner .ico { width: 20px; height: 20px; opacity: .85; }
+:root[data-season="easter"] .sbanner .bt, :root[data-season="trinity"] .sbanner .bt { background: rgba(120, 80, 0, .12); }
+@media (prefers-color-scheme: dark) { :root[data-season="easter"]:not([data-theme="light"]) .sbanner .bt, :root[data-season="trinity"]:not([data-theme="light"]) .sbanner .bt { background: rgba(255, 255, 255, .16); } }
+:root[data-season][data-theme="dark"] .sbanner .bt { background: rgba(255, 255, 255, .16); }
+.scrim.top { align-items: flex-start; }
+.drawer { width: 100%; max-width: 40rem; max-height: 92%; overflow-y: auto; overscroll-behavior: contain; background: var(--surface); border-radius: 0 0 24px 24px; border: 1px solid var(--line); border-top: 0; box-shadow: 0 12px 40px rgba(0, 0, 0, .3); padding-top: env(safe-area-inset-top, 0px); animation: drIn .24s ease-out; }
+@keyframes drIn { from { transform: translateY(-100%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .drawer { animation: none; } }
+.drhead { display: flex; align-items: center; gap: 14px; padding: 20px 20px 16px; background: var(--hero); color: var(--hfg); }
+.drhead .drt { flex: 1; min-width: 0; }
+.drhead .tag { font-size: 11px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; color: var(--hlab); }
+.drhead h3 { margin: 4px 0 0; font-family: var(--read); font-size: 1.8rem; line-height: 1.12; font-weight: 700; }
+.drhead .sd { margin-top: 4px; font-weight: 700; font-size: 14.5px; color: var(--hlab); }
+.drhead .stile { width: 84px; height: 84px; align-self: auto; background-clip: padding-box; }
+.drbody { padding: 16px 20px 6px; }
+.drbody .sp { margin: 0 0 10px; font-size: 15.5px; line-height: 1.6; }
+.drbody .sn { font-size: 14px; color: var(--muted); }
+.drbody .sn b { color: var(--fg); }
+.drverse { margin-top: 16px; padding: 16px; border-radius: 16px; background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent); }
+.drverse .lab { font-size: 11px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; color: var(--accent); }
+.drverse .vt { margin: 8px 0; font-family: var(--read); font-size: 1.15rem; line-height: 1.6; }
+.drverse .vr { font-weight: 800; font-size: 14px; }
+.drverse .sref { margin-top: 10px; padding: 10px 16px; border-radius: 12px; background: var(--accent); color: var(--accent-fg); font-weight: 800; font-size: 14.5px; }
+.drclose { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 14px; margin-top: 8px; color: var(--muted); font-weight: 700; font-size: 14px; }
