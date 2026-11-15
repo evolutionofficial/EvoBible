@@ -40,6 +40,8 @@
   var S = { view: "home", b: 0, c: 1, sel: [], q: "", mode: "tema", theme: null, moreOpen: false, pendingAI: false, ai: null };
   var hls = lsGet("evo.hl", {});
   var settings = lsGet("evo.set", { fs: 21, theme: "auto" });
+  if (!settings.cal) settings.cal = "protestan";
+  if (!settings.sea) settings.sea = "on";
   var recent = lsGet("evo.recent", []);
   var open = null, toastT;
   var API = "https://ddydxagduxhzzsrlwgkd.supabase.co/functions/v1/cari";
@@ -80,12 +82,146 @@
   }
   function verseCopy(id) { return clean(texts[id]) + "\n\n" + refOf(id) + " (AYT)"; }
 
+
+  /* ---------- Evo Seasons: tema mengikuti masa gerejawi ---------- */
+var ST = '<path class="w" d="M0-7 2-2 7 0 2 2 0 7-2 2-7 0-2-2z"/>';
+function star(x, y, s, c) { return '<g transform="translate(' + x + ' ' + y + ') scale(' + s + ')" class="' + (c || "c") + '"><path d="M0-7 2-2 7 0 2 2 0 7-2 2-7 0-2-2z"/></g>'; }
+var ORN = {
+  advent: '<ellipse class="a" cx="60" cy="86" rx="40" ry="17" opacity=".0"/><ellipse cx="60" cy="88" rx="38" ry="15" fill="none" stroke="#6fbf86" stroke-width="11" stroke-dasharray="7 3"/><ellipse cx="60" cy="88" rx="38" ry="15" fill="none" stroke="#3f9a62" stroke-width="3" stroke-dasharray="2 6"/>'
+    + '<circle cx="31" cy="92" r="2.6" fill="#e5484d"/><circle cx="90" cy="84" r="2.6" fill="#e5484d"/><circle cx="68" cy="102" r="2.6" fill="#e5484d"/>'
+    + '<rect class="w" x="30" y="62" width="7" height="26" rx="1.5"/><rect class="w" x="47" y="54" width="7" height="34" rx="1.5"/><rect fill="#f4a6c9" x="66" y="58" width="7" height="30" rx="1.5"/><rect class="w" x="83" y="66" width="7" height="22" rx="1.5"/>'
+    + '<path class="c" d="M33.5 50c-4 5-3 9 0 10 3-1 4-5 0-10zM50.5 42c-4 5-3 9 0 10 3-1 4-5 0-10zM69.5 46c-4 5-3 9 0 10 3-1 4-5 0-10zM86.5 54c-4 5-3 9 0 10 3-1 4-5 0-10z"/>'
+    + star(14, 30, .9) + star(104, 24, 1.1) + star(100, 52, .6) + star(20, 56, .6),
+  christmas: star(60, 22, 2.1, "c") + '<path class="c" opacity=".16" d="M60 22 40 100h40z"/>'
+    + '<path fill="#8a5a2b" d="M34 100v-26l26-18 26 18v26z"/><path fill="#6d4420" d="M30 76 60 52l30 24-4 4-26-20-26 20z"/><path class="c" d="M52 100V84a8 8 0 0 1 16 0v16z"/><ellipse class="w" cx="60" cy="97" rx="7" ry="3.2" opacity=".95"/>'
+    + '<g transform="translate(14 0)"><path fill="#3aa86a" d="M10 98h20L20 74z"/><path fill="#2f9a5d" d="M12 80h16L20 62z"/><path fill="#3aa86a" d="M14 66h12L20 50z"/><rect fill="#7a4a22" x="18" y="98" width="4" height="5"/><circle fill="#e5484d" cx="16" cy="90" r="2.4"/><circle class="c" cx="24" cy="82" r="2.2"/><circle fill="#e5484d" cx="20" cy="68" r="2"/>' + star(20, 48, .7, "c") + '</g>'
+    + star(102, 40, .8) + star(96, 64, .55),
+  lent: '<circle cx="60" cy="62" r="42" fill="none" class="sw" stroke-width="1.4" opacity=".5"/><circle cx="60" cy="62" r="33" fill="none" class="sw" stroke-width="1" opacity=".35"/><rect class="w" x="55.5" y="22" width="9" height="78" rx="2"/><rect class="w" x="36" y="42" width="48" height="9" rx="2"/>',
+  palm: '<g transform="translate(0 4)"><path d="M60 106V74" stroke="#9c7a4a" stroke-width="5" stroke-linecap="round"/>'
+    + [-72, -48, -24, 0, 24, 48, 72].map(function (a, i) { return '<g transform="rotate(' + a + ' 60 76)"><ellipse cx="60" cy="42" rx="' + (i % 2 ? 6 : 7.5) + '" ry="' + (i === 3 ? 36 : 31) + '" fill="' + (i % 2 ? "#7fd18a" : "#4fb865") + '"/><path d="M60 14V74" stroke="#2f8f4b" stroke-width="1.2"/></g>'; }).join("") + '</g>'
+    + star(16, 24, .7) + star(106, 20, .8),
+  goodfriday: '<path fill="#000" opacity=".35" d="M0 120V92c18-10 34-14 60-14s42 4 60 14v28z"/><rect class="w" x="54.5" y="14" width="11" height="84" rx="2.4"/><rect class="w" x="32" y="36" width="56" height="11" rx="2.4"/><path d="M0 102c20-10 36-14 60-14s40 4 60 14" fill="none" class="sa" stroke-width="1.6" opacity=".6"/>',
+  holysat: '<path fill="#000" opacity=".28" d="M10 108V70a50 50 0 0 1 100 0v38z"/><path fill="#0b1020" d="M26 108V72a34 34 0 0 1 68 0v36z"/><path class="c" opacity=".16" d="M44 108V76a16 16 0 0 1 32 0v32z"/><circle cx="32" cy="92" r="17" fill="#8794b8"/><circle cx="29" cy="88" r="14" fill="#9eaace"/><path class="c" d="M92 22a12 12 0 1 0 8 20 10 10 0 0 1-8-20z" opacity=".85"/>' + star(24, 28, .7) + star(58, 14, .6) + star(100, 62, .5),
+  easter: '<g stroke-linecap="round" class="sa" stroke-width="3">' + [-80, -55, -30, 0, 30, 55, 80].map(function (a) { return '<path transform="rotate(' + a + ' 60 74)" d="M60 24v-12"/>'; }).join("") + '</g><circle class="c" cx="60" cy="74" r="26"/>'
+    + '<path fill="#6c5a3a" d="M18 108V78a30 30 0 0 1 60 0v30z" opacity=".0"/><path fill="#7a6a4a" d="M20 110V86a26 26 0 0 1 52 0v24z"/><path class="w" d="M32 110V88a14 14 0 0 1 28 0v22z"/><circle cx="84" cy="94" r="16" fill="#9a8a68"/><circle cx="81" cy="91" r="12" fill="#b3a380"/>'
+    + '<g transform="translate(100 98)"><circle class="w" cx="0" cy="-8" r="4"/><circle class="w" cx="7" cy="-3" r="4"/><circle class="w" cx="-7" cy="-3" r="4"/><circle class="w" cx="4" cy="5" r="4"/><circle class="w" cx="-4" cy="5" r="4"/><circle class="c" r="3.2"/></g><path d="M0 110h120" class="sa" stroke-width="2" opacity=".5"/>',
+  ascension: '<path d="M44 14h32l22 92H22z" class="c" opacity=".3"/><path d="M52 14h16l10 92H42z" class="w" opacity=".5"/><g class="w"><circle cx="30" cy="96" r="12"/><circle cx="46" cy="90" r="16"/><circle cx="66" cy="92" r="15"/><circle cx="84" cy="98" r="11"/><rect x="24" y="96" width="66" height="14" rx="7"/></g><g class="w" opacity=".7"><circle cx="100" cy="44" r="6"/><circle cx="108" cy="46" r="5"/><rect x="95" y="46" width="18" height="6" rx="3"/></g>'
+    + '<path class="w" d="M60 30c-3 8-3 16 0 22 3-6 3-14 0-22z" opacity=".95"/>' + star(20, 30, .8) + star(98, 20, .7),
+  pentecost: '<path d="M60 22c-14 18-20 28-20 44a20 20 0 0 0 40 0c0-16-6-26-20-44z" fill="#ff6a2b"/><path d="M60 40c-8 11-12 18-12 28a12 12 0 0 0 24 0c0-10-4-17-12-28z" fill="#ffb02e"/><path d="M60 58c-4 6-6 10-6 15a6 6 0 0 0 12 0c0-5-2-9-6-15z" fill="#fff3c4"/>'
+    + '<path d="M22 56c-8 10-11 15-11 22a11 11 0 0 0 22 0c0-7-3-12-11-22z" fill="#ff8a3d"/><path d="M98 52c-8 10-11 15-11 22a11 11 0 0 0 22 0c0-7-3-12-11-22z" fill="#ff8a3d"/><path d="M22 70c-4 5-5 8-5 11a5 5 0 0 0 10 0c0-3-1-6-5-11z" fill="#ffd36a"/><path d="M98 66c-4 5-5 8-5 11a5 5 0 0 0 10 0c0-3-1-6-5-11z" fill="#ffd36a"/>'
+    + '<g transform="translate(60 14)"><path class="w" d="M0 0c-6-5-16-5-24-1 7 0 12 2 15 6-5 1-9 4-11 8 6-3 12-3 17-1 2-5 5-9 8-12 4 2 8 6 11 12 1-8-3-17-16-12z" opacity=".0"/><path class="w" d="M-26 6c8-6 18-4 24 2 4-8 12-12 22-10-6 2-10 6-12 11 8 0 14 5 17 12-8-5-14-4-20-1-4 7-12 10-20 6 4-2 7-5 8-9-6-1-12-4-19-11z"/><circle cx="12" cy="3" r="1.2" fill="#2b2b2b"/></g>',
+  trinity: '<g fill="none" class="sa" stroke-width="3.4"><circle cx="60" cy="48" r="24"/><circle cx="43" cy="76" r="24"/><circle cx="77" cy="76" r="24"/></g><path class="c" d="M60 40 66 52h-12z" opacity="0"/><circle class="c" cx="60" cy="66" r="5"/><path d="M60 14 20 100h80z" fill="none" class="sw" stroke-width="1.2" opacity=".35"/>' + star(14, 18, .8) + star(106, 20, .7),
+  ordinary: '<path d="M60 112C60 86 62 62 70 34" fill="none" stroke="#2f8f4b" stroke-width="4" stroke-linecap="round" class="sg"/>'
+    + '<path fill="#5fbf7a" d="M62 96c-18 2-28-6-30-20 16-2 28 4 30 20z"/><path fill="#7fd18a" d="M64 80c16 0 26-8 28-22-16-1-27 6-28 22z"/><path fill="#5fbf7a" d="M64 62c-14 0-22-8-24-20 14-1 23 6 24 20z"/><path fill="#7fd18a" d="M68 46c12-2 18-10 18-22-13 0-19 9-18 22z"/><path class="c" d="M70 34c-2-6-1-11 4-15 3 5 2 11-4 15z"/>'
+    + '<ellipse cx="60" cy="112" rx="30" ry="4" class="w" opacity=".3"/>' + star(20, 26, .6) + star(100, 70, .5)
+};
+
+  var ORDER = ["advent", "christmas", "lent", "palm", "goodfriday", "holysat", "easter", "ascension", "pentecost", "trinity", "ordinary"];
+  var SEA = {
+    advent: { n: ["Adven", "Adven"], d: "Masa pengharapan, penantian, dan persiapan hati menyambut kedatangan Kristus.", v: ["Mazmur", 130, 5], g: ["#321a6b", "#7e5bd0"], oc: "#f5cf6b" },
+    christmas: { n: ["Natal", "Masa Natal"], d: "Masa sukacita merayakan kelahiran Yesus Kristus, Terang yang datang ke dunia.", v: ["Lukas", 2, 11], g: ["#0b4a2a", "#1f8a4f"], oc: "#f5cf6b" },
+    lent: { n: ["Pra-Paskah", "Masa Prapaskah"], d: "Masa pertobatan, doa, dan introspeksi menuju salib Kristus.", v: ["Yoel", 2, 12], g: ["#2a1550", "#654aa0"], oc: "#d9c8ff" },
+    palm: { n: ["Minggu Palma", "Minggu Palma"], d: "Pekan Suci dimulai: Yesus masuk ke Yerusalem disambut sorak-sorai dan daun palem.", v: ["Zakharia", 9, 9], g: ["#1a5a2a", "#3f9650"], oc: "#f2e08a" },
+    goodfriday: { n: ["Jumat Agung", "Tri Hari Suci"], d: "Mengenang wafat Kristus di kayu salib. Hening, sederhana, penuh syukur atas kasih-Nya.", v: ["Yohanes", 19, 30], g: ["#2b0912", "#7a1830"], oc: "#f0b8c4" },
+    holysat: { n: ["Sabtu Sunyi", "Sabtu Suci"], d: "Hari yang hening di antara salib dan kebangkitan. Menanti dalam doa.", v: ["Ratapan", 3, 26], g: ["#0e1328", "#2d3a64"], oc: "#cfd8f5" },
+    easter: { n: ["Paskah", "Masa Paskah"], d: "Kristus bangkit! Masa kemenangan, pengharapan, dan hidup yang baru.", v: ["Lukas", 24, 6], g: ["#fffaf0", "#f1d487"], oc: "#d9a21b" },
+    ascension: { n: ["Kenaikan Tuhan Yesus", "Kenaikan Tuhan"], d: "Mengenang Kristus naik ke surga dalam kemuliaan, dengan janji kedatangan-Nya kembali.", v: ["Kisah Para Rasul", 1, 9], g: ["#174f8c", "#3a85cc"], oc: "#ffe08a" },
+    pentecost: { n: ["Pentakosta", "Hari Raya Pentakosta"], d: "Roh Kudus dicurahkan. Gereja dilahirkan dan diutus ke seluruh dunia.", v: ["Kisah Para Rasul", 2, 4], g: ["#8f1608", "#d34a18"], oc: "#ffd36a" },
+    trinity: { n: ["Minggu Trinitas", "Tritunggal Mahakudus"], d: "Memuji Allah Tritunggal: Bapa, Anak, dan Roh Kudus, satu Allah yang kekal.", v: ["Matius", 28, 19], g: ["#fffaf0", "#f1d487"], oc: "#c9971f" },
+    ordinary: { n: ["Masa Biasa", "Masa Biasa"], d: "Masa bertumbuh: iman yang berakar dan berbuah dalam kehidupan sehari-hari.", v: ["Kolose", 2, 7], g: ["#14543a", "#2f8a5f"], oc: "#f2e08a" }
+  };
+  var MON = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+  var PV = null;
+  function dn(y, m, d) { return Math.round(Date.UTC(y, m, d) / 864e5); }
+  function dnDate(n) { var d = new Date(n * 864e5); return d.getUTCDate() + " " + MON[d.getUTCMonth()]; }
+  function dow(n) { return (((n + 4) % 7) + 7) % 7; }
+  function easterDn(y) {
+    var a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451), mo = Math.floor((h + l - 7 * m + 114) / 31), da = (h + l - 7 * m + 114) % 31 + 1;
+    return dn(y, mo - 1, da);
+  }
+  function adventStart(y) { var x = dn(y, 11, 25), d = dow(x); return x - (d === 0 ? 7 : d) - 21; }
+  function seasonList(y, cal) {
+    var kat = cal === "katolik", out = [];
+    for (var Y = y - 1; Y <= y + 1; Y++) {
+      var E = easterDn(Y), j6 = dn(Y + 1, 0, 6), add = (7 - dow(j6)) % 7; if (!add) add = 7;
+      out.push({ id: "advent", s: adventStart(Y), e: dn(Y, 11, 24) });
+      out.push({ id: "christmas", s: dn(Y, 11, 25), e: kat ? j6 + add : j6 - 1 });
+      out.push({ id: "lent", s: E - 46, e: E - 8 });
+      out.push({ id: "palm", s: E - 7, e: kat ? E - 4 : E - 3 });
+      out.push({ id: "goodfriday", s: kat ? E - 3 : E - 2, e: E - 2 });
+      out.push({ id: "holysat", s: E - 1, e: E - 1 });
+      out.push({ id: "easter", s: E, e: E + 38 });
+      out.push({ id: "ascension", s: E + 39, e: E + 48 });
+      out.push({ id: "pentecost", s: E + 49, e: E + 55 });
+      out.push({ id: "trinity", s: E + 56, e: E + 62 });
+    }
+    out.sort(function (a, b) { return a.s - b.s; });
+    var all = [];
+    out.forEach(function (x, n) {
+      var prev = all.length ? all[all.length - 1] : null;
+      if (prev && x.s > prev.e + 1) all.push({ id: "ordinary", s: prev.e + 1, e: x.s - 1 });
+      all.push(x);
+    });
+    return all;
+  }
+  function todayDn() { var t = new Date(); return dn(t.getFullYear(), t.getMonth(), t.getDate()); }
+  function seasonView() {
+    var t = todayDn(), y = new Date().getFullYear(), L = seasonList(y, settings.cal), i, k = -1;
+    if (PV) {
+      for (i = 0; i < L.length; i++) if (L[i].id === PV && L[i].e >= t) { k = i; break; }
+      if (k < 0) for (i = 0; i < L.length; i++) if (L[i].id === PV) { k = i; break; }
+    } else for (i = 0; i < L.length; i++) if (t >= L[i].s && t <= L[i].e) { k = i; break; }
+    if (k < 0) return null;
+    return { cur: L[k], next: L[k + 1] || null };
+  }
+  function sname(id) { return SEA[id].n[settings.cal === "katolik" ? 1 : 0]; }
+  function srange(x) { return x.s === x.e ? dnDate(x.s) : dnDate(x.s) + " – " + dnDate(x.e); }
+  function ornSvg(id) { return '<svg class="orn-svg" viewBox="0 0 120 120" aria-hidden="true">' + ORN[id] + "</svg>"; }
+  function activeSeasonId() { if (PV) return PV; if (settings.sea === "off") return null; var v = seasonView(); return v ? v.cur.id : null; }
+  function bookIdx(n) { for (var i = 0; i < BOOKS.length; i++) if (BOOKS[i].n === n) return i; return -1; }
+  function renderSeasonCard() {
+    var el = $("seasonCard"), v = seasonView();
+    if (!v) { el.hidden = true; return; }
+    var id = v.cur.id, m = SEA[id], bi = bookIdx(m.v[0]), ref = bi >= 0 ? m.v[0] + " " + m.v[1] + ":" + m.v[2] : "";
+    el.hidden = false;
+    el.innerHTML = '<div class="si"><div class="tag">' + (PV ? "Pratinjau tema" : "Masa gerejawi saat ini") + "</div><h3>" + esc(sname(id)) + '</h3><div class="sd">' + esc(srange(v.cur)) + '</div><p class="sp">' + esc(m.d) + "</p>"
+      + (v.next ? '<div class="sn">Berikutnya: <b>' + esc(sname(v.next.id)) + "</b> · " + esc(dnDate(v.next.s)) + "</div>" : "")
+      + (ref ? '<button class="sref" type="button" data-sref="' + id + '">Renungkan: ' + esc(ref) + "</button>" : "")
+      + '</div><div class="stile" style="background:linear-gradient(165deg,' + m.g[0] + "," + m.g[1] + ');--oc:' + m.oc + '">' + ornSvg(id) + "</div>";
+  }
+  function applySeason() {
+    var id = activeSeasonId(), root = document.documentElement;
+    if (id) root.setAttribute("data-season", id); else root.removeAttribute("data-season");
+    var b = $("sBadge");
+    if (id) { b.hidden = false; b.innerHTML = ornSvg(id); } else b.hidden = true;
+    var bg = getComputedStyle(document.body).backgroundColor;
+    Array.prototype.forEach.call(document.querySelectorAll('meta[name="theme-color"]'), function (mt) { if (bg) mt.setAttribute("content", bg); });
+    document.body.classList.toggle("previewing", !!PV);
+    $("pvbar").hidden = !PV;
+    if (PV) $("pvName").textContent = sname(PV);
+  }
+  function refreshSeason() { applySeason(); renderSeasonCard(); if (S.view === "home") renderHome(); }
+  function syncSeasonUI() {
+    Array.prototype.forEach.call($("calSeg").children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.k === settings.cal)); });
+    Array.prototype.forEach.call($("seaSeg").children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.k === settings.sea)); });
+    $("pvGrid").innerHTML = ORDER.map(function (id) { var m = SEA[id]; return '<button type="button" data-pv="' + id + '"><i style="background:linear-gradient(135deg,' + m.g[0] + "," + m.g[1] + ')"></i>' + esc(sname(id)) + "</button>"; }).join("");
+  }
+  $("calSeg").onclick = function (e) { var k = e.target.dataset && e.target.dataset.k; if (!k) return; settings.cal = k; lsSet("evo.set", settings); syncSeasonUI(); refreshSeason(); };
+  $("seaSeg").onclick = function (e) { var k = e.target.dataset && e.target.dataset.k; if (!k) return; settings.sea = k; lsSet("evo.set", settings); syncSeasonUI(); refreshSeason(); };
+  $("pvGrid").onclick = function (e) { var b = e.target.closest("[data-pv]"); if (!b) return; PV = b.dataset.pv; hide(); refreshSeason(); go("home"); window.scrollTo(0, 0); };
+  function pvStep(d) { var i = ORDER.indexOf(PV); PV = ORDER[(i + d + ORDER.length) % ORDER.length]; refreshSeason(); }
+  $("pvPrev").onclick = function () { pvStep(-1); };
+  $("pvNext").onclick = function () { pvStep(1); };
+  $("pvDone").onclick = function () { PV = null; refreshSeason(); };
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && !PV) refreshSeason(); });
+
   /* ---------- settings ---------- */
   function applySettings() {
     document.documentElement.style.setProperty("--fs-read", settings.fs + "px");
     $("fsOut").textContent = settings.fs;
     if (settings.theme === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", settings.theme);
     Array.prototype.forEach.call($("themeSeg").children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.t === settings.theme)); });
+    syncSeasonUI(); applySeason();
   }
   $("fsDown").onclick = function () { settings.fs = Math.max(14, settings.fs - 1); lsSet("evo.set", settings); applySettings(); };
   $("fsUp").onclick = function () { settings.fs = Math.min(30, settings.fs + 1); lsSet("evo.set", settings); applySettings(); };
@@ -155,18 +291,19 @@
   function renderHome() {
     $("greet").textContent = greeting();
     var id = votdId(), th = themeOfVerse(id);
-    $("votd").innerHTML = '<div class="lab">Ayat hari ini' + (th ? " · " + esc(th.n) : "") + '</div><p class="vt">' + esc(clean(texts[id])) + '</p><div class="vr">' + esc(refOf(id)) + '</div><div class="acts"><button data-act="read" data-id="' + id + '">Baca pasalnya</button><button data-act="copy" data-id="' + id + '">Salin</button></div>';
+    $("votd").innerHTML = '<div class="lab">Ayat hari ini' + (th ? " · " + esc(th.n) : "") + '</div><p class="vt">' + esc(clean(texts[id])) + '</p><div class="vr">' + esc(refOf(id)) + '</div><div class="acts"><button data-act="read" data-id="' + id + '">Baca pasalnya</button><button data-act="copy" data-id="' + id + '">Salin</button></div>' + (activeSeasonId() ? '<div class="orn">' + ornSvg(activeSeasonId()) + "</div>" : "");
     var last = lsGet("evo.last", null), cont = $("cont");
     var ok = last && BOOKS[last.b] && BOOKS[last.b].ch[last.c - 1];
     if (!ok) last = { b: 0, c: 1 };
     cont.dataset.b = last.b; cont.dataset.c = last.c;
     cont.innerHTML = '<svg class="ico" viewBox="0 0 24 24" style="color:var(--accent)"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg><span class="t"><small>' + (ok ? "Lanjutkan membaca" : "Mulai membaca") + '</small><b>' + esc(BOOKS[last.b].n) + " " + last.c + "</b></span>";
-    renderCats();
+    renderCats(); renderSeasonCard();
     renderInstall();
   }
   $("homeForm").onsubmit = function (e) { e.preventDefault(); var q = $("hq").value.trim(); if (!q) return; $("hq").blur(); startSearch(q); };
   $("vHome").addEventListener("click", function (e) {
     var t;
+    if ((t = e.target.closest("[data-sref]"))) { var m = SEA[t.dataset.sref].v; openRef(bookIdx(m[0]), m[1], m[2]); return; }
     if ((t = e.target.closest("[data-cat]"))) { openCat(+t.dataset.cat); return; }
     if ((t = e.target.closest("[data-tema]"))) { openTheme(t.dataset.tema); return; }
     if ((t = e.target.closest("[data-act]"))) { var id = +t.dataset.id; if (t.dataset.act === "copy") copyText(verseCopy(id)); else openRef(bOf[id], cOf[id], vOf[id]); return; }
