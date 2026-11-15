@@ -37,7 +37,7 @@
   var TNAME = { takut: "Takut dan cemas" };
 
   /* ---------- state ---------- */
-  var S = { view: "home", b: 0, c: 1, sel: [], q: "", mode: "tema", theme: null, moreOpen: false, pendingAI: false, ai: null };
+  var S = { view: "home", b: 0, c: 1, sel: [], q: "", mode: "tema", theme: null, moreOpen: false, pendingAI: false, ai: null, histOpen: false };
   var hls = lsGet("evo.hl", {});
   var settings = lsGet("evo.set", { fs: 21, theme: "auto" });
   if (!settings.cal) settings.cal = "protestan";
@@ -53,6 +53,31 @@
     return '<div class="care"><b>Anda tidak sendirian</b><p>Jika Anda sedang berpikir untuk menyakiti diri atau mengakhiri hidup, mohon bicara dengan seseorang sekarang: keluarga, sahabat, atau pendeta yang Anda percaya.</p><p>Layanan Healing119 dari Kementerian Kesehatan: telepon 119 ext. 8, atau chat lewat healing119.id. Jika sibuk, coba lagi sebentar lagi.</p><div class="acts"><a class="btn pri" href="tel:119">Telepon 119</a><a class="btn sec" href="https://healing119.id" target="_blank" rel="noopener">Buka healing119.id</a></div></div>';
   }
   function renderIfCurrent(key) { if (S.view === "search" && !S.theme && S.mode === "tema" && aiKey(S.q) === key) renderSearch(); }
+  /* ---------- sesi renungan: 3x sehari (pagi 05-11:59, siang 12-16:59, malam 17-04:59) ---------- */
+  var SES = [{ k: "pagi", n: "Pagi", a: 5, b: 12 }, { k: "siang", n: "Siang", a: 12, b: 17 }, { k: "malam", n: "Malam", a: 17, b: 29 }];
+  function sesNow() {
+    var d = new Date(), h = d.getHours(), hh = h < 5 ? h + 24 : h, s = SES[0];
+    for (var i = 0; i < SES.length; i++) if (hh >= SES[i].a && hh < SES[i].b) s = SES[i];
+    var x = new Date(d.getTime() - 5 * 36e5);
+    return { s: s, day: x.getFullYear() + "-" + ("0" + (x.getMonth() + 1)).slice(-2) + "-" + ("0" + x.getDate()).slice(-2) };
+  }
+  function sesLog() { var n = sesNow(), L = lsGet("evo.ses", null); if (!L || L.day !== n.day || !L.s) L = { day: n.day, s: {} }; return L; }
+  function sesUsed() { return sesLog().s[sesNow().s.k] || null; }
+  function sesAllowed(q) { var u = sesUsed(); return !u || u.key === aiKey(q); }
+  function sesMark(q) { var n = sesNow(), L = sesLog(); if (!L.s[n.s.k]) { L.s[n.s.k] = { q: q.trim(), key: aiKey(q), ids: [] }; lsSet("evo.ses", L); } }
+  function sesSetIds(key, ids) { var n = sesNow(), L = sesLog(), e = L.s[n.s.k]; if (e && e.key === key && !e.ids.length && ids.length) { e.ids = ids.slice(0, 5); lsSet("evo.ses", L); } }
+  function sesNextText() { var k = sesNow().s.k; return k === "pagi" ? "Sesi siang dibuka pukul 12.00" : k === "siang" ? "Sesi malam dibuka pukul 17.00" : "Sesi pagi dibuka besok pukul 05.00"; }
+  function histHtml() {
+    var L = sesLog(), h = "";
+    SES.forEach(function (s) {
+      var e = L.s[s.k]; if (!e) return;
+      h += "<h3>" + s.n + " · “" + esc(e.q) + "”</h3>";
+      if (!e.ids.length) h += '<p class="hint">Belum ada ayat tersimpan untuk sesi ini.</p>';
+      e.ids.forEach(function (id, i) { h += card(id, { label: i ? "Terkait" : "Rekomendasi", k: "iman" }, null); });
+    });
+    return h || '<p class="hint">Belum ada renungan hari ini.</p>';
+  }
+  function histPart() { return sesNow().s.k === "malam" ? '<button class="btn sec histbtn" type="button" data-act="hist">Riwayat hari ini</button><div class="hist" id="histBox"' + (S.histOpen ? "" : " hidden") + ">" + histHtml() + "</div>" : ""; }
   function runAI(q, cands) {
     var key = aiKey(q), cache = lsGet("evo.ai", {}), hit = cache[key];
     if (hit && Date.now() - hit.t < 6048e5) { S.ai = { q: key, state: "done", data: hit.d }; return; }
@@ -496,12 +521,26 @@ var ORN = {
     if (!ok) last = { b: 0, c: 1 };
     cont.dataset.b = last.b; cont.dataset.c = last.c;
     cont.innerHTML = '<svg class="ico" viewBox="0 0 24 24" style="color:var(--accent)"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg><span class="t"><small>' + (ok ? "Lanjutkan membaca" : "Mulai membaca") + '</small><b>' + esc(BOOKS[last.b].n) + " " + last.c + "</b></span>";
-    renderCats(); renderBanner();
+    renderFeel(); renderCats(); renderBanner();
     renderInstall();
   }
-  $("homeForm").onsubmit = function (e) { e.preventDefault(); var q = $("hq").value.trim(); if (!q) return; $("hq").blur(); startSearch(q); };
+  function renderFeel() {
+    var u = sesUsed(), n = sesNow(), box = $("feelDone");
+    $("homeForm").hidden = !!u;
+    if (!u) { box.hidden = true; box.innerHTML = ""; return; }
+    var h = '<p class="sub">Renungan ' + n.s.n.toLowerCase() + " Anda: “" + esc(u.q) + "”</p>";
+    if (u.ids.length) { var id = u.ids[0]; h += '<div class="lab">Rekomendasi untuk Anda</div><p class="vt">' + esc(clean(texts[id])) + '</p><div class="vr">' + esc(refOf(id)) + "</div>"; }
+    h += '<div class="acts"><button class="btn pri" type="button" data-ses="open">' + (u.ids.length > 1 ? "Lihat " + (u.ids.length - 1) + " ayat yang berhubungan" : "Lihat renungan") + "</button>";
+    if (n.s.k === "malam") h += '<button class="btn sec" type="button" data-ses="hist">Riwayat hari ini</button>';
+    h += '</div><p class="note">' + esc(sesNextText()) + ". Renungan bisa dipakai tiga kali sehari: pagi, siang, dan malam.</p>";
+    box.innerHTML = h; box.hidden = false;
+  }
+  setInterval(function () { if (S.view === "home" && !document.hidden) renderFeel(); }, 60000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden && S.view === "home") renderFeel(); });
+  $("homeForm").onsubmit = function (e) { e.preventDefault(); var q = $("hq").value.trim(); if (!q) return; $("hq").blur(); if (!parseRef(q) && !CRISIS.test(q) && !sesAllowed(q)) { renderFeel(); return; } $("hq").value = ""; S.histOpen = false; startSearch(q); };
   $("vHome").addEventListener("click", function (e) {
     var t;
+    if ((t = e.target.closest("[data-ses]"))) { var su = sesUsed(); if (su) { S.histOpen = t.dataset.ses === "hist"; startSearch(su.q); } return; }
     if ((t = e.target.closest("[data-kat]"))) { var kg = katToday(); if (!kg) return; if (t.dataset.kat === "copy") copyText(katText(kg, 0) + "\n\n" + kg.label + " (AYT)"); else openRef(kg.b, kg.c, kg.v1, kg.v2); return; }
     if ((t = e.target.closest("[data-cat]"))) { openCat(+t.dataset.cat); return; }
     if ((t = e.target.closest("[data-tema]"))) { openTheme(t.dataset.tema); return; }
@@ -564,26 +603,40 @@ var ORN = {
     var re = termRegex(q);
     if (S.mode === "tema") {
       if (q.length < 3) { body.innerHTML = html + '<p class="hint">Tulis minimal tiga huruf.</p>'; return; }
+      if (!ref && !CRISIS.test(q) && !sesAllowed(q)) {
+        var u0 = sesUsed();
+        body.innerHTML = html + '<div class="empty">Anda sudah memakai renungan sesi ' + sesNow().s.n.toLowerCase() + " (“" + esc(u0.q) + "”). " + esc(sesNextText()) + '.</div><button class="btn pri histbtn" type="button" data-act="sesopen">Lihat renungan sesi ini</button>' + histPart();
+        return;
+      }
       var r = eng.search(q, { limit: 40 }), key = aiKey(q), crisis = CRISIS.test(q);
       var cands = r.results.map(function (x) { return x.id; });
-      if (S.pendingAI) { S.pendingAI = false; if (!crisis && cands.length >= 5) runAI(q, cands); }
+      if (S.pendingAI) { S.pendingAI = false; if (!ref && !crisis && r.results.length) sesMark(q); if (!crisis && cands.length >= 5) runAI(q, cands); }
       var ai = S.ai && S.ai.q === key ? S.ai : null;
       if (crisis || (ai && ai.state === "done" && ai.data.krisis)) html += careCard();
       if (r.sel.length) html += '<div class="found">Cocok dengan tema: ' + r.sel.map(function (c) { return '<button class="tchip" style="--h:' + hueOf(c.k) + '" data-tema="' + c.k + '">' + esc(c.n) + "</button>"; }).join("") + "</div>";
       if (ai && ai.state === "wait") { body.innerHTML = html + '<div class="wait" role="status"><span class="dots"><i></i><i></i><i></i></span>Mencarikan ayat yang paling sesuai untuk Anda…</div>'; return; }
       if (ai && ai.state === "done") {
-        var used = {};
+        var used = {}, picks = [], rel = [];
         if (ai.data.ringkasan) html += '<div class="sumcard">' + esc(ai.data.ringkasan) + "</div>";
-        ai.data.pilihan.forEach(function (p) { if (p.id >= 0 && p.id < texts.length && !used[p.id]) { used[p.id] = 1; html += card(p.id, { label: "Pilihan untuk Anda", k: "iman" }, re, p.alasan); } });
-        var rest = r.results.filter(function (x) { return !used[x.id]; }).slice(0, 6);
-        if (rest.length) html += '<div class="mini">Ayat lain yang terkait</div>' + rest.map(function (x) { return card(x.id, x.why, re); }).join("");
+        ai.data.pilihan.forEach(function (p) { if (p.id >= 0 && p.id < texts.length && !used[p.id]) { used[p.id] = 1; picks.push(p); } });
+        picks.slice(1).forEach(function (p) { rel.push({ id: p.id, alasan: p.alasan }); });
+        r.results.forEach(function (x) { if (rel.length < 4 && !used[x.id]) { used[x.id] = 1; rel.push({ id: x.id, why: x.why }); } });
+        rel = rel.slice(0, 4);
+        if (picks.length) html += '<div class="mini">Rekomendasi untuk Anda</div>' + card(picks[0].id, { label: "Rekomendasi", k: "iman" }, re, picks[0].alasan);
+        if (rel.length) html += '<div class="mini">Ayat yang berhubungan</div>' + rel.map(function (x) { return card(x.id, x.why || { label: "Terkait", k: "iman" }, re, x.alasan); }).join("");
+        sesSetIds(key, (picks.length ? [picks[0].id] : []).concat(rel.map(function (x) { return x.id; })));
       } else if (!r.results.length) {
         html += '<div class="empty">Belum ada ayat yang cocok dengan “' + esc(q) + '”. Coba kata yang lebih umum, misalnya “takut”, “marah”, atau “keluarga”.</div>';
       } else {
         if (ai && ai.state === "fail" && ai.why === "batas") html += '<p class="hint">Pemilihan otomatis sedang penuh hari ini. Berikut hasil dasar dari HP Anda.</p>';
         else if (ai && ai.state === "off") html += '<p class="hint">Sedang tanpa internet. Berikut hasil dasar dari HP Anda.</p>';
-        html += r.results.slice(0, 14).map(function (x) { return card(x.id, x.why, re); }).join("");
+        var top = r.results.slice(0, 5);
+        html += '<div class="mini">Rekomendasi untuk Anda</div>' + card(top[0].id, top[0].why, re);
+        if (top.length > 1) html += '<div class="mini">Ayat yang berhubungan</div>' + top.slice(1).map(function (x) { return card(x.id, x.why, re); }).join("");
+        sesSetIds(key, top.map(function (x) { return x.id; }));
       }
+      var se = sesUsed();
+      if (se && se.key === key) html += '<p class="hint">' + esc(sesNextText()) + ". Satu renungan untuk setiap sesi: pagi, siang, dan malam.</p>" + histPart();
     } else {
       var terms = q.toLowerCase().split(/\s+/).filter(Boolean), res = [], total = 0;
       for (var i = 0; i < texts.length; i++) {
@@ -613,6 +666,8 @@ var ORN = {
     var t;
     if ((t = e.target.closest("[data-act]")) && t.dataset.act === "back") { S.theme = null; go("home"); return; }
     if (t && t.dataset.act === "more") { S.moreOpen = true; renderSearch(); return; }
+    if (t && t.dataset.act === "hist") { S.histOpen = !S.histOpen; var hb = $("histBox"); if (hb) hb.hidden = !S.histOpen; return; }
+    if (t && t.dataset.act === "sesopen") { var su = sesUsed(); if (su) { S.q = su.q; $("q").value = su.q; S.theme = null; S.mode = "tema"; S.ai = null; S.pendingAI = true; syncMode(); renderSearch(); window.scrollTo(0, 0); } return; }
     if (t && (t.dataset.act === "copy" || t.dataset.act === "save")) {
       var cardEl = t.closest(".rcard"), id = +cardEl.dataset.id;
       if (t.dataset.act === "copy") copyText(verseCopy(id)); else toggleHl(id, t);

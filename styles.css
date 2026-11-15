@@ -213,9 +213,10 @@ svg { display: block; }
 @media (max-width: 420px) { .ask { font-size: 1.65rem; } .ch-head h1 { font-size: 2.4rem; } .selbar .info { display: none; } .selbar .in { padding-left: 6px; } }
 
 /* ---- ramah lansia ---- */
-.sfield input { height: 58px; font-size: 18px; padding-right: 96px; }
-.sfield .clr { right: 88px; }
-.gobtn { position: absolute; right: 7px; height: 44px; padding: 0 18px; border-radius: 13px; background: var(--accent); color: var(--accent-fg); font-weight: 800; font-size: 16px; }
+.sfield input { height: 58px; font-size: 18px; padding-right: 136px; text-overflow: ellipsis; }
+.sfield .clr { right: 126px; }
+#sForm input { padding-right: 170px; }
+.gobtn { position: absolute; right: 7px; height: 44px; padding: 0 16px; border-radius: 13px; background: var(--accent); color: var(--accent-fg); font-weight: 800; font-size: 16px; white-space: nowrap; }
 .gobtn:hover { filter: brightness(1.08); }
 .privacy { margin: 8px 2px 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
 .textib { font-weight: 800; font-size: 17px; letter-spacing: -.02em; width: 46px; }
@@ -522,3 +523,15 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .vn { font-size: .68em; }
 .tab, .greet, .votd .lab, .votd .vr, #prev small, #next small, .sbanner small, .sd, .sref, .vn, .cont small { font-size: 15px; }
 .vn { font-size: .7em; }
+
+/* ---- renungan 3 sesi per hari ---- */
+.feeldone .sub { margin: 0 0 10px; }
+.feeldone .lab { font-size: 13px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: .04em; margin: 4px 0 6px; }
+.feeldone .vt { margin: 0 0 6px; font-size: 18px; line-height: 1.55; }
+.feeldone .vr { font-weight: 800; color: var(--muted); margin-bottom: 14px; }
+.feeldone .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.feeldone .acts .btn { min-height: 48px; }
+.feeldone .note { margin: 12px 0 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
+.histbtn { display: block; width: 100%; margin-top: 12px; min-height: 48px; }
+.hist h3 { margin: 22px 0 8px; font-size: 1.05rem; font-weight: 800; }
+.sfield input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
