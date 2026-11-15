@@ -38,11 +38,9 @@
         <input id="hq" type="search" placeholder="Tulis perasaan Anda" autocomplete="off" enterkeyhint="search" aria-label="Cari ayat berdasarkan perasaan">
         <button type="submit" class="gobtn">Cari</button>
       </form>
-      <div class="chips" id="homeChips"></div>
     </section>
-    <div class="sec"><h2>Perasaan dan pergumulan</h2></div>
-    <div class="tiles" id="themeTiles"></div>
-    <button class="more" id="moreThemes" type="button" hidden>Lihat lebih banyak</button>
+    <div class="sec"><h2>Jelajahi menurut kebutuhan</h2></div>
+    <div class="cats" id="cats"></div>
   </main>
 </section>
 
@@ -121,6 +119,10 @@
   <div class="sh-body" id="booksBody"></div>
 </div></div>
 
+<div class="scrim" id="shCat" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hCat">
+  <div class="sh-head"><h2 id="hCat"></h2><button class="ib" data-close aria-label="Tutup"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sh-body"><p class="vnote" id="catSub"></p><div class="tiles" id="catList"></div></div>
+</div></div>
 <div class="scrim" id="shVoice" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hVoice">
   <div class="sh-head"><h2 id="hVoice">Pilih suara</h2><button class="ib" data-close aria-label="Tutup"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="sh-body">

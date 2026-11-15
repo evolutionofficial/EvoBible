@@ -25,13 +25,14 @@
   var HUE = {};
   function setHue(h, keys) { keys.split(" ").forEach(function (k) { HUE[k] = h; }); }
   var GROUPS = [
-    ["Perasaan dan pergumulan", 214, "takut cemas hibur sabar sendiri diam tunggu damai kuat sakit mati harapan"],
-    ["Hubungan dengan sesama", 338, "kasih ampun keluarga anak sahabat musuh marah iri layan jemaat"],
-    ["Hidup sehari-hari", 36, "kerja uang belajar hikmat tujuan identitas pemimpin adil"],
-    ["Karakter dan pergumulan batin", 262, "dosa godaan jujur rendah menang"],
-    ["Iman dan Tuhan", 172, "iman doa firman puji dekat roh baik janji anugerah salib selamat lindung ciptaan akhir syukur sukacita"]
+    ["Pergumulan", 214, "Takut, cemas, sakit, kesepian, dan masa sulit", "takut cemas sakit mati sendiri diam marah iri godaan"],
+    ["Pengharapan", 172, "Penghiburan, damai, dan janji Tuhan", "harapan hibur damai kuat sabar tunggu janji lindung salib selamat akhir"],
+    ["Bersyukur", 36, "Sukacita, pujian, dan kebaikan Tuhan", "syukur sukacita puji anugerah baik ciptaan roh"],
+    ["Kasih dan sesama", 338, "Keluarga, sahabat, pengampunan, dan melayani", "kasih ampun keluarga anak sahabat musuh layan jemaat"],
+    ["Introspeksi", 262, "Memeriksa hati, dosa, kejujuran, dan iman", "dosa jujur rendah menang iman doa firman dekat"],
+    ["Mencari arah", 280, "Hikmat, tujuan hidup, pekerjaan, dan keputusan", "hikmat tujuan identitas kerja uang belajar pemimpin adil"]
   ];
-  GROUPS.forEach(function (g) { setHue(g[1], g[2].replace("cemas ", "").replace(" cemas", "")); });
+  GROUPS.forEach(function (g) { setHue(g[1], g[3].replace("cemas ", "").replace(" cemas", "")); });
   function hueOf(k) { return HUE[k] !== undefined ? HUE[k] : 172; }
   var TNAME = { takut: "Takut dan cemas" };
 
@@ -92,7 +93,7 @@
 
   /* ---------- sheets ---------- */
   function show(id) { hide(); $(id).hidden = false; open = id; }
-  function hide() { ["shBooks", "shSet", "shVoice"].forEach(function (i) { $(i).hidden = true; }); open = null; }
+  function hide() { ["shBooks", "shSet", "shVoice", "shCat"].forEach(function (i) { $(i).hidden = true; }); open = null; }
   document.addEventListener("click", function (e) {
     if (e.target.closest("[data-close]")) hide(); else if (e.target.classList && e.target.classList.contains("scrim")) hide();
   });
@@ -127,7 +128,6 @@
   $("tabs").onclick = function (e) { var t = e.target.closest(".tab"); if (t) go(t.dataset.v); };
 
   /* ---------- beranda ---------- */
-  var EXAMPLES = ["takut menghadapi masa depan", "sulit memaafkan", "merasa kesepian", "doa belum dijawab", "capek dengan pekerjaan"];
   function greeting() { var h = new Date().getHours(); return h < 4 ? "Selamat malam" : h < 11 ? "Selamat pagi" : h < 15 ? "Selamat siang" : h < 18 ? "Selamat sore" : "Selamat malam"; }
   var votdIds = null;
   function votdId() {
@@ -136,18 +136,24 @@
     return votdIds[(day * 97) % votdIds.length];
   }
   function themeOfVerse(id) { for (var i = 0; i < eng.clusters.length; i++) if (eng.clusters[i].a.indexOf(id) >= 0) return eng.clusters[i]; return null; }
-  var ALLT = [], shownT = 8;
-  GROUPS.forEach(function (g) { g[2].split(" ").forEach(function (k) { if (CLM[k]) ALLT.push([k, g[1]]); }); });
-  function renderThemes() {
-    $("themeTiles").innerHTML = ALLT.slice(0, shownT).map(function (t) {
-      var c = CLM[t[0]];
-      return '<button class="tile" style="--h:' + t[1] + '" data-tema="' + t[0] + '"><b>' + esc(c.n) + "</b><small>" + c.a.length + " ayat kunci</small></button>";
+  function groupKeys(g) { return g[3].split(" ").filter(function (k) { return CLM[k]; }); }
+  function renderCats() {
+    $("cats").innerHTML = GROUPS.map(function (g, n) {
+      return '<button class="cat" style="--h:' + g[1] + '" data-cat="' + n + '"><b>' + esc(g[0]) + "</b><small>" + esc(g[2]) + "</small></button>";
     }).join("");
-    $("moreThemes").hidden = shownT >= ALLT.length;
   }
+  function openCat(n) {
+    var g = GROUPS[n];
+    $("hCat").textContent = g[0]; $("catSub").textContent = g[2];
+    $("catList").innerHTML = groupKeys(g).map(function (k) {
+      var c = CLM[k];
+      return '<button class="tile" style="--h:' + g[1] + '" data-tema="' + k + '"><b>' + esc(c.n) + "</b><small>" + c.a.length + " ayat kunci</small></button>";
+    }).join("");
+    show("shCat");
+  }
+  $("catList").addEventListener("click", function (e) { var t = e.target.closest("[data-tema]"); if (t) { hide(); openTheme(t.dataset.tema); } });
   function renderHome() {
     $("greet").textContent = greeting();
-    $("homeChips").innerHTML = EXAMPLES.map(function (e) { return '<button class="chip" data-q="' + esc(e) + '">' + esc(e) + "</button>"; }).join("");
     var id = votdId(), th = themeOfVerse(id);
     $("votd").innerHTML = '<div class="lab">Ayat hari ini' + (th ? " · " + esc(th.n) : "") + '</div><p class="vt">' + esc(clean(texts[id])) + '</p><div class="vr">' + esc(refOf(id)) + '</div><div class="acts"><button data-act="read" data-id="' + id + '">Baca pasalnya</button><button data-act="copy" data-id="' + id + '">Salin</button></div>';
     var last = lsGet("evo.last", null), cont = $("cont");
@@ -155,14 +161,13 @@
     if (!ok) last = { b: 0, c: 1 };
     cont.dataset.b = last.b; cont.dataset.c = last.c;
     cont.innerHTML = '<svg class="ico" viewBox="0 0 24 24" style="color:var(--accent)"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg><span class="t"><small>' + (ok ? "Lanjutkan membaca" : "Mulai membaca") + '</small><b>' + esc(BOOKS[last.b].n) + " " + last.c + "</b></span>";
-    renderThemes();
+    renderCats();
     renderInstall();
   }
   $("homeForm").onsubmit = function (e) { e.preventDefault(); var q = $("hq").value.trim(); if (!q) return; $("hq").blur(); startSearch(q); };
   $("vHome").addEventListener("click", function (e) {
-    if (e.target.closest("#moreThemes")) { shownT += 8; renderThemes(); return; }
     var t;
-    if ((t = e.target.closest("[data-q]"))) { startSearch(t.dataset.q); return; }
+    if ((t = e.target.closest("[data-cat]"))) { openCat(+t.dataset.cat); return; }
     if ((t = e.target.closest("[data-tema]"))) { openTheme(t.dataset.tema); return; }
     if ((t = e.target.closest("[data-act]"))) { var id = +t.dataset.id; if (t.dataset.act === "copy") copyText(verseCopy(id)); else openRef(bOf[id], cOf[id], vOf[id]); return; }
     if (e.target.closest("#pick")) { go("read"); setTimeout(function () { try { $("btnLoc").click(); } catch (x) {} }, 80); return; }
