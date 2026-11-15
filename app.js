@@ -136,6 +136,15 @@
     return votdIds[(day * 97) % votdIds.length];
   }
   function themeOfVerse(id) { for (var i = 0; i < eng.clusters.length; i++) if (eng.clusters[i].a.indexOf(id) >= 0) return eng.clusters[i]; return null; }
+  var ALLT = [], shownT = 8;
+  GROUPS.forEach(function (g) { g[2].split(" ").forEach(function (k) { if (CLM[k]) ALLT.push([k, g[1]]); }); });
+  function renderThemes() {
+    $("themeTiles").innerHTML = ALLT.slice(0, shownT).map(function (t) {
+      var c = CLM[t[0]];
+      return '<button class="tile" style="--h:' + t[1] + '" data-theme="' + t[0] + '"><b>' + esc(c.n) + "</b><small>" + c.a.length + " ayat kunci</small></button>";
+    }).join("");
+    $("moreThemes").hidden = shownT >= ALLT.length;
+  }
   function renderHome() {
     $("greet").textContent = greeting();
     $("homeChips").innerHTML = EXAMPLES.map(function (e) { return '<button class="chip" data-q="' + esc(e) + '">' + esc(e) + "</button>"; }).join("");
@@ -146,18 +155,12 @@
     if (!ok) last = { b: 0, c: 1 };
     cont.dataset.b = last.b; cont.dataset.c = last.c;
     cont.innerHTML = '<svg class="ico" viewBox="0 0 24 24" style="color:var(--accent)"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg><span class="t"><small>' + (ok ? "Lanjutkan membaca" : "Mulai membaca") + '</small><b>' + esc(BOOKS[last.b].n) + " " + last.c + "</b></span>";
-    var html = "";
-    GROUPS.forEach(function (g) {
-      var keys = g[2].split(" ").filter(function (k) { return CLM[k]; });
-      html += '<div class="sec"><h2>' + esc(g[0]) + "</h2><span>" + keys.length + " tema</span></div><div class=\"tiles\">";
-      keys.forEach(function (k) { var c = CLM[k]; html += '<button class="tile" style="--h:' + g[1] + '" data-theme="' + k + '"><b>' + esc(c.n) + "</b><small>" + c.a.length + " ayat kunci</small></button>"; });
-      html += "</div>";
-    });
-    $("themes").innerHTML = html;
+    renderThemes();
     renderInstall();
   }
   $("homeForm").onsubmit = function (e) { e.preventDefault(); var q = $("hq").value.trim(); if (!q) return; $("hq").blur(); startSearch(q); };
   $("vHome").addEventListener("click", function (e) {
+    if (e.target.closest("#moreThemes")) { shownT += 8; renderThemes(); return; }
     var t;
     if ((t = e.target.closest("[data-q]"))) { startSearch(t.dataset.q); return; }
     if ((t = e.target.closest("[data-theme]"))) { openTheme(t.dataset.theme); return; }
@@ -395,11 +398,11 @@
   function renderInstall() {
     var el = $("install"); if (!el) return;
     var no = lsGet("evo.noinst", 0), android = /android/i.test(navigator.userAgent), ios = isIOS();
-    if (location.protocol === "file:" || isStandalone() || lsGet("evo.installed", 0) || (no && Date.now() - no < 12096e5) || !(android || ios || deferred)) { el.hidden = true; return; }
+    if (location.protocol === "file:" || isStandalone() || lsGet("evo.installed", 0) || !(android || ios || deferred)) { el.hidden = true; return; }
     var inner;
-    if (deferred) inner = "<p>Ikon EvoBible akan muncul di layar HP seperti aplikasi lain. Sekali ketuk, langsung terbuka.</p><div class=\"acts\"><button class=\"btn pri\" data-inst=\"go\">Pasang sekarang</button><button class=\"btn sec\" data-inst=\"later\">Nanti saja</button></div>";
-    else if (ios) inner = "<ol><li>Ketuk tombol Bagikan " + SHARE_I + " di bagian bawah layar Safari.</li><li>Geser ke bawah, ketuk <b>Tambah ke Layar Utama</b>.</li><li>Ketuk <b>Tambah</b> di pojok kanan atas.</li></ol><div class=\"acts\"><button class=\"btn sec\" data-inst=\"later\">Nanti saja</button></div>";
-    else inner = "<ol><li>Ketuk tombol menu (tiga titik) di pojok kanan atas peramban.</li><li>Pilih <b>Instal aplikasi</b> atau <b>Tambahkan ke layar utama</b>.</li><li>Ketuk <b>Instal</b> atau <b>Tambah</b>.</li></ol><div class=\"acts\"><button class=\"btn sec\" data-inst=\"later\">Nanti saja</button></div>";
+    if (deferred) inner = "<p>Ikon EvoBible akan muncul di layar HP seperti aplikasi lain. Sekali ketuk, langsung terbuka.</p><div class=\"acts\"><button class=\"btn pri\" data-inst=\"go\">Pasang sekarang</button></div>";
+    else if (ios) inner = "<ol><li>Ketuk tombol Bagikan " + SHARE_I + " di bagian bawah layar Safari.</li><li>Geser ke bawah, ketuk <b>Tambah ke Layar Utama</b>.</li><li>Ketuk <b>Tambah</b> di pojok kanan atas.</li></ol>";
+    else inner = "<ol><li>Ketuk tombol menu (tiga titik) di pojok kanan atas peramban.</li><li>Pilih <b>Instal aplikasi</b> atau <b>Tambahkan ke layar utama</b>.</li><li>Ketuk <b>Instal</b> atau <b>Tambah</b>.</li></ol>";
     el.innerHTML = "<h2>Pasang EvoBible di layar utama</h2>" + inner; el.hidden = false;
   }
   window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferred = e; renderInstall(); });

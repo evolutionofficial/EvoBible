@@ -270,3 +270,12 @@ svg { display: block; }
   animation: drl 3.2s linear infinite; }
 @keyframes drl { to { --ang: 360deg; } }
 @media (prefers-reduced-motion: reduce) { #homeForm::before, #homeForm::after { animation: none; } }
+
+/* ---- penyesuaian beranda ---- */
+.greet { margin-bottom: 10px; }
+.votd { margin-top: 0; }
+.cont.big { margin-top: 14px; }
+.sec { margin-top: 26px; }
+.more { display: block; width: 100%; margin-top: 12px; padding: 14px; border-radius: 14px; background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: 15.5px; }
+.sheet .install { margin: 18px 0 0; padding: 14px 0 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: none; }
+.sheet .install h2 { font-size: 15px; }

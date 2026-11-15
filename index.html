@@ -28,11 +28,9 @@
   </div></header>
   <main class="inner">
     <p class="greet" id="greet"></p>
-    <h1 class="ask">Mari membaca Firman hari ini</h1>
+    <article class="votd" id="votd" aria-label="Ayat hari ini"></article>
     <button class="cont big" id="cont"></button>
     <button class="pick" id="pick" type="button">Pilih kitab lain</button>
-    <article class="votd" id="votd" aria-label="Ayat hari ini"></article>
-    <div class="install" id="install" hidden></div>
     <section class="feel" aria-labelledby="feelH">
       <h2 id="feelH">Bagaimana harimu?</h2>
       <form class="sfield" id="homeForm" role="search">
@@ -42,7 +40,9 @@
       </form>
       <div class="chips" id="homeChips"></div>
     </section>
-    <div id="themes"></div>
+    <div class="sec"><h2>Perasaan dan pergumulan</h2></div>
+    <div class="tiles" id="themeTiles"></div>
+    <button class="more" id="moreThemes" type="button" hidden>Lihat lebih banyak</button>
   </main>
 </section>
 
@@ -120,6 +120,7 @@
       <div class="stepper"><button id="fsDown" aria-label="Perkecil huruf">A−</button><output id="fsOut">19</output><button id="fsUp" aria-label="Perbesar huruf">A+</button></div></div>
     <div class="row" style="border-bottom:0"><span class="lbl">Tema warna</span>
       <div class="seg" id="themeSeg"><button data-t="auto" aria-pressed="true">Otomatis</button><button data-t="light" aria-pressed="false">Terang</button><button data-t="dark" aria-pressed="false">Gelap</button></div></div>
+    <div class="install" id="install" hidden></div>
     <div class="about">
       <p><span class="badge">Membaca Alkitab bisa tanpa internet</span></p>
       <p>Setelah dibuka sekali dengan internet, seluruh Alkitab tersimpan di HP dan bisa dibaca kapan saja. Tombol Cari memakai internet. Jika internet putus atau penuh, aplikasi tetap menampilkan hasil dasar dari HP Anda.</p>
