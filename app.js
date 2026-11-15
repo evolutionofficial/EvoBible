@@ -103,7 +103,7 @@
   }
   function paras(t) { return String(t || "").split(/\n+/).filter(function (x) { return x.trim(); }).map(function (x) { return "<p>" + esc(x.trim()) + "</p>"; }).join(""); }
   function prayerOnly(p) { return (p.tradisi === "katolik" ? CROSS + "\n\n" : "") + p.doa + (p.penutup ? "\n" + p.penutup : ""); }
-  function prayerText(p) { return p.judul + "\n\n“" + clean(texts[p.id]) + "”\n(" + refOf(p.id) + ", AYT)\n\n" + (p.makna ? p.makna + "\n\n" : "") + p.renungan + "\n\nDoa\n" + prayerOnly(p) + "\n\n— Evo Bible"; }
+  function prayerText(p) { return p.judul + "\n\n“" + clean(texts[p.id]) + "”\n(" + refOf(p.id) + ", AYT)\n\n" + (p.makna ? p.makna + "\n\n" : "") + p.renungan + "\n\n" + (p.judul_doa || "Doa") + "\n" + prayerOnly(p) +"\n\n— Evo Bible"; }
   function journal() { var J = lsGet("evo.jurnal", []); return Array.isArray(J) ? J : []; }
   function journalHas(p) { return journal().some(function (e) { return e.p && e.p.id === p.id && e.p.judul === p.judul && e.p.doa === p.doa; }); }
   function prayerBody(p) {
@@ -111,13 +111,13 @@
     h += '<div class="pr-verse"><p class="vt">' + esc(clean(texts[id])) + '</p><div class="vr">' + esc(refOf(id)) + " (AYT)</div></div>";
     if (p.makna) h += '<div class="pr-sec"><h3>Makna ayat</h3>' + paras(p.makna) + "</div>";
     h += '<div class="pr-sec"><h3>Renungan</h3>' + paras(p.renungan) + "</div>";
-    h += '<div class="pr-sec pr-doa"><h3>Doa</h3>';
+    h += '<div class="pr-sec pr-doa"><h3>Doa yang disusun</h3>' + (p.judul_doa ? '<h4 class="pr-dtitle">' + esc(p.judul_doa) + "</h4>" : "");
     if (p.tradisi === "katolik") h += '<div class="pr-cross"><small>Buatlah Tanda Salib sambil mengucapkan:</small><p>' + CROSS + "</p></div>";
     h += paras(p.doa) + (p.penutup ? '<p class="pr-end">' + esc(p.penutup) + "</p>" : "") + "</div>";
     return h;
   }
-  function prayerHtml(p) {
-    var h = '<article class="pray"><div class="pr-kicker">Evo Prayer · Renungan ' + (SES_N[p.sesi] || "") + '</div><h2 class="pr-title">' + esc(p.judul) + "</h2>";
+  function prayerHtml(p, q) {
+    var h = '<article class="pray"><div class="pr-kicker">Evo Prayer · Renungan ' + (SES_N[p.sesi] || "") + '</div><h2 class="pr-title">' + esc(p.judul) + "</h2>" + (q ? '<div class="pr-story"><small>Cerita saya</small><p>“' + esc(q) + '”</p></div>' : "");
     h += prayerBody(p).replace('(AYT)</div></div>', '(AYT)</div><button class="txtbtn" type="button" data-act="prread" data-id="' + p.id + '">Baca pasalnya</button></div>');
     h += '<div class="pr-acts"><button class="btn pri" type="button" data-act="prcopy">Salin doa</button><button class="btn sec" type="button" data-act="prshare">Bagikan</button><button class="btn sec" type="button" data-act="prsave">' + (journalHas(p) ? "Tersimpan di Jurnal Doa" : "Simpan ke Jurnal Doa") + "</button></div>";
     h += '<p class="pr-note">Doa ini disusun AI untuk membantu Anda menemukan kata-kata, bukan pesan langsung dari Tuhan. Silakan ubah, lewati, atau berdoa dengan kata-kata Anda sendiri.</p></article>';
@@ -572,7 +572,7 @@ var ORN = {
   function renderFeel() {
     var u = sesUsed(), n = sesNow(), box = $("feelDone"), sq = SES_Q[n.s.k];
     $("feelH").textContent = sq[0]; $("hq").placeholder = sq[1];
-    $("homeForm").hidden = !!u;
+    $("homeForm").hidden = !!u; $("feelSub").hidden = !!u;
     if (!u) { box.hidden = true; box.innerHTML = ""; return; }
     var h = '<p class="sub">Renungan ' + n.s.n.toLowerCase() + " Anda: “" + esc(u.q) + "”</p>";
     if (u.pr) h += '<div class="lab">Evo Prayer</div><h3 class="fd-title">' + esc(u.pr.judul) + "</h3>";
@@ -664,7 +664,7 @@ var ORN = {
       if (pr && pr.state === "wait") { body.innerHTML = html + '<div class="wait" role="status"><span class="dots"><i></i><i></i><i></i></span>Menyusun renungan dan doa untuk Anda…</div>'; return; }
       if (pr && pr.state === "done") {
         var mid = pr.data.id, rel = r.results.filter(function (x) { return x.id !== mid; }).slice(0, 4);
-        html += prayerHtml(pr.data);
+        html += prayerHtml(pr.data, q);
         if (rel.length) html += '<div class="mini">Ayat yang berhubungan</div>' + rel.map(function (x) { return card(x.id, x.why, re); }).join("");
         sesSetIds(key, [mid].concat(rel.map(function (x) { return x.id; })), true);
       } else if (!r.results.length) {

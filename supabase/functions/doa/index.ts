@@ -101,10 +101,11 @@ const SCHEMA = {
     no: { type: "INTEGER" },
     makna: { type: "STRING" },
     renungan: { type: "STRING" },
+    judul_doa: { type: "STRING" },
     doa: { type: "STRING" },
     penutup: { type: "STRING" },
   },
-  required: ["krisis", "judul", "no", "makna", "renungan", "doa", "penutup"],
+  required: ["krisis", "judul", "no", "makna", "renungan", "judul_doa", "doa", "penutup"],
 };
 
 const SESI: Record<string, string> = {
@@ -134,7 +135,11 @@ const SYSTEM =
   "MAKNA: 2 sampai 3 kalimat tentang konteks ayat (siapa, dalam keadaan apa) dan maknanya. Jangan mengarang detail sejarah yang tidak pasti. " +
   "RENUNGAN: 2 paragraf pendek (dipisah baris kosong, total 90 sampai 150 kata) yang menghubungkan pesan ayat dengan situasi pengguna. Hangat, manusiawi, menenangkan, mudah dipahami orang lanjut usia. " +
   "Jangan menghakimi, menggurui, atau memastikan apa kehendak Tuhan. Jangan menjanjikan bahwa masalah pasti selesai seperti yang diharapkan. " +
-  "DOA: isi doa saja (tanpa penutup), 90 sampai 160 kata, alami dan tulus, tidak kaku, terhubung jelas dengan ayat dan renungan, sesuai cerita pengguna. Tanpa judul atau label. " +
+  "JUDUL_DOA: judul doa pendek yang menyebut isi permohonannya, misalnya \"Doa Memohon Kekuatan dan Hikmat\" atau \"Doa Syukur di Akhir Hari\". " +
+  "DOA: isi doa saja tanpa penutup, MINIMAL 120 kata (boleh sampai 200 kata). Baris pertama hanya sapaan diakhiri koma (misalnya \"Ya Tuhan,\" atau \"Bapa di surga,\"). " +
+  "Sesudah itu 4 sampai 6 paragraf pendek, masing-masing 1 sampai 3 kalimat, dipisah baris baru: (1) datang kepada Tuhan dengan keadaan yang sedang dirasakan, (2) mengakui dengan jujur pergumulan, rasa takut, atau syukurnya secara konkret sesuai cerita, " +
+  "(3) permohonan yang jelas (misalnya ketenangan, hikmat, kekuatan, pemulihan) yang terhubung dengan ayat, (4) penyerahan dan harapan bahwa ia tidak menghadapi semuanya sendirian. " +
+  "Alami, tulus, sederhana, tidak kaku, tidak berlebihan, seperti orang sungguh berbicara kepada Tuhan. Tanpa judul atau label di dalam doa. " +
   "PENUTUP: kalimat penutup doa sesuai tradisi. " +
   "ETIKA: jangan berbicara atas nama Tuhan, jangan menyatakan doa ini pesan dari Tuhan, jangan menjanjikan hasil doa, jangan memanipulasi rasa takut atau rasa bersalah, jangan menilai kondisi rohani pengguna. " +
   "Isi krisis=true hanya jika pengguna menulis ingin mengakhiri hidup atau menyakiti dirinya; jika begitu, renungan dan doa tetap lembut dan mendorongnya mencari pertolongan orang terdekat. Selain itu krisis=false. " +
@@ -203,7 +208,7 @@ Deno.serve(async (req: Request) => {
             responseMimeType: "application/json",
             responseSchema: SCHEMA,
             temperature: 0.6,
-            maxOutputTokens: 4000,
+            maxOutputTokens: 5000,
           },
         }),
         signal: AbortSignal.timeout(22000),
@@ -225,7 +230,7 @@ Deno.serve(async (req: Request) => {
         console.error("nomor ayat tidak valid", out.no);
         return "galat";
       }
-      if (!clip(out.judul, 80) || !clip(out.renungan, 1400) || !clip(out.doa, 1600)) {
+      if (!clip(out.judul, 80) || !clip(out.renungan, 1400) || clip(out.doa, 2200).split(/\s+/).length < 80) {
         console.error("isi kurang");
         return "galat";
       }
@@ -248,7 +253,8 @@ Deno.serve(async (req: Request) => {
     judul: clip(out.judul, 80),
     makna: clip(out.makna, 600),
     renungan: clip(out.renungan, 1400),
-    doa: clip(out.doa, 1600),
+    judul_doa: clip(out.judul_doa, 80),
+    doa: clip(out.doa, 2200),
     penutup: clip(out.penutup, 120),
   });
 });
