@@ -270,7 +270,7 @@ var ORN = {
 
   /* ---------- routing ---------- */
   var VIEWS = { home: "vHome", search: "vSearch", read: "vRead", saved: "vSaved" };
-  var NAMES = { home: "beranda", search: "cari", read: "baca", saved: "sorotan" };
+  var NAMES = { home: "beranda", search: "cari", read: "baca", saved: "tersimpan" };
   function go(v) { var h = NAMES[v]; if (location.hash.slice(1) === h) route(); else location.hash = h; }
   function openRef(b, c, v, v2) { var h = BOOKS[b].a + "-" + c + (v ? "-" + v + (v2 && v2 >= v ? "-" + v2 : "") : ""); if (location.hash.slice(1) === h) route(); else location.hash = h; }
   function showView(v) {
@@ -289,7 +289,7 @@ var ORN = {
       }
     }
     if (h === "cari") { showView("search"); renderSearch(); if (!S.q && !S.theme) { try { $("q").focus(); } catch (e) {} } window.scrollTo(0, 0); return; }
-    if (h === "sorotan") { showView("saved"); renderSaved(); window.scrollTo(0, 0); return; }
+    if (h === "tersimpan" || h === "sorotan") { showView("saved"); renderSaved(); window.scrollTo(0, 0); return; }
     if (h === "baca") { var last = lsGet("evo.last", { b: 0, c: 1 }); if (!BOOKS[last.b] || !BOOKS[last.b].ch[last.c - 1]) last = { b: 0, c: 1 }; showView("read"); renderChapter(last.b, last.c, 0); return; }
     showView("home"); renderHome(); window.scrollTo(0, 0);
   }
@@ -381,7 +381,7 @@ var ORN = {
   function card(id, why, re, alasan) {
     var w = why ? '<span class="why" style="--h:' + hueOf(why.k) + '">' + (why.label ? esc(why.label) : (why.a ? "Ayat kunci" : "Terkait") + " · " + esc(why.n)) + "</span>" : '<span class="why lexw">Mengandung kata Anda</span>';
     return '<div class="rcard" data-id="' + id + '" role="button" tabindex="0"><div class="rref">' + esc(refOf(id)) + '</div><div class="rtx">' + hilite(texts[id], re) + '</div>' + (alasan ? '<p class="alasan"><b>Mengapa cocok:</b> ' + esc(alasan) + "</p>" : "") + '<div class="rft">' + w +
-      '<button class="mini-ib" data-act="copy" aria-label="Salin ayat">' + COPY_I + '</button><button class="mini-ib" data-act="save" aria-pressed="' + (!!hls[keyOf(id)]) + '" aria-label="Sorot ayat">' + SAVE_I + "</button></div></div>";
+      '<button class="mini-ib" data-act="copy" aria-label="Salin ayat">' + COPY_I + '</button><button class="mini-ib" data-act="save" aria-pressed="' + (!!hls[keyOf(id)]) + '" aria-label="Simpan ayat">' + SAVE_I + "</button></div></div>";
   }
   function renderSearch() {
     var body = $("sBody"), q = S.q.trim();
@@ -465,15 +465,15 @@ var ORN = {
     if (on) hls[k] = 1; else delete hls[k];
     lsSet("evo.hl", hls);
     if (btn) btn.setAttribute("aria-pressed", String(on));
-    toast(on ? "Ayat disorot" : "Sorotan dilepas");
+    toast(on ? "Ayat disimpan" : "Simpanan dihapus");
   }
 
-  /* ---------- sorotan ---------- */
+  /* ---------- ayat tersimpan ---------- */
   function renderSaved() {
     var ids = Object.keys(hls).map(function (k) { var p = k.split(":").map(Number); return gid(p[0], p[1], p[2]); }).sort(function (a, b) { return a - b; });
     $("svCopy").hidden = !ids.length;
     $("svBody").innerHTML = ids.length ? '<div class="found">' + ids.length + " ayat</div>" + ids.map(function (id) { return card(id, null, null).replace("Mengandung kata Anda", esc(BOOKS[bOf[id]].n)); }).join("") :
-      '<div class="empty"><p style="margin:0 0 6px;font-weight:700;color:var(--fg)">Belum ada sorotan</p>Ketuk sebuah ayat saat membaca lalu pilih Sorot, atau ketuk ikon penanda pada hasil pencarian.</div>';
+      '<div class="empty"><p style="margin:0 0 6px;font-weight:700;color:var(--fg)">Belum ada ayat tersimpan</p>Ketuk sebuah ayat saat membaca lalu pilih Simpan ayat, atau ketuk ikon penanda pada hasil pencarian.</div>';
     $("svBody").dataset.ids = ids.join(",");
   }
   $("svBody").addEventListener("click", function (e) {
@@ -483,7 +483,7 @@ var ORN = {
     if (t && t.dataset.act === "save") { toggleHl(id, t); renderSaved(); return; }
     openRef(bOf[id], cOf[id], vOf[id]);
   });
-  $("svCopy").onclick = function () { var ids = $("svBody").dataset.ids.split(",").filter(Boolean).map(Number); copyText(ids.map(function (id) { return clean(texts[id]) + "\n" + refOf(id) + " (AYT)"; }).join("\n\n"), "Semua sorotan disalin"); };
+  $("svCopy").onclick = function () { var ids = $("svBody").dataset.ids.split(",").filter(Boolean).map(Number); copyText(ids.map(function (id) { return clean(texts[id]) + "\n" + refOf(id) + " (AYT)"; }).join("\n\n"), "Semua ayat tersimpan disalin"); };
 
   /* ---------- baca ---------- */
   function renderChapter(b, c, vFocus, vEnd) {
@@ -503,7 +503,7 @@ var ORN = {
     lsSet("evo.last", { b: b, c: c });
     if (T.on) markVerse();
     if (vFocus && $("v" + vFocus)) { var el = $("v" + vFocus); el.scrollIntoView({ block: "center" }); el.classList.add("flash"); } else window.scrollTo(0, 0);
-    if (vFocus && vEnd >= vFocus) { for (var n = vFocus; n <= vEnd; n++) { var e2 = $("v" + n); if (e2) { S.sel.push(n); e2.classList.add("sel"); } } updateSel(); }
+    if (vFocus && vEnd >= vFocus) { for (var n = vFocus; n <= vEnd; n++) { var e2 = $("v" + n); if (e2) { S.sel.push(n); e2.classList.add("sel"); } } S.quiet = true; updateSel(); }
   }
   function setNav(btn, t) { btn.hidden = !t; if (t) btn.querySelector("b").textContent = BOOKS[t[0]].n + " " + t[1]; btn._t = t; }
   function prevOf(b, c) { if (c > 1) return [b, c - 1]; if (b > 0) return [b - 1, BOOKS[b - 1].ch.length]; return null; }
@@ -518,22 +518,23 @@ var ORN = {
   $("text").addEventListener("click", function (e) {
     var v = e.target.closest(".v"); if (!v) return;
     var n = +v.dataset.v, i = S.sel.indexOf(n);
+    if (S.quiet) { S.quiet = false; if (i >= 0) { updateSel(); return; } }
     if (i >= 0) { S.sel.splice(i, 1); v.classList.remove("sel"); } else { S.sel.push(n); v.classList.add("sel"); }
     updateSel();
   });
-  function clearSel(silent) { S.sel = []; Array.prototype.forEach.call(document.querySelectorAll(".v.sel"), function (el) { el.classList.remove("sel"); }); if (silent) $("selbar").hidden = true; else updateSel(); }
+  function clearSel(silent) { S.sel = []; S.quiet = false; Array.prototype.forEach.call(document.querySelectorAll(".v.sel"), function (el) { el.classList.remove("sel"); }); if (silent) $("selbar").hidden = true; else updateSel(); }
   function rangeStr(nums) { var s = nums.slice().sort(function (a, b) { return a - b; }), out = [], i = 0; while (i < s.length) { var j = i; while (j + 1 < s.length && s[j + 1] === s[j] + 1) j++; out.push(j > i ? s[i] + "-" + s[j] : String(s[i])); i = j + 1; } return out.join(","); }
   function updateSel() {
-    var n = S.sel.length; $("selbar").hidden = n === 0; if (!n) return;
+    var n = S.sel.length; $("selbar").hidden = n === 0 || !!S.quiet; if (!n) return;
     $("selInfo").textContent = n + " ayat dipilih";
     var allHl = S.sel.every(function (v) { return hls[S.b + ":" + S.c + ":" + v]; });
-    $("selHl").textContent = allHl ? "Lepas sorot" : "Sorot";
+    $("selHl").textContent = allHl ? "Hapus simpanan" : "Simpan ayat";
   }
   $("selClear").onclick = function () { clearSel(); };
   $("selHl").onclick = function () {
     var allHl = S.sel.every(function (v) { return hls[S.b + ":" + S.c + ":" + v]; });
     S.sel.forEach(function (v) { var k = S.b + ":" + S.c + ":" + v; if (allHl) delete hls[k]; else hls[k] = 1; $("v" + v).classList.toggle("hl", !allHl); });
-    lsSet("evo.hl", hls); toast(allHl ? "Sorotan dilepas" : "Ayat disorot"); clearSel();
+    lsSet("evo.hl", hls); toast(allHl ? "Simpanan dihapus" : "Ayat disimpan"); clearSel();
   };
   $("selCopy").onclick = function () {
     var s = S.sel.slice().sort(function (a, b) { return a - b; }), bk = BOOKS[S.b], ch = bk.ch[S.c - 1];

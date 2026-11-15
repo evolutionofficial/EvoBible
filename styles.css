@@ -146,7 +146,7 @@ svg { display: block; }
 .v { cursor: pointer; border-radius: 3px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 .v:hover { background: var(--accent-soft); }
 .vn { font-family: var(--ui); font-size: .58em; font-weight: 700; color: var(--accent); vertical-align: .55em; margin-right: .3em; font-variant-numeric: tabular-nums; }
-.v.hl { background: var(--hl); }
+.v.hl .vn { background: var(--accent); color: var(--accent-fg); border-radius: 5px; padding: 0 5px; }
 .v.sel { background: var(--sel); box-shadow: 0 0 0 2px var(--sel); }
 .v.flash { animation: flash 2.4s ease-out; }
 @keyframes flash { 0%, 55% { background: var(--hl); } 100% { background: transparent; } }
