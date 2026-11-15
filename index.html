@@ -87,6 +87,29 @@
   <footer class="inner credit"><p>Teks: Alkitab Yang Terbuka (AYT), © Yayasan Lembaga SABDA 2011, 2024. Dipakai untuk tujuan non-komersial. ayt.co</p></footer>
 </section>
 
+<!-- GEREJA -->
+<section id="vChurch" class="view" hidden>
+  <header class="bar"><div class="inner sv-head" style="padding-top:6px"><h1>Info Gereja</h1></div></header>
+  <main class="inner chbody">
+    <section class="chcard">
+      <div class="flabel">Tradisi gereja</div>
+      <div class="trad" id="chTrad" role="group" aria-label="Tradisi gereja"><button type="button" data-t="katolik">Katolik</button><button type="button" data-t="protestan">Protestan</button><button type="button" data-t="semua">Semua denominasi</button></div>
+      <div id="chSub"></div>
+    </section>
+    <section class="chcard">
+      <div class="flabel">Lokasi pencarian</div>
+      <button class="fgo" id="chLoc" type="button">Gunakan lokasi saya</button>
+      <form class="chplace" id="chPlaceForm"><input id="chPlace" type="search" placeholder="atau ketik nama kota" autocomplete="off" aria-label="Nama kota atau daerah"><button type="submit">Cari</button></form>
+      <div class="chrad"><span>Jarak</span><div class="seg" id="chRad"></div></div>
+      <p class="vnote" id="chPlaceNote"></p>
+    </section>
+    <div class="chfind"><input id="chQ" type="search" placeholder="Cari nama gereja" autocomplete="off" aria-label="Cari nama gereja"></div>
+    <div class="found" id="chStat"></div>
+    <div id="chList"></div>
+    <p class="chsrc">Data gereja dari OpenStreetMap (&copy; para kontributor OpenStreetMap, lisensi ODbL). Informasi dapat belum lengkap atau belum terbarui. Gereja yang tradisi atau sinodenya tidak tertulis di data ditandai &ldquo;Belum teridentifikasi&rdquo; dan hanya muncul pada pilihan Semua denominasi.</p>
+  </main>
+</section>
+
 <!-- TERSIMPAN -->
 <section id="vSaved" class="view" hidden>
   <header class="bar"><div class="inner sv-head" style="padding-top:6px">
@@ -101,6 +124,7 @@
   <button class="tab" data-v="read"><svg class="ico" viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg>Baca</button>
   <button class="tab" data-v="search"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Cari</button>
   <button class="tab" data-v="saved"><svg class="ico" viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>Tersimpan</button>
+  <button class="tab" data-v="church"><svg class="ico" viewBox="0 0 24 24"><path d="M12 2v5M9.5 4.5h5"/><path d="M12 7 6 11v10h12V11z"/><path d="M10 21v-5a2 2 0 0 1 4 0v5"/><path d="M3 21h18"/></svg>Gereja</button>
 </div></nav>
 
 <div class="pvbar" id="pvbar" hidden><div class="in">
@@ -152,6 +176,8 @@
       <div class="seg" id="calSeg"><button data-k="protestan" aria-pressed="true">Protestan</button><button data-k="katolik" aria-pressed="false">Katolik</button></div></div>
     <div class="row"><span class="lbl">Tema musiman</span>
       <div class="seg" id="seaSeg"><button data-k="on" aria-pressed="true">Ikuti kalender</button><button data-k="off" aria-pressed="false">Biru biasa</button></div></div>
+    <div class="row"><span class="lbl">Tradisi gereja</span>
+      <div class="seg" id="chSeg"><button data-k="katolik" aria-pressed="false">Katolik</button><button data-k="protestan" aria-pressed="false">Protestan</button><button data-k="semua" aria-pressed="false">Semua</button></div></div>
     <div class="pvwrap"><span class="lbl">Lihat pratinjau tema</span><p class="vnote">Hanya untuk melihat tampilan. Tanggal dan kalender Anda tidak berubah.</p><div class="pvgrid" id="pvGrid"></div></div>
     <div class="install" id="install" hidden></div>
     <div class="about">
