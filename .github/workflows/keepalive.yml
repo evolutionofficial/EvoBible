@@ -1,0 +1,11 @@
+name: Keepalive
+on:
+  schedule:
+    - cron: "17 2 */3 * *"
+  workflow_dispatch:
+permissions: {}
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsS -m 30 "https://ddydxagduxhzzsrlwgkd.supabase.co/functions/v1/cari"
