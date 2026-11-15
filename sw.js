@@ -11,7 +11,7 @@
 // Bump VERSION whenever the site files change so that devices download
 // a fresh cache and drop the old one.
 
-const VERSION = "v4";
+const VERSION = "v5";
 const CACHE = "evobible-" + VERSION;
 
 const PRECACHE = [
