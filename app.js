@@ -104,7 +104,7 @@
     prot_any: /protestant|evangelical|pentecostal|charismatic|lutheran|methodist|presbyterian|reformed|anglican|calvinist|mennonite|salvation_army|apostolic|nazarene|assemblies/i,
     kat_name: /\b(katolik|katedral|paroki|stasi|basilika)\b/i,
     radii: [5, 10, 20],
-    endpoints: ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]
+    endpoints: ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter", "https://overpass.private.coffee/api/interpreter"]
   };
   var CH = Object.assign({ trad: null, kat: "all", prot: "all", rad: 5, place: null }, lsGet("evo.church", {}));
   CH.q = ""; CH.dq = ""; CH.items = []; CH.status = "idle"; CH.shown = 40;
@@ -166,7 +166,7 @@
     $("chPlaceNote").textContent = CH.place ? "Mencari di sekitar: " + CH.place.label : "Belum ada lokasi. Tekan Gunakan lokasi saya, atau ketik nama kota.";
     if (!CH.trad) { st.textContent = ""; ls.innerHTML = ""; return; }
     if (CH.status === "load") { st.textContent = ""; ls.innerHTML = '<div class="wait"><span class="dots"><i></i><i></i><i></i></span> Mencari gereja…</div>'; return; }
-    if (CH.status === "err") { st.textContent = ""; ls.innerHTML = '<div class="empty"><p style="margin:0 0 8px;font-weight:700;color:var(--fg)">Data gereja belum bisa dimuat</p>Periksa sambungan internet, lalu coba lagi.<br><button class="btn" id="chRetry" type="button" style="margin-top:12px">Coba lagi</button></div>'; return; }
+    if (CH.status === "err") { st.textContent = ""; ls.innerHTML = '<div class="empty"><p style="margin:0 0 8px;font-weight:700;color:var(--fg)">Data gereja belum bisa dimuat</p>' + esc(CH.lastErr || "Periksa sambungan internet") + '.<br><button class="btn" id="chRetry" type="button" style="margin-top:12px">Coba lagi</button></div>'; return; }
     if (!CH.place || CH.status === "idle") { st.textContent = ""; ls.innerHTML = ""; return; }
     var all = CH.items.map(function (it) { it.dist = haversine(CH.place.lat, CH.place.lon, it.lat, it.lon); return it; }).sort(function (a, b) { return a.dist - b.dist; });
     var res = all.filter(chPass), unk = all.filter(function (it) { return !it.trad; }).length;
@@ -183,10 +183,21 @@
   }
   function renderChurch() { drawChTrad(); drawChRad(); drawChList(); if (CH.place && CH.status === "idle" && CH.trad) loadChurches(); }
   function chFetch(query, i) {
-    i = i || 0; var ctl = new AbortController(), to = setTimeout(function () { ctl.abort(); }, 22000);
-    return fetch(CH_CFG.endpoints[i], { method: "POST", body: "data=" + encodeURIComponent(query), headers: { "Content-Type": "application/x-www-form-urlencoded" }, signal: ctl.signal })
-      .then(function (r) { clearTimeout(to); if (!r.ok) throw new Error("http"); return r.json(); })
-      .catch(function (e) { clearTimeout(to); if (i + 1 < CH_CFG.endpoints.length) return chFetch(query, i + 1); throw e; });
+    i = i || 0;
+    var ctl = new AbortController(), to = setTimeout(function () { ctl.abort(); }, 30000);
+    var url = CH_CFG.endpoints[i] + "?data=" + encodeURIComponent(query);
+    return fetch(url, { method: "GET", signal: ctl.signal, cache: "no-store" })
+      .then(function (r) {
+        clearTimeout(to);
+        if (!r.ok) { var err = new Error("HTTP " + r.status); err.code = r.status; throw err; }
+        return r.text().then(function (t) { try { return JSON.parse(t); } catch (e) { var er = new Error("format"); er.code = "format"; throw er; } });
+      })
+      .catch(function (e) {
+        clearTimeout(to);
+        CH.lastErr = (e && e.name === "AbortError") ? "Waktu habis (server terlalu lama menjawab)" : (e && e.code === "format") ? "Server mengirim data yang tidak terbaca" : (e && e.code) ? "Server peta menolak permintaan (kode " + e.code + ")" : "Tidak bisa terhubung ke server peta";
+        if (i + 1 < CH_CFG.endpoints.length) return chFetch(query, i + 1);
+        throw e;
+      });
   }
   function loadChurches() {
     var p = CH.place; if (!p) return;
