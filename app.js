@@ -65,19 +65,64 @@
   function sesUsed() { return sesLog().s[sesNow().s.k] || null; }
   function sesAllowed(q) { var u = sesUsed(); return !u || u.key === aiKey(q); }
   function sesMark(q) { var n = sesNow(), L = sesLog(); if (!L.s[n.s.k]) { L.s[n.s.k] = { q: q.trim(), key: aiKey(q), ids: [] }; lsSet("evo.ses", L); } }
-  function sesSetIds(key, ids) { var n = sesNow(), L = sesLog(), e = L.s[n.s.k]; if (e && e.key === key && !e.ids.length && ids.length) { e.ids = ids.slice(0, 5); lsSet("evo.ses", L); } }
+  function sesSetIds(key, ids, force) { var n = sesNow(), L = sesLog(), e = L.s[n.s.k]; if (e && e.key === key && (force || !e.ids.length) && ids.length && e.ids.join() !== ids.slice(0, 5).join()) { e.ids = ids.slice(0, 5); lsSet("evo.ses", L); } }
   function sesNextText() { var k = sesNow().s.k; return k === "pagi" ? "Sesi siang dibuka pukul 12.00" : k === "siang" ? "Sesi malam dibuka pukul 17.00" : "Sesi pagi dibuka besok pukul 05.00"; }
   function histHtml() {
     var L = sesLog(), h = "";
     SES.forEach(function (s) {
       var e = L.s[s.k]; if (!e) return;
       h += "<h3>" + s.n + " · “" + esc(e.q) + "”</h3>";
+      if (e.pr) h += '<p class="hint"><b>' + esc(e.pr.judul) + "</b></p>";
       if (!e.ids.length) h += '<p class="hint">Belum ada ayat tersimpan untuk sesi ini.</p>';
       e.ids.forEach(function (id, i) { h += card(id, { label: i ? "Terkait" : "Rekomendasi", k: "iman" }, null); });
     });
     return h || '<p class="hint">Belum ada renungan hari ini.</p>';
   }
   function histPart() { return sesNow().s.k === "malam" ? '<button class="btn sec histbtn" type="button" data-act="hist">Riwayat hari ini</button><div class="hist" id="histBox"' + (S.histOpen ? "" : " hidden") + ">" + histHtml() + "</div>" : ""; }
+  /* ---------- Evo Prayer: satu ayat, satu renungan, satu doa ---------- */
+  var API_DOA = "https://ddydxagduxhzzsrlwgkd.supabase.co/functions/v1/doa";
+  var SES_Q = { pagi: ["Apa rencanamu hari ini?", "Ceritakan rencanamu hari ini"], siang: ["Apa yang sedang atau sudah kau perjuangkan?", "Ceritakan perjuanganmu hari ini"], malam: ["Bagaimana harimu?", "Ceritakan harimu"] };
+  var SES_N = { pagi: "pagi", siang: "siang", malam: "malam" };
+  var CROSS = "Demi nama Bapa, dan Putra, dan Roh Kudus. Amin.";
+  function sesSetPrayer(key, pr) { var n = sesNow(), L = sesLog(), e = L.s[n.s.k]; if (e && e.key === key) { e.pr = pr; lsSet("evo.ses", L); } }
+  function runPrayer(q, cands) {
+    var key = aiKey(q), tr = settings.cal === "katolik" ? "katolik" : "protestan", se = sesUsed();
+    if (se && se.key === key && se.pr) { S.pr = { q: key, state: "done", data: se.pr }; return; }
+    if (navigator.onLine === false) { S.pr = { q: key, state: "off" }; return; }
+    S.pr = { q: key, state: "wait" };
+    var ctl = new AbortController(), to = setTimeout(function () { ctl.abort(); }, 50000);
+    function fail(why) { clearTimeout(to); if (S.pr && S.pr.q === key) { S.pr = { q: key, state: "fail", why: why }; renderIfCurrent(key); } }
+    fetch(API_DOA, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: q.slice(0, 500), ids: cands.slice(0, 40), d: devId, t: tr, s: sesNow().s.k }), signal: ctl.signal })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        clearTimeout(to);
+        if (!(S.pr && S.pr.q === key)) return;
+        if (j && j.ok && j.id >= 0 && j.id < texts.length && j.doa) { S.pr = { q: key, state: "done", data: j }; sesSetPrayer(key, j); renderIfCurrent(key); }
+        else fail(j && j.sebab);
+      }, function () { fail("jaringan"); });
+  }
+  function paras(t) { return String(t || "").split(/\n+/).filter(function (x) { return x.trim(); }).map(function (x) { return "<p>" + esc(x.trim()) + "</p>"; }).join(""); }
+  function prayerOnly(p) { return (p.tradisi === "katolik" ? CROSS + "\n\n" : "") + p.doa + (p.penutup ? "\n" + p.penutup : ""); }
+  function prayerText(p) { return p.judul + "\n\n“" + clean(texts[p.id]) + "”\n(" + refOf(p.id) + ", AYT)\n\n" + (p.makna ? p.makna + "\n\n" : "") + p.renungan + "\n\nDoa\n" + prayerOnly(p) + "\n\n— Evo Bible"; }
+  function journal() { var J = lsGet("evo.jurnal", []); return Array.isArray(J) ? J : []; }
+  function journalHas(p) { return journal().some(function (e) { return e.p && e.p.id === p.id && e.p.judul === p.judul && e.p.doa === p.doa; }); }
+  function prayerBody(p) {
+    var id = p.id, h = "";
+    h += '<div class="pr-verse"><p class="vt">' + esc(clean(texts[id])) + '</p><div class="vr">' + esc(refOf(id)) + " (AYT)</div></div>";
+    if (p.makna) h += '<div class="pr-sec"><h3>Makna ayat</h3>' + paras(p.makna) + "</div>";
+    h += '<div class="pr-sec"><h3>Renungan</h3>' + paras(p.renungan) + "</div>";
+    h += '<div class="pr-sec pr-doa"><h3>Doa</h3>';
+    if (p.tradisi === "katolik") h += '<div class="pr-cross"><small>Buatlah Tanda Salib sambil mengucapkan:</small><p>' + CROSS + "</p></div>";
+    h += paras(p.doa) + (p.penutup ? '<p class="pr-end">' + esc(p.penutup) + "</p>" : "") + "</div>";
+    return h;
+  }
+  function prayerHtml(p) {
+    var h = '<article class="pray"><div class="pr-kicker">Evo Prayer · Renungan ' + (SES_N[p.sesi] || "") + '</div><h2 class="pr-title">' + esc(p.judul) + "</h2>";
+    h += prayerBody(p).replace('(AYT)</div></div>', '(AYT)</div><button class="txtbtn" type="button" data-act="prread" data-id="' + p.id + '">Baca pasalnya</button></div>');
+    h += '<div class="pr-acts"><button class="btn pri" type="button" data-act="prcopy">Salin doa</button><button class="btn sec" type="button" data-act="prshare">Bagikan</button><button class="btn sec" type="button" data-act="prsave">' + (journalHas(p) ? "Tersimpan di Jurnal Doa" : "Simpan ke Jurnal Doa") + "</button></div>";
+    h += '<p class="pr-note">Doa ini disusun AI untuk membantu Anda menemukan kata-kata, bukan pesan langsung dari Tuhan. Silakan ubah, lewati, atau berdoa dengan kata-kata Anda sendiri.</p></article>';
+    return h;
+  }
   function runAI(q, cands) {
     var key = aiKey(q), cache = lsGet("evo.ai", {}), hit = cache[key];
     if (hit && Date.now() - hit.t < 6048e5) { S.ai = { q: key, state: "done", data: hit.d }; return; }
@@ -525,12 +570,14 @@ var ORN = {
     renderInstall();
   }
   function renderFeel() {
-    var u = sesUsed(), n = sesNow(), box = $("feelDone");
+    var u = sesUsed(), n = sesNow(), box = $("feelDone"), sq = SES_Q[n.s.k];
+    $("feelH").textContent = sq[0]; $("hq").placeholder = sq[1];
     $("homeForm").hidden = !!u;
     if (!u) { box.hidden = true; box.innerHTML = ""; return; }
     var h = '<p class="sub">Renungan ' + n.s.n.toLowerCase() + " Anda: “" + esc(u.q) + "”</p>";
-    if (u.ids.length) { var id = u.ids[0]; h += '<div class="lab">Rekomendasi untuk Anda</div><p class="vt">' + esc(clean(texts[id])) + '</p><div class="vr">' + esc(refOf(id)) + "</div>"; }
-    h += '<div class="acts"><button class="btn pri" type="button" data-ses="open">' + (u.ids.length > 1 ? "Lihat " + (u.ids.length - 1) + " ayat yang berhubungan" : "Lihat renungan") + "</button>";
+    if (u.pr) h += '<div class="lab">Evo Prayer</div><h3 class="fd-title">' + esc(u.pr.judul) + "</h3>";
+    if (u.ids.length) { var id = u.ids[0]; h += (u.pr ? "" : '<div class="lab">Rekomendasi untuk Anda</div>') + '<p class="vt">' + esc(clean(texts[id])) + '</p><div class="vr">' + esc(refOf(id)) + "</div>"; }
+    h += '<div class="acts"><button class="btn pri" type="button" data-ses="open">' + (u.pr ? "Buka renungan dan doa" : u.ids.length > 1 ? "Lihat " + (u.ids.length - 1) + " ayat yang berhubungan" : "Lihat renungan") + "</button>";
     if (n.s.k === "malam") h += '<button class="btn sec" type="button" data-ses="hist">Riwayat hari ini</button>';
     h += '</div><p class="note">' + esc(sesNextText()) + ". Renungan bisa dipakai tiga kali sehari: pagi, siang, dan malam.</p>";
     box.innerHTML = h; box.hidden = false;
@@ -549,14 +596,14 @@ var ORN = {
   });
 
   /* ---------- cari ---------- */
-  function startSearch(q) { S.q = q; S.theme = null; S.mode = "tema"; S.ai = null; S.pendingAI = true; $("q").value = q; syncMode(); pushRecent(q); go("search"); }
+  function startSearch(q) { S.q = q; S.theme = null; S.mode = "tema"; S.ai = null; S.pr = null; S.pendingAI = true; $("q").value = q; syncMode(); pushRecent(q); go("search"); }
   function openTheme(k) { S.theme = k; S.moreOpen = false; go("search"); }
   function pushRecent(q) { q = q.trim(); if (q.length < 3) return; recent = [q].concat(recent.filter(function (x) { return x !== q; })).slice(0, 6); lsSet("evo.recent", recent); }
   function syncMode() { Array.prototype.forEach.call($("mode").children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.m === S.mode)); }); $("qclr").hidden = !$("q").value; }
   $("mode").onclick = function (e) { var m = e.target.dataset && e.target.dataset.m; if (!m) return; S.mode = m; S.theme = null; S.pendingAI = false; syncMode(); renderSearch(); };
   var qT;
   $("q").addEventListener("input", function () { S.q = $("q").value; S.theme = null; S.ai = null; S.pendingAI = false; syncMode(); clearTimeout(qT); qT = setTimeout(renderSearch, 160); });
-  $("sForm").onsubmit = function (e) { e.preventDefault(); $("q").blur(); S.q = $("q").value; pushRecent(S.q); S.ai = null; S.pendingAI = S.mode === "tema"; renderSearch(); };
+  $("sForm").onsubmit = function (e) { e.preventDefault(); $("q").blur(); S.q = $("q").value; pushRecent(S.q); S.ai = null; S.pr = null; S.pendingAI = S.mode === "tema"; renderSearch(); };
   $("qclr").onclick = function () { $("q").value = ""; S.q = ""; S.theme = null; syncMode(); renderSearch(); $("q").focus(); };
 
   function parseRef(q) {
@@ -610,26 +657,22 @@ var ORN = {
       }
       var r = eng.search(q, { limit: 40 }), key = aiKey(q), crisis = CRISIS.test(q);
       var cands = r.results.map(function (x) { return x.id; });
-      if (S.pendingAI) { S.pendingAI = false; if (!ref && !crisis && r.results.length) sesMark(q); if (!crisis && cands.length >= 5) runAI(q, cands); }
-      var ai = S.ai && S.ai.q === key ? S.ai : null;
-      if (crisis || (ai && ai.state === "done" && ai.data.krisis)) html += careCard();
-      if (r.sel.length) html += '<div class="found">Cocok dengan tema: ' + r.sel.map(function (c) { return '<button class="tchip" style="--h:' + hueOf(c.k) + '" data-tema="' + c.k + '">' + esc(c.n) + "</button>"; }).join("") + "</div>";
-      if (ai && ai.state === "wait") { body.innerHTML = html + '<div class="wait" role="status"><span class="dots"><i></i><i></i><i></i></span>Mencarikan ayat yang paling sesuai untuk Anda…</div>'; return; }
-      if (ai && ai.state === "done") {
-        var used = {}, picks = [], rel = [];
-        if (ai.data.ringkasan) html += '<div class="sumcard">' + esc(ai.data.ringkasan) + "</div>";
-        ai.data.pilihan.forEach(function (p) { if (p.id >= 0 && p.id < texts.length && !used[p.id]) { used[p.id] = 1; picks.push(p); } });
-        picks.slice(1).forEach(function (p) { rel.push({ id: p.id, alasan: p.alasan }); });
-        r.results.forEach(function (x) { if (rel.length < 4 && !used[x.id]) { used[x.id] = 1; rel.push({ id: x.id, why: x.why }); } });
-        rel = rel.slice(0, 4);
-        if (picks.length) html += '<div class="mini">Rekomendasi untuk Anda</div>' + card(picks[0].id, { label: "Rekomendasi", k: "iman" }, re, picks[0].alasan);
-        if (rel.length) html += '<div class="mini">Ayat yang berhubungan</div>' + rel.map(function (x) { return card(x.id, x.why || { label: "Terkait", k: "iman" }, re, x.alasan); }).join("");
-        sesSetIds(key, (picks.length ? [picks[0].id] : []).concat(rel.map(function (x) { return x.id; })));
+      if (S.pendingAI) { S.pendingAI = false; if (!ref && !crisis && r.results.length) sesMark(q); if (!ref && !crisis && cands.length >= 3) runPrayer(q, cands); }
+      var pr = S.pr && S.pr.q === key ? S.pr : null;
+      if (crisis || (pr && pr.state === "done" && pr.data.krisis)) html += careCard();
+      if (r.sel.length && !(pr && pr.state === "done")) html += '<div class="found">Cocok dengan tema: ' + r.sel.map(function (c) { return '<button class="tchip" style="--h:' + hueOf(c.k) + '" data-tema="' + c.k + '">' + esc(c.n) + "</button>"; }).join("") + "</div>";
+      if (pr && pr.state === "wait") { body.innerHTML = html + '<div class="wait" role="status"><span class="dots"><i></i><i></i><i></i></span>Menyusun renungan dan doa untuk Anda…</div>'; return; }
+      if (pr && pr.state === "done") {
+        var mid = pr.data.id, rel = r.results.filter(function (x) { return x.id !== mid; }).slice(0, 4);
+        html += prayerHtml(pr.data);
+        if (rel.length) html += '<div class="mini">Ayat yang berhubungan</div>' + rel.map(function (x) { return card(x.id, x.why, re); }).join("");
+        sesSetIds(key, [mid].concat(rel.map(function (x) { return x.id; })), true);
       } else if (!r.results.length) {
         html += '<div class="empty">Belum ada ayat yang cocok dengan “' + esc(q) + '”. Coba kata yang lebih umum, misalnya “takut”, “marah”, atau “keluarga”.</div>';
       } else {
-        if (ai && ai.state === "fail" && ai.why === "batas") html += '<p class="hint">Pemilihan otomatis sedang penuh hari ini. Berikut hasil dasar dari HP Anda.</p>';
-        else if (ai && ai.state === "off") html += '<p class="hint">Sedang tanpa internet. Berikut hasil dasar dari HP Anda.</p>';
+        if (pr && pr.state === "fail" && pr.why === "batas") html += '<p class="hint">Penyusunan doa sedang penuh hari ini. Berikut ayat yang dipilih dari HP Anda.</p>';
+        else if (pr && pr.state === "fail") html += '<p class="hint">Renungan dan doa belum bisa disusun. Berikut ayat yang dipilih dari HP Anda.</p><button class="btn pri histbtn" type="button" data-act="prretry">Coba susun doa lagi</button>';
+        else if (pr && pr.state === "off") html += '<p class="hint">Sedang tanpa internet. Berikut ayat yang dipilih dari HP Anda.</p>';
         var top = r.results.slice(0, 5);
         html += '<div class="mini">Rekomendasi untuk Anda</div>' + card(top[0].id, top[0].why, re);
         if (top.length > 1) html += '<div class="mini">Ayat yang berhubungan</div>' + top.slice(1).map(function (x) { return card(x.id, x.why, re); }).join("");
@@ -667,13 +710,22 @@ var ORN = {
     if ((t = e.target.closest("[data-act]")) && t.dataset.act === "back") { S.theme = null; go("home"); return; }
     if (t && t.dataset.act === "more") { S.moreOpen = true; renderSearch(); return; }
     if (t && t.dataset.act === "hist") { S.histOpen = !S.histOpen; var hb = $("histBox"); if (hb) hb.hidden = !S.histOpen; return; }
-    if (t && t.dataset.act === "sesopen") { var su = sesUsed(); if (su) { S.q = su.q; $("q").value = su.q; S.theme = null; S.mode = "tema"; S.ai = null; S.pendingAI = true; syncMode(); renderSearch(); window.scrollTo(0, 0); } return; }
+    if (t && t.dataset.act === "sesopen") { var su = sesUsed(); if (su) { S.q = su.q; $("q").value = su.q; S.theme = null; S.mode = "tema"; S.ai = null; S.pr = null; S.pendingAI = true; syncMode(); renderSearch(); window.scrollTo(0, 0); } return; }
+    if (t && t.dataset.act === "prretry") { S.pr = null; S.pendingAI = true; renderSearch(); return; }
+    if (t && t.dataset.act === "prread") { var pid = +t.dataset.id; openRef(bOf[pid], cOf[pid], vOf[pid]); return; }
+    if (t && /^pr(copy|share|save)$/.test(t.dataset.act)) {
+      var p0 = S.pr && S.pr.state === "done" ? S.pr.data : null; if (!p0) return;
+      if (t.dataset.act === "prcopy") copyText(prayerOnly(p0), "Doa disalin");
+      else if (t.dataset.act === "prshare") { if (navigator.share) navigator.share({ title: p0.judul, text: prayerText(p0) }).catch(function () {}); else copyText(prayerText(p0), "Renungan dan doa disalin"); }
+      else if (!journalHas(p0)) { var J = journal(); J.unshift({ t: Date.now(), q: S.q.trim(), p: p0 }); lsSet("evo.jurnal", J.slice(0, 60)); t.textContent = "Tersimpan di Jurnal Doa"; toast("Disimpan ke Jurnal Doa (tab Tersimpan)"); }
+      return;
+    }
     if (t && (t.dataset.act === "copy" || t.dataset.act === "save")) {
       var cardEl = t.closest(".rcard"), id = +cardEl.dataset.id;
       if (t.dataset.act === "copy") copyText(verseCopy(id)); else toggleHl(id, t);
       return;
     }
-    if ((t = e.target.closest("[data-q]"))) { S.q = t.dataset.q; $("q").value = S.q; S.theme = null; S.ai = null; S.pendingAI = S.mode === "tema"; pushRecent(S.q); renderSearch(); return; }
+    if ((t = e.target.closest("[data-q]"))) { S.q = t.dataset.q; $("q").value = S.q; S.theme = null; S.ai = null; S.pr = null; S.pendingAI = S.mode === "tema"; pushRecent(S.q); renderSearch(); return; }
     if ((t = e.target.closest("[data-tema]"))) { S.theme = t.dataset.tema; S.moreOpen = false; renderSearch(); window.scrollTo(0, 0); return; }
     if ((t = e.target.closest(".go"))) { openRef(+t.dataset.b, +t.dataset.c, +t.dataset.v); return; }
     if ((t = e.target.closest(".rcard"))) { var i2 = +t.dataset.id; if (S.q) pushRecent(S.q); openRef(bOf[i2], cOf[i2], vOf[i2]); }
@@ -688,14 +740,30 @@ var ORN = {
   }
 
   /* ---------- ayat tersimpan ---------- */
+  function journalHtml() {
+    var J = journal(); if (!J.length) return "";
+    return '<div class="mini">Jurnal Doa</div>' + J.map(function (e, i) {
+      var p = e.p, d = new Date(e.t).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+      return '<details class="jr"><summary><b>' + esc(p.judul) + "</b><small>" + esc(d) + " · " + esc(refOf(p.id)) + "</small></summary>" + (e.q ? '<p class="jr-q">Cerita Anda: “' + esc(e.q) + "”</p>" : "") + prayerBody(p) +
+        '<div class="pr-acts"><button class="btn sec" type="button" data-jr="copy" data-i="' + i + '">Salin doa</button><button class="btn sec" type="button" data-jr="share" data-i="' + i + '">Bagikan</button><button class="btn sec" type="button" data-jr="del" data-i="' + i + '">Hapus</button></div></details>';
+    }).join("") + '<div class="mini">Ayat tersimpan</div>';
+  }
   function renderSaved() {
     var ids = Object.keys(hls).map(function (k) { var p = k.split(":").map(Number); return gid(p[0], p[1], p[2]); }).sort(function (a, b) { return a - b; });
     $("svCopy").hidden = !ids.length;
-    $("svBody").innerHTML = ids.length ? '<div class="found">' + ids.length + " ayat</div>" + ids.map(function (id) { return card(id, null, null).replace("Mengandung kata Anda", esc(BOOKS[bOf[id]].n)); }).join("") :
-      '<div class="empty"><p style="margin:0 0 6px;font-weight:700;color:var(--fg)">Belum ada ayat tersimpan</p>Ketuk sebuah ayat saat membaca lalu pilih Simpan ayat, atau ketuk ikon penanda pada hasil pencarian.</div>';
+    $("svBody").innerHTML = journalHtml() + (ids.length ? '<div class="found">' + ids.length + " ayat</div>" + ids.map(function (id) { return card(id, null, null).replace("Mengandung kata Anda", esc(BOOKS[bOf[id]].n)); }).join("") :
+      '<div class="empty"><p style="margin:0 0 6px;font-weight:700;color:var(--fg)">Belum ada ayat tersimpan</p>Ketuk sebuah ayat saat membaca lalu pilih Simpan ayat, atau ketuk ikon penanda pada hasil pencarian.</div>');
     $("svBody").dataset.ids = ids.join(",");
   }
   $("svBody").addEventListener("click", function (e) {
+    var jb = e.target.closest("[data-jr]");
+    if (jb) {
+      var J = journal(), je = J[+jb.dataset.i]; if (!je) return;
+      if (jb.dataset.jr === "copy") copyText(prayerOnly(je.p), "Doa disalin");
+      else if (jb.dataset.jr === "share") { if (navigator.share) navigator.share({ title: je.p.judul, text: prayerText(je.p) }).catch(function () {}); else copyText(prayerText(je.p), "Renungan dan doa disalin"); }
+      else if (jb.dataset.jr === "del") { J.splice(+jb.dataset.i, 1); lsSet("evo.jurnal", J); renderSaved(); toast("Dihapus dari Jurnal Doa"); }
+      return;
+    }
     var t = e.target.closest("[data-act]"), cardEl = e.target.closest(".rcard"); if (!cardEl) return;
     var id = +cardEl.dataset.id;
     if (t && t.dataset.act === "copy") { copyText(verseCopy(id)); return; }
