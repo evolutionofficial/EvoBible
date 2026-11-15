@@ -54,6 +54,8 @@
   }
   function renderIfCurrent(key) { if (S.view === "search" && !S.theme && S.mode === "tema" && aiKey(S.q) === key) renderSearch(); }
   /* ---------- sesi renungan: 3x sehari (pagi 05-11:59, siang 12-16:59, malam 17-04:59) ---------- */
+  // MODE UJI: true = kotak cerita selalu muncul & bisa dipakai berkali-kali (tanpa batas 3 sesi/hari). Ubah ke false untuk mengaktifkan batas lagi.
+  var TEST_NO_LIMIT = true;
   var SES = [{ k: "pagi", n: "Pagi", a: 5, b: 12 }, { k: "siang", n: "Siang", a: 12, b: 17 }, { k: "malam", n: "Malam", a: 17, b: 29 }];
   function sesNow() {
     var d = new Date(), h = d.getHours(), hh = h < 5 ? h + 24 : h, s = SES[0];
@@ -63,10 +65,10 @@
   }
   function sesLog() { var n = sesNow(), L = lsGet("evo.ses", null); if (!L || L.day !== n.day || !L.s) L = { day: n.day, s: {} }; return L; }
   function sesUsed() { return sesLog().s[sesNow().s.k] || null; }
-  function sesAllowed(q) { var u = sesUsed(); return !u || u.key === aiKey(q); }
-  function sesMark(q) { var n = sesNow(), L = sesLog(); if (!L.s[n.s.k]) { L.s[n.s.k] = { q: q.trim(), key: aiKey(q), ids: [] }; lsSet("evo.ses", L); } }
+  function sesAllowed(q) { if (TEST_NO_LIMIT) return true; var u = sesUsed(); return !u || u.key === aiKey(q); }
+  function sesMark(q) { var n = sesNow(), L = sesLog(), e = L.s[n.s.k]; if (!e || (TEST_NO_LIMIT && e.key !== aiKey(q))) { L.s[n.s.k] = { q: q.trim(), key: aiKey(q), ids: [] }; lsSet("evo.ses", L); } }
   function sesSetIds(key, ids, force) { var n = sesNow(), L = sesLog(), e = L.s[n.s.k]; if (e && e.key === key && (force || !e.ids.length) && ids.length && e.ids.join() !== ids.slice(0, 5).join()) { e.ids = ids.slice(0, 5); lsSet("evo.ses", L); } }
-  function sesNextText() { var k = sesNow().s.k; return k === "pagi" ? "Sesi siang dibuka pukul 12.00" : k === "siang" ? "Sesi malam dibuka pukul 17.00" : "Sesi pagi dibuka besok pukul 05.00"; }
+  function sesNextText() { if (TEST_NO_LIMIT) return "Mode uji: renungan dan doa bisa dicoba tanpa batas"; var k = sesNow().s.k; return k === "pagi" ? "Sesi siang dibuka pukul 12.00" : k === "siang" ? "Sesi malam dibuka pukul 17.00" : "Sesi pagi dibuka besok pukul 05.00"; }
   function histHtml() {
     var L = sesLog(), h = "";
     SES.forEach(function (s) {
@@ -572,7 +574,7 @@ var ORN = {
   function renderFeel() {
     var u = sesUsed(), n = sesNow(), box = $("feelDone"), sq = SES_Q[n.s.k];
     $("feelH").textContent = sq[0]; $("hq").placeholder = sq[1];
-    $("homeForm").hidden = !!u; $("feelSub").hidden = !!u;
+    $("homeForm").hidden = !!u && !TEST_NO_LIMIT; $("feelSub").hidden = !!u && !TEST_NO_LIMIT;
     if (!u) { box.hidden = true; box.innerHTML = ""; return; }
     var h = '<p class="sub">Renungan ' + n.s.n.toLowerCase() + " Anda: “" + esc(u.q) + "”</p>";
     if (u.pr) h += '<div class="lab">Evo Prayer</div><h3 class="fd-title">' + esc(u.pr.judul) + "</h3>";
