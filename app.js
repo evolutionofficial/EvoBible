@@ -141,7 +141,7 @@
   function renderThemes() {
     $("themeTiles").innerHTML = ALLT.slice(0, shownT).map(function (t) {
       var c = CLM[t[0]];
-      return '<button class="tile" style="--h:' + t[1] + '" data-theme="' + t[0] + '"><b>' + esc(c.n) + "</b><small>" + c.a.length + " ayat kunci</small></button>";
+      return '<button class="tile" style="--h:' + t[1] + '" data-tema="' + t[0] + '"><b>' + esc(c.n) + "</b><small>" + c.a.length + " ayat kunci</small></button>";
     }).join("");
     $("moreThemes").hidden = shownT >= ALLT.length;
   }
@@ -163,7 +163,7 @@
     if (e.target.closest("#moreThemes")) { shownT += 8; renderThemes(); return; }
     var t;
     if ((t = e.target.closest("[data-q]"))) { startSearch(t.dataset.q); return; }
-    if ((t = e.target.closest("[data-theme]"))) { openTheme(t.dataset.theme); return; }
+    if ((t = e.target.closest("[data-tema]"))) { openTheme(t.dataset.tema); return; }
     if ((t = e.target.closest("[data-act]"))) { var id = +t.dataset.id; if (t.dataset.act === "copy") copyText(verseCopy(id)); else openRef(bOf[id], cOf[id], vOf[id]); return; }
     if (e.target.closest("#pick")) { go("read"); setTimeout(function () { try { $("btnLoc").click(); } catch (x) {} }, 80); return; }
     if (e.target.closest("#cont")) { var c = $("cont"); openRef(+c.dataset.b, +c.dataset.c, 0); }
@@ -229,7 +229,7 @@
       if (S.pendingAI) { S.pendingAI = false; if (!crisis && cands.length >= 5) runAI(q, cands); }
       var ai = S.ai && S.ai.q === key ? S.ai : null;
       if (crisis || (ai && ai.state === "done" && ai.data.krisis)) html += careCard();
-      if (r.sel.length) html += '<div class="found">Cocok dengan tema: ' + r.sel.map(function (c) { return '<button class="tchip" style="--h:' + hueOf(c.k) + '" data-theme="' + c.k + '">' + esc(c.n) + "</button>"; }).join("") + "</div>";
+      if (r.sel.length) html += '<div class="found">Cocok dengan tema: ' + r.sel.map(function (c) { return '<button class="tchip" style="--h:' + hueOf(c.k) + '" data-tema="' + c.k + '">' + esc(c.n) + "</button>"; }).join("") + "</div>";
       if (ai && ai.state === "wait") { body.innerHTML = html + '<div class="wait" role="status"><span class="dots"><i></i><i></i><i></i></span>Mencarikan ayat yang paling sesuai untuk Anda…</div>'; return; }
       if (ai && ai.state === "done") {
         var used = {};
@@ -279,7 +279,7 @@
       return;
     }
     if ((t = e.target.closest("[data-q]"))) { S.q = t.dataset.q; $("q").value = S.q; S.theme = null; S.ai = null; S.pendingAI = S.mode === "tema"; pushRecent(S.q); renderSearch(); return; }
-    if ((t = e.target.closest("[data-theme]"))) { S.theme = t.dataset.theme; S.moreOpen = false; renderSearch(); window.scrollTo(0, 0); return; }
+    if ((t = e.target.closest("[data-tema]"))) { S.theme = t.dataset.tema; S.moreOpen = false; renderSearch(); window.scrollTo(0, 0); return; }
     if ((t = e.target.closest(".go"))) { openRef(+t.dataset.b, +t.dataset.c, +t.dataset.v); return; }
     if ((t = e.target.closest(".rcard"))) { var i2 = +t.dataset.id; if (S.q) pushRecent(S.q); openRef(bOf[i2], cOf[i2], vOf[i2]); }
   });
@@ -415,7 +415,7 @@
   });
 
   /* ---------- membacakan Alkitab (suara bawaan HP) ---------- */
-  var synth = window.speechSynthesis, tts = lsGet("evo.tts", {}), RATES = [0.8, 0.9, 1, 1.15], voices = [], T = { on: false, paused: false, b: 0, c: 1, i: 0, tok: 0, errs: 0 };
+  var synth = window.speechSynthesis, tts = lsGet("evo.tts", {}), RATES = [0.8, 0.9, 1, 1.15], voices = [], T = { on: false, paused: false, b: 0, c: 1, i: 0, tok: 0, errs: 0, list: null, k: 0 };
   if (tts.auto === undefined) tts.auto = true;
   if (!tts.rate) tts.rate = 0.9;
   function saveTTS() { lsSet("evo.tts", tts); }
@@ -456,6 +456,13 @@
     if (tok !== T.tok || !T.on || T.paused) return;
     var ch = BOOKS[T.b].ch[T.c - 1];
     if (intro) { markVerse(); say(BOOKS[T.b].n + " pasal " + T.c, function () { step(tok, false); }); return; }
+    if (T.list) {
+      if (T.k >= T.list.length) { stopTTS(); return; }
+      T.i = T.list[T.k] - 1;
+      updatePlayer(); markVerse();
+      say(vtext(ch.v[T.i]), function () { T.k++; step(tok, false); });
+      return;
+    }
     if (T.i >= ch.v.length) {
       var nx = nextOf(T.b, T.c);
       if (tts.auto && nx) {
@@ -469,8 +476,9 @@
     updatePlayer(); markVerse();
     say(vtext(ch.v[T.i]), function () { T.i++; step(tok, false); });
   }
-  function startTTS(b, c, i, intro) {
-    synth.cancel(); T.tok++; T.on = true; T.paused = false; T.b = b; T.c = c; T.i = i; T.errs = 0;
+  function restartTTS() { synth.cancel(); T.tok++; T.paused = false; T.errs = 0; updatePlayer(); var tok = T.tok; setTimeout(function () { step(tok, false); }, 60); }
+  function startTTS(b, c, i, intro, list) {
+    synth.cancel(); T.tok++; T.on = true; T.paused = false; T.b = b; T.c = c; T.i = i; T.errs = 0; T.list = list || null; T.k = 0;
     document.body.classList.add("speaking"); $("player").hidden = false; updatePlayer();
     var tok = T.tok; setTimeout(function () { step(tok, !!intro); }, 60);
   }
@@ -480,18 +488,18 @@
   }
   $("btnListen").onclick = function () {
     if (T.on) { stopTTS(); return; }
-    var start = S.sel.length ? Math.min.apply(null, S.sel) - 1 : 0;
-    startTTS(S.b, S.c, start, start === 0);
+    if (S.sel.length) { var list = S.sel.slice().sort(function (a, b) { return a - b; }); startTTS(S.b, S.c, list[0] - 1, false, list); }
+    else startTTS(S.b, S.c, 0, true);
   };
   $("pStop").onclick = stopTTS;
   $("pPlay").onclick = function () {
     if (!T.on) return;
-    if (T.paused) startTTS(T.b, T.c, T.i, false);
+    if (T.paused) restartTTS();
     else { T.paused = true; T.tok++; synth.cancel(); updatePlayer(); }
   };
   $("pRate").onclick = function () {
     var k = RATES.indexOf(tts.rate); tts.rate = RATES[(k + 1) % RATES.length]; saveTTS();
-    if (T.on && !T.paused) startTTS(T.b, T.c, T.i, false); else updatePlayer();
+    if (T.on && !T.paused) restartTTS(); else updatePlayer();
   };
   function drawVoices() {
     var l = idVoices(), cur = pickVoice();
@@ -506,7 +514,7 @@
     var t = e.target.closest(".vopt"); if (!t) return;
     tts.voice = t.dataset.u; saveTTS(); drawVoices();
     var was = T.on && !T.paused; synth.cancel(); T.tok++;
-    say("Selamat membaca Firman Tuhan.", function () { if (was) startTTS(T.b, T.c, T.i, false); });
+    say("Selamat membaca Firman Tuhan.", function () { if (was) restartTTS(); });
   });
   $("vAuto").onchange = function () { tts.auto = this.checked; saveTTS(); };
 
