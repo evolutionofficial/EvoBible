@@ -272,7 +272,7 @@ var ORN = {
   var VIEWS = { home: "vHome", search: "vSearch", read: "vRead", saved: "vSaved" };
   var NAMES = { home: "beranda", search: "cari", read: "baca", saved: "sorotan" };
   function go(v) { var h = NAMES[v]; if (location.hash.slice(1) === h) route(); else location.hash = h; }
-  function openRef(b, c, v, v2) { var h = BOOKS[b].a + "-" + c + (v ? "-" + v + (v2 && v2 > v ? "-" + v2 : "") : ""); if (location.hash.slice(1) === h) route(); else location.hash = h; }
+  function openRef(b, c, v, v2) { var h = BOOKS[b].a + "-" + c + (v ? "-" + v + (v2 && v2 >= v ? "-" + v2 : "") : ""); if (location.hash.slice(1) === h) route(); else location.hash = h; }
   function showView(v) {
     S.view = v;
     Object.keys(VIEWS).forEach(function (k) { $(VIEWS[k]).hidden = k !== v; });
@@ -342,7 +342,6 @@ var ORN = {
     if ((t = e.target.closest("[data-cat]"))) { openCat(+t.dataset.cat); return; }
     if ((t = e.target.closest("[data-tema]"))) { openTheme(t.dataset.tema); return; }
     if ((t = e.target.closest("[data-act]"))) { var id = +t.dataset.id; if (t.dataset.act === "copy") copyText(verseCopy(id)); else openRef(bOf[id], cOf[id], vOf[id]); return; }
-    if (e.target.closest("#pick")) { go("read"); setTimeout(function () { try { $("btnLoc").click(); } catch (x) {} }, 80); return; }
     if (e.target.closest("#cont")) { var c = $("cont"); openRef(+c.dataset.b, +c.dataset.c, 0); }
   });
 
@@ -490,6 +489,7 @@ var ORN = {
   function renderChapter(b, c, vFocus, vEnd) {
     var bk = BOOKS[b], ch = bk.ch[c - 1];
     S.b = b; S.c = c; clearSel(true);
+    if (FIND.b !== b) { FIND.b = b; syncFinders(); }
     $("locText").textContent = bk.n + " " + c; $("chBook").textContent = bk.n; $("chNum").textContent = "Pasal " + c;
     var h = ch.h || {}, html = "", op = false;
     ch.v.forEach(function (raw, i) {
@@ -503,7 +503,7 @@ var ORN = {
     lsSet("evo.last", { b: b, c: c });
     if (T.on) markVerse();
     if (vFocus && $("v" + vFocus)) { var el = $("v" + vFocus); el.scrollIntoView({ block: "center" }); el.classList.add("flash"); } else window.scrollTo(0, 0);
-    if (vFocus && vEnd > vFocus) { for (var n = vFocus; n <= vEnd; n++) { var e2 = $("v" + n); if (e2) { S.sel.push(n); e2.classList.add("sel"); } } updateSel(); }
+    if (vFocus && vEnd >= vFocus) { for (var n = vFocus; n <= vEnd; n++) { var e2 = $("v" + n); if (e2) { S.sel.push(n); e2.classList.add("sel"); } } updateSel(); }
   }
   function setNav(btn, t) { btn.hidden = !t; if (t) btn.querySelector("b").textContent = BOOKS[t[0]].n + " " + t[1]; btn._t = t; }
   function prevOf(b, c) { if (c > 1) return [b, c - 1]; if (b > 0) return [b - 1, BOOKS[b - 1].ch.length]; return null; }
@@ -542,29 +542,78 @@ var ORN = {
   };
 
   /* ---------- pilih kitab ---------- */
-  var tab = 0, pick = -1;
+  var tab = 0, pick = -1, fmode = false, bq = "";
+  function norm(s) { return s.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim(); }
   function drawBooks() {
     var html = "";
-    if (pick >= 0) {
+    if (pick >= 0 && !fmode) {
       var bk = BOOKS[pick];
       html += '<button class="back2" id="bkBack"><svg class="ico" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="m15 6-6 6 6 6"/></svg>Semua kitab</button><h3 style="margin:0 0 12px;font-size:22px;font-weight:800;letter-spacing:-.02em">' + esc(bk.n) + '</h3><div class="chs">';
       for (var c = 1; c <= bk.ch.length; c++) html += '<button data-c="' + c + '" class="' + (pick === S.b && c === S.c ? "cur" : "") + '">' + c + "</button>";
       html += "</div>";
     } else {
-      html += '<div class="tabs2" role="tablist"><button role="tab" data-tab="0" aria-selected="' + (tab === 0) + '">Perjanjian Lama</button><button role="tab" data-tab="1" aria-selected="' + (tab === 1) + '">Perjanjian Baru</button></div><div class="books">';
-      for (var i = tab ? 39 : 0; i < (tab ? 66 : 39); i++) html += '<button data-b="' + i + '" class="' + (i === S.b ? "cur" : "") + '">' + esc(BOOKS[i].n) + "</button>";
+      var curB = fmode ? FIND.b : S.b, q = norm(bq);
+      if (fmode) html += '<input class="bkq" id="bkq" type="search" placeholder="Ketik nama kitab" autocomplete="off" value="' + esc(bq) + '" aria-label="Cari kitab">';
+      if (!q) html += '<div class="tabs2" role="tablist"><button role="tab" data-tab="0" aria-selected="' + (tab === 0) + '"><b>Perjanjian Lama</b><small>39 kitab</small></button><button role="tab" data-tab="1" aria-selected="' + (tab === 1) + '"><b>Perjanjian Baru</b><small>27 kitab</small></button></div>';
+      html += '<div class="books">';
+      var n = 0;
+      for (var i = q ? 0 : (tab ? 39 : 0); i < (q ? 66 : (tab ? 66 : 39)); i++) { if (q && norm(BOOKS[i].n).indexOf(q) < 0) continue; n++; html += '<button data-b="' + i + '" class="' + (i === curB ? "cur" : "") + '">' + esc(BOOKS[i].n) + "</button>"; }
+      if (q && !n) html += '<p class="vnote">Kitab tidak ditemukan.</p>';
       html += "</div>";
     }
     $("booksBody").innerHTML = html;
   }
-  $("btnLoc").onclick = function () { pick = -1; tab = S.b >= 39 ? 1 : 0; drawBooks(); show("shBooks"); var cur = $("booksBody").querySelector(".cur"); if (cur) cur.scrollIntoView({ block: "center" }); };
+  $("btnLoc").onclick = function () { fmode = false; bq = ""; pick = -1; tab = S.b >= 39 ? 1 : 0; drawBooks(); show("shBooks"); var cur = $("booksBody").querySelector(".cur"); if (cur) cur.scrollIntoView({ block: "center" }); };
   $("booksBody").addEventListener("click", function (e) {
     var t = e.target.closest("button"); if (!t) return;
     if (t.dataset.tab) { tab = +t.dataset.tab; drawBooks(); }
+    else if (t.dataset.b && fmode) { FIND.b = +t.dataset.b; FIND.c = ""; FIND.v1 = ""; FIND.v2 = ""; syncFinders(); hide(); var fc = document.querySelector(".finder:not([hidden]) .fc"); setTimeout(function () { var f = visibleFinder(); if (f) f.querySelector(".fc").focus(); }, 60); }
     else if (t.dataset.b) { pick = +t.dataset.b; drawBooks(); $("booksBody").scrollTop = 0; }
     else if (t.id === "bkBack") { pick = -1; drawBooks(); }
     else if (t.dataset.c) { var b = pick; hide(); openRef(b, +t.dataset.c); }
   });
+
+  $("booksBody").addEventListener("input", function (e) { if (e.target.id !== "bkq") return; bq = e.target.value; var pos = bq.length; drawBooks(); var el = $("bkq"); el.focus(); try { el.setSelectionRange(pos, pos); } catch (x) {} });
+
+  /* ---------- buka ayat: kitab, pasal, ayat - sampai ayat ---------- */
+  var FIND = { b: 0, c: "", v1: "", v2: "" };
+  function finderHTML() {
+    return '<form class="finder" autocomplete="off"><div class="flabel">Buka kitab, pasal, dan ayat</div><div class="frow">'
+      + '<button type="button" class="fbook" aria-label="Pilih kitab"><span></span><svg class="ico" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>'
+      + '<input class="fn fc" data-k="c" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="Pasal" aria-label="Pasal" enterkeyhint="go">'
+      + '<input class="fn fv1" data-k="v1" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="Ayat" aria-label="Ayat" enterkeyhint="go">'
+      + '<i class="dash">\u2013</i>'
+      + '<input class="fn fv2" data-k="v2" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="s/d" aria-label="Sampai ayat" enterkeyhint="go">'
+      + '</div><button class="fgo" type="submit">Buka ayat</button></form>';
+  }
+  function visibleFinder() { var l = document.querySelectorAll(".finder"); for (var i = 0; i < l.length; i++) if (l[i].offsetParent !== null) return l[i]; return null; }
+  function syncFinders() {
+    Array.prototype.forEach.call(document.querySelectorAll(".finder"), function (f) {
+      f.querySelector(".fbook span").textContent = BOOKS[FIND.b].n;
+      ["c", "v1", "v2"].forEach(function (k) { var el = f.querySelector('[data-k="' + k + '"]'); if (el !== document.activeElement) el.value = FIND[k]; });
+    });
+  }
+  $("finderHome").innerHTML = finderHTML(); $("finderRead").innerHTML = finderHTML();
+  Array.prototype.forEach.call(document.querySelectorAll(".finder"), function (f) {
+    f.querySelector(".fbook").onclick = function () { fmode = true; bq = ""; pick = -1; tab = FIND.b >= 39 ? 1 : 0; drawBooks(); show("shBooks"); var cur = $("booksBody").querySelector(".cur"); if (cur) cur.scrollIntoView({ block: "center" }); };
+    f.addEventListener("input", function (e) {
+      var k = e.target.dataset && e.target.dataset.k; if (!k) return;
+      e.target.value = e.target.value.replace(/\D/g, "").slice(0, 3); FIND[k] = e.target.value; syncFinders();
+    });
+    f.onsubmit = function (e) {
+      e.preventDefault();
+      var bk = BOOKS[FIND.b], c = parseInt(FIND.c, 10) || 1, v1 = parseInt(FIND.v1, 10) || 0, v2 = parseInt(FIND.v2, 10) || 0;
+      if (c > bk.ch.length) { c = bk.ch.length; toast(bk.n + " hanya punya " + c + " pasal"); }
+      var mx = bk.ch[c - 1].v.length;
+      if (v1 > mx) { v1 = mx; toast(bk.n + " " + c + " hanya punya " + mx + " ayat"); }
+      if (!v1) v2 = 0; else { if (v2 < v1) v2 = v1; if (v2 > mx) v2 = mx; }
+      FIND.c = String(c); FIND.v1 = v1 ? String(v1) : ""; FIND.v2 = v1 ? String(v2) : ""; syncFinders();
+      try { document.activeElement.blur(); } catch (x) {}
+      openRef(FIND.b, c, v1, v2);
+    };
+  });
+  FIND.b = (function () { var l = lsGet("evo.last", null); return l && BOOKS[l.b] ? l.b : 0; })();
+  syncFinders();
 
   /* ---------- scroll shadow ---------- */
   window.addEventListener("scroll", function () { Array.prototype.forEach.call(document.querySelectorAll("#vHome .bar"), function (b) { b.classList.toggle("line", window.scrollY > 8); }); }, { passive: true });
