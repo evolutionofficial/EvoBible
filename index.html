@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EvoBible</title>
+<meta name="description" content="Alkitab Indonesia (AYT) dengan pencarian ayat berdasarkan perasaan. Bisa dibaca tanpa internet.">
+<meta name="theme-color" content="#f3f5f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="EvoBible">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- BERANDA -->
+<section id="vHome" class="view">
+  <header class="bar"><div class="inner">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#0d4150"/><circle cx="16" cy="19" r="6.2" fill="#ffd27a"/><path d="M5 19.5h22" stroke="#e8f5f3" stroke-width="2" stroke-linecap="round"/><path d="M9 24h14" stroke="#62d3c2" stroke-width="2" stroke-linecap="round"/></svg>
+      EvoBible
+    </div>
+    <button class="ib" id="btnSet" aria-label="Pengaturan tampilan"><svg class="ico" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
+  </div></header>
+  <main class="inner">
+    <p class="greet" id="greet"></p>
+    <h1 class="ask">Apa yang sedang Anda hadapi hari ini?</h1>
+    <form class="sfield" id="homeForm" role="search">
+      <svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="hq" type="search" placeholder="Tulis perasaan Anda" autocomplete="off" enterkeyhint="search" aria-label="Cari ayat berdasarkan perasaan">
+      <button type="submit" class="gobtn">Cari</button>
+    </form>
+    <p class="privacy" id="hPriv">Saat Anda menekan Cari, kalimat Anda dikirim lewat internet ke layanan Google Gemini untuk dipilihkan ayatnya. Jangan menulis nama atau data pribadi.</p>
+    <div class="chips" id="homeChips"></div>
+    <div class="install" id="install" hidden></div>
+    <article class="votd" id="votd" aria-label="Ayat hari ini"></article>
+    <button class="cont" id="cont" hidden></button>
+    <div id="themes"></div>
+  </main>
+</section>
+
+<!-- CARI -->
+<section id="vSearch" class="view" hidden>
+  <header class="bar line">
+    <div class="inner" style="padding-top:8px">
+      <form class="sfield" id="sForm" role="search">
+        <svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Cari tema, kata, atau ayat (Yoh 3:16)" autocomplete="off" enterkeyhint="search" aria-label="Cari">
+        <button type="button" class="clr" id="qclr" aria-label="Hapus" hidden><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        <button type="submit" class="gobtn">Cari</button>
+      </form>
+    </div>
+    <div class="inner modes"><div class="seg" id="mode">
+      <button data-m="tema" aria-pressed="true">Rekomendasi</button>
+      <button data-m="kata" aria-pressed="false">Kata persis</button>
+    </div></div>
+  </header>
+  <main class="inner sbody" id="sBody"></main>
+</section>
+
+<!-- BACA -->
+<section id="vRead" class="view" hidden>
+  <header class="bar line"><div class="inner">
+    <button class="loc" id="btnLoc" aria-label="Pilih kitab dan pasal">
+      <svg class="ico" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 21.5A2.5 2.5 0 0 1 6.5 19H20v2H6.5"/></svg>
+      <span id="locText">Kejadian 1</span>
+      <svg class="ico" viewBox="0 0 24 24" style="width:16px;height:16px;color:var(--muted)"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <button class="ib textib" id="btnSet2" aria-label="Ukuran huruf dan tampilan">Aa</button>
+  </div></header>
+  <main class="inner rmain">
+    <div class="ch-head"><div class="bk" id="chBook"></div><h1 id="chNum"></h1></div>
+    <article class="text" id="text"></article>
+    <nav class="pn" aria-label="Pasal">
+      <button id="prev"><small>Sebelumnya</small><b></b></button>
+      <button id="next"><small>Berikutnya</small><b></b></button>
+    </nav>
+  </main>
+  <footer class="inner credit"><p>Teks: Alkitab Yang Terbuka (AYT), © Yayasan Lembaga SABDA 2011, 2024. Dipakai untuk tujuan non-komersial. ayt.co</p></footer>
+</section>
+
+<!-- SOROTAN -->
+<section id="vSaved" class="view" hidden>
+  <header class="bar"><div class="inner sv-head" style="padding-top:6px">
+    <h1>Sorotan</h1>
+    <button class="txtbtn" id="svCopy" hidden>Salin semua</button>
+  </div></header>
+  <main class="inner sbody" id="svBody"></main>
+</section>
+
+<nav class="tabbar" aria-label="Menu utama"><div class="inner" id="tabs">
+  <button class="tab" data-v="home"><svg class="ico" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>Beranda</button>
+  <button class="tab" data-v="search"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Cari</button>
+  <button class="tab" data-v="read"><svg class="ico" viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg>Baca</button>
+  <button class="tab" data-v="saved"><svg class="ico" viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>Sorotan</button>
+</div></nav>
+
+<div class="selbar" id="selbar" hidden><div class="in">
+  <span class="info" id="selInfo"></span>
+  <button id="selCopy">Salin</button><button id="selHl">Sorot</button><button id="selClear" aria-label="Batalkan pilihan">Batal</button>
+</div></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<div class="scrim" id="shBooks" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hBooks">
+  <div class="sh-head"><h2 id="hBooks">Pilih kitab</h2><button class="ib" data-close aria-label="Tutup"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sh-body" id="booksBody"></div>
+</div></div>
+
+<div class="scrim" id="shSet" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hSet">
+  <div class="sh-head"><h2 id="hSet">Tampilan</h2><button class="ib" data-close aria-label="Tutup"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sh-body">
+    <div class="row"><span class="lbl">Ukuran huruf bacaan</span>
+      <div class="stepper"><button id="fsDown" aria-label="Perkecil huruf">A−</button><output id="fsOut">19</output><button id="fsUp" aria-label="Perbesar huruf">A+</button></div></div>
+    <div class="row" style="border-bottom:0"><span class="lbl">Tema warna</span>
+      <div class="seg" id="themeSeg"><button data-t="auto" aria-pressed="true">Otomatis</button><button data-t="light" aria-pressed="false">Terang</button><button data-t="dark" aria-pressed="false">Gelap</button></div></div>
+    <div class="about">
+      <p><span class="badge">Membaca Alkitab bisa tanpa internet</span></p>
+      <p>Setelah dibuka sekali dengan internet, seluruh Alkitab tersimpan di HP dan bisa dibaca kapan saja. Tombol Cari memakai internet. Jika internet putus atau penuh, aplikasi tetap menampilkan hasil dasar dari HP Anda.</p>
+      <p>Saat Anda menekan Cari, kalimat Anda dikirim ke server kami dan ke layanan Google Gemini untuk dipilihkan ayatnya. Kami tidak menyimpan kalimat itu. Jangan menulis nama atau data pribadi.</p>
+      <p>Teks Alkitab Yang Terbuka (AYT) © Yayasan Lembaga SABDA 2011, 2024. Boleh dipakai dan dibagikan gratis untuk tujuan non-komersial. <a href="https://ayt.co" target="_blank" rel="noopener">ayt.co</a></p>
+      <p>Sorotan dan pengaturan tersimpan di HP ini.</p>
+    </div>
+  </div>
+</div></div>
+
+<script src="data.js"></script>
+<script src="engine.js"></script>
+<script src="engine-core.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
