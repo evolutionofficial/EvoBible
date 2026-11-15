@@ -92,7 +92,7 @@
 
   /* ---------- sheets ---------- */
   function show(id) { hide(); $(id).hidden = false; open = id; }
-  function hide() { ["shBooks", "shSet"].forEach(function (i) { $(i).hidden = true; }); open = null; }
+  function hide() { ["shBooks", "shSet", "shVoice"].forEach(function (i) { $(i).hidden = true; }); open = null; }
   document.addEventListener("click", function (e) {
     if (e.target.closest("[data-close]")) hide(); else if (e.target.classList && e.target.classList.contains("scrim")) hide();
   });
@@ -110,7 +110,7 @@
     if (v !== "read") clearSel(true);
   }
   function route() {
-    hide();
+    if (open !== "shVoice") hide();
     var h = decodeURIComponent(location.hash.slice(1)), m = /^([A-Za-z0-9]+)-(\d+)(?:-(\d+))?$/.exec(h);
     if (m) {
       for (var i = 0; i < BOOKS.length; i++) if (BOOKS[i].a === m[1]) {
@@ -324,6 +324,7 @@
     $("text").innerHTML = html;
     setNav($("prev"), prevOf(b, c)); setNav($("next"), nextOf(b, c));
     lsSet("evo.last", { b: b, c: c });
+    if (T.on) markVerse();
     if (vFocus && $("v" + vFocus)) { var el = $("v" + vFocus); el.scrollIntoView({ block: "center" }); el.classList.add("flash"); } else window.scrollTo(0, 0);
   }
   function setNav(btn, t) { btn.hidden = !t; if (t) btn.querySelector("b").textContent = BOOKS[t[0]].n + " " + t[1]; btn._t = t; }
@@ -412,6 +413,103 @@
     if (t.dataset.inst === "later") { lsSet("evo.noinst", Date.now()); $("install").hidden = true; return; }
     if (deferred) { deferred.prompt(); deferred.userChoice.then(function (c) { if (c && c.outcome === "accepted") lsSet("evo.installed", 1); deferred = null; renderInstall(); }); }
   });
+
+  /* ---------- membacakan Alkitab (suara bawaan HP) ---------- */
+  var synth = window.speechSynthesis, tts = lsGet("evo.tts", {}), RATES = [0.8, 0.9, 1, 1.15], voices = [], T = { on: false, paused: false, b: 0, c: 1, i: 0, tok: 0, errs: 0 };
+  if (tts.auto === undefined) tts.auto = true;
+  if (!tts.rate) tts.rate = 0.9;
+  function saveTTS() { lsSet("evo.tts", tts); }
+  if (!synth || typeof SpeechSynthesisUtterance === "undefined") { $("btnListen").hidden = true; }
+  function loadVoices() { try { voices = synth.getVoices() || []; } catch (e) { voices = []; } }
+  if (synth) { loadVoices(); if (synth.addEventListener) synth.addEventListener("voiceschanged", loadVoices); else synth.onvoiceschanged = loadVoices; }
+  function idVoices() { return voices.filter(function (v) { return /^(id|in)([-_]|$)/i.test(v.lang) || /indones/i.test(v.name); }); }
+  function vscore(v) { return (/google|natural|neural|enhanced|premium/i.test(v.name + v.voiceURI) ? 3 : 0) + (v.localService ? 0 : 1); }
+  function pickVoice() {
+    var l = idVoices(), x = l.filter(function (v) { return v.voiceURI === tts.voice; })[0];
+    if (x) return x;
+    l.sort(function (a, b) { return vscore(b) - vscore(a); }); return l[0] || null;
+  }
+  function vtext(raw) { return raw.replace(/^¶/, "").replace(/^\(\d+-\d+\)\s*/, ""); }
+  function say(text, done) {
+    var u = new SpeechSynthesisUtterance(text), v = pickVoice(); u.lang = "id-ID";
+    if (v) { u.voice = v; u.lang = v.lang; }
+    u.rate = tts.rate; u.pitch = 1;
+    u.onend = function () { T.errs = 0; done(); };
+    u.onerror = function (e) { if (e && (e.error === "canceled" || e.error === "interrupted")) return; if (++T.errs > 2) { stopTTS(); toast("Suara tidak bisa diputar di HP ini"); return; } done(); };
+    synth.speak(u);
+  }
+  function markVerse() {
+    Array.prototype.forEach.call(document.querySelectorAll(".v.speak"), function (el) { el.classList.remove("speak"); });
+    if (!T.on || S.view !== "read" || S.b !== T.b || S.c !== T.c) return;
+    var el = $("v" + (T.i + 1)); if (!el) return;
+    el.classList.add("speak");
+    var r = el.getBoundingClientRect(), H = window.innerHeight;
+    if (r.top < 90 || r.bottom > H - 150) el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+  function updatePlayer() {
+    $("pTitle").textContent = BOOKS[T.b].n + " " + T.c + ":" + (T.i + 1);
+    $("pPlay").textContent = T.paused ? "Lanjut" : "Jeda";
+    $("pRate").textContent = tts.rate + "×";
+    $("btnListen").classList.toggle("on", T.on);
+  }
+  function step(tok, intro) {
+    if (tok !== T.tok || !T.on || T.paused) return;
+    var ch = BOOKS[T.b].ch[T.c - 1];
+    if (intro) { markVerse(); say(BOOKS[T.b].n + " pasal " + T.c, function () { step(tok, false); }); return; }
+    if (T.i >= ch.v.length) {
+      var nx = nextOf(T.b, T.c);
+      if (tts.auto && nx) {
+        var follow = S.view === "read" && S.b === T.b && S.c === T.c;
+        T.b = nx[0]; T.c = nx[1]; T.i = 0; updatePlayer();
+        if (follow) openRef(T.b, T.c);
+        step(tok, true);
+      } else stopTTS();
+      return;
+    }
+    updatePlayer(); markVerse();
+    say(vtext(ch.v[T.i]), function () { T.i++; step(tok, false); });
+  }
+  function startTTS(b, c, i, intro) {
+    synth.cancel(); T.tok++; T.on = true; T.paused = false; T.b = b; T.c = c; T.i = i; T.errs = 0;
+    document.body.classList.add("speaking"); $("player").hidden = false; updatePlayer();
+    var tok = T.tok; setTimeout(function () { step(tok, !!intro); }, 60);
+  }
+  function stopTTS() {
+    T.tok++; T.on = false; T.paused = false; try { synth.cancel(); } catch (e) {}
+    document.body.classList.remove("speaking"); $("player").hidden = true; markVerse(); $("btnListen").classList.remove("on");
+  }
+  $("btnListen").onclick = function () {
+    if (T.on) { stopTTS(); return; }
+    var start = S.sel.length ? Math.min.apply(null, S.sel) - 1 : 0;
+    startTTS(S.b, S.c, start, start === 0);
+  };
+  $("pStop").onclick = stopTTS;
+  $("pPlay").onclick = function () {
+    if (!T.on) return;
+    if (T.paused) startTTS(T.b, T.c, T.i, false);
+    else { T.paused = true; T.tok++; synth.cancel(); updatePlayer(); }
+  };
+  $("pRate").onclick = function () {
+    var k = RATES.indexOf(tts.rate); tts.rate = RATES[(k + 1) % RATES.length]; saveTTS();
+    if (T.on && !T.paused) startTTS(T.b, T.c, T.i, false); else updatePlayer();
+  };
+  function drawVoices() {
+    var l = idVoices(), cur = pickVoice();
+    $("vNote").textContent = l.length ? "Suara yang tersedia tergantung HP Anda. Ketuk satu suara untuk mencoba dan memilihnya." : "HP Anda belum punya suara bahasa Indonesia. Buka Pengaturan HP, cari “teks ke ucapan” (text-to-speech), lalu unduh bahasa Indonesia. Sementara itu, suara bawaan HP dipakai.";
+    $("vList").innerHTML = l.map(function (v, n) {
+      return '<button class="vopt' + (cur && cur.voiceURI === v.voiceURI ? " cur" : "") + '" data-u="' + esc(v.voiceURI) + '"><b>Suara ' + (n + 1) + '</b><small>' + esc(v.name) + " · " + esc(v.lang) + (v.localService ? "" : " · perlu internet") + "</small></button>";
+    }).join("");
+    $("vAuto").checked = !!tts.auto;
+  }
+  $("pVoice").onclick = function () { loadVoices(); drawVoices(); show("shVoice"); };
+  $("vList").addEventListener("click", function (e) {
+    var t = e.target.closest(".vopt"); if (!t) return;
+    tts.voice = t.dataset.u; saveTTS(); drawVoices();
+    var was = T.on && !T.paused; synth.cancel(); T.tok++;
+    say("Selamat membaca Firman Tuhan.", function () { if (was) startTTS(T.b, T.c, T.i, false); });
+  });
+  $("vAuto").onchange = function () { tts.auto = this.checked; saveTTS(); };
+
   if ("serviceWorker" in navigator && location.protocol !== "file:") { window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); }); }
 
   applySettings();

@@ -279,3 +279,27 @@ svg { display: block; }
 .more { display: block; width: 100%; margin-top: 12px; padding: 14px; border-radius: 14px; background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: 15.5px; }
 .sheet .install { margin: 18px 0 0; padding: 14px 0 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: none; }
 .sheet .install h2 { font-size: 15px; }
+
+/* ---- membacakan ---- */
+.listen { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; margin-right: 6px; padding: 0 14px; height: 42px; border-radius: 99px; background: var(--accent); color: var(--accent-fg); font-weight: 800; font-size: 15px; }
+.listen .ico { width: 20px; height: 20px; stroke: currentColor; }
+.listen.on { background: var(--accent-soft); color: var(--accent); }
+.v.speak { background: var(--accent-soft); border-radius: 6px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.player { position: fixed; left: 0; right: 0; bottom: calc(var(--tabh) + env(safe-area-inset-bottom, 0px) + 8px); z-index: 36; display: flex; justify-content: center; padding: 0 10px; pointer-events: none; }
+.player .in { pointer-events: auto; display: flex; align-items: center; gap: 2px; flex-wrap: nowrap; width: 100%; max-width: 40rem; padding: 8px 6px 8px 12px; background: var(--fg); color: var(--bg); border-radius: 18px; box-shadow: 0 8px 28px rgba(0, 0, 0, .35); }
+.player .pinfo { display: flex; flex-direction: column; margin-right: auto; min-width: 0; }
+.player small { font-size: 11.5px; opacity: .7; }
+.player b { font-size: 15px; }
+.player button { padding: 10px 9px; border-radius: 12px; font-weight: 800; font-size: 14px; white-space: nowrap; }
+.player button:hover { background: rgba(127, 127, 127, .3); }
+.player #pPlay { background: var(--accent); color: var(--accent-fg); }
+.speaking .selbar { bottom: calc(var(--tabh) + env(safe-area-inset-bottom, 0px) + 96px); }
+.speaking .toast { bottom: calc(var(--tabh) + env(safe-area-inset-bottom, 0px) + 150px); }
+.speaking main.inner { padding-bottom: 90px; }
+.vnote { margin: 4px 0 12px; font-size: 14.5px; line-height: 1.55; color: var(--muted); }
+.vopt { display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; padding: 13px 14px; margin-bottom: 8px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--surface); }
+.vopt b { font-size: 16px; }
+.vopt small { color: var(--muted); font-size: 12.5px; }
+.vopt.cur { border-color: var(--accent); background: var(--accent-soft); }
+.vauto { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 15.5px; font-weight: 600; }
+.vauto input { width: 22px; height: 22px; accent-color: var(--accent); }
