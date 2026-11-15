@@ -142,10 +142,10 @@
     var id = votdId(), th = themeOfVerse(id);
     $("votd").innerHTML = '<div class="lab">Ayat hari ini' + (th ? " · " + esc(th.n) : "") + '</div><p class="vt">' + esc(clean(texts[id])) + '</p><div class="vr">' + esc(refOf(id)) + '</div><div class="acts"><button data-act="read" data-id="' + id + '">Baca pasalnya</button><button data-act="copy" data-id="' + id + '">Salin</button></div>';
     var last = lsGet("evo.last", null), cont = $("cont");
-    if (last && BOOKS[last.b] && BOOKS[last.b].ch[last.c - 1]) {
-      cont.hidden = false; cont.dataset.b = last.b; cont.dataset.c = last.c;
-      cont.innerHTML = '<svg class="ico" viewBox="0 0 24 24" style="color:var(--accent)"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg><span class="t"><small>Lanjutkan membaca</small><b>' + esc(BOOKS[last.b].n) + " " + last.c + "</b></span>";
-    } else cont.hidden = true;
+    var ok = last && BOOKS[last.b] && BOOKS[last.b].ch[last.c - 1];
+    if (!ok) last = { b: 0, c: 1 };
+    cont.dataset.b = last.b; cont.dataset.c = last.c;
+    cont.innerHTML = '<svg class="ico" viewBox="0 0 24 24" style="color:var(--accent)"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg><span class="t"><small>' + (ok ? "Lanjutkan membaca" : "Mulai membaca") + '</small><b>' + esc(BOOKS[last.b].n) + " " + last.c + "</b></span>";
     var html = "";
     GROUPS.forEach(function (g) {
       var keys = g[2].split(" ").filter(function (k) { return CLM[k]; });
@@ -162,6 +162,7 @@
     if ((t = e.target.closest("[data-q]"))) { startSearch(t.dataset.q); return; }
     if ((t = e.target.closest("[data-theme]"))) { openTheme(t.dataset.theme); return; }
     if ((t = e.target.closest("[data-act]"))) { var id = +t.dataset.id; if (t.dataset.act === "copy") copyText(verseCopy(id)); else openRef(bOf[id], cOf[id], vOf[id]); return; }
+    if (e.target.closest("#pick")) { go("read"); setTimeout(function () { try { $("btnLoc").click(); } catch (x) {} }, 80); return; }
     if (e.target.closest("#cont")) { var c = $("cont"); openRef(+c.dataset.b, +c.dataset.c, 0); }
   });
 
@@ -212,7 +213,7 @@
       ["aku takut menghadapi masa depan", "bagaimana cara memaafkan orang yang menyakitiku", "sedih ditinggal orang tersayang", "tuhan kenapa doaku tidak dijawab", "merasa tidak berharga", "ingin lebih dekat dengan Tuhan", "pemimpin yang baik"].forEach(function (s) { h += '<button data-q="' + esc(s) + '"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>' + esc(s) + "</button>"; });
       h += "</div>";
       if (recent.length) { h += '<div class="mini">Terakhir dicari</div><div class="chips" style="margin-top:0">' + recent.map(function (r) { return '<button class="chip" data-q="' + esc(r) + '">' + esc(r) + "</button>"; }).join("") + "</div>"; }
-      h += '<p class="hint">Ketik juga alamat ayat seperti <b>Mzm 23</b> atau <b>Yoh 3:16</b> untuk langsung membukanya.</p><p class="privacy">Saat Anda menekan Cari, kalimat Anda dikirim lewat internet ke layanan Google Gemini untuk dipilihkan ayatnya. Jangan menulis nama atau data pribadi.</p>';
+      h += '<p class="hint">Ketik juga alamat ayat seperti <b>Mzm 23</b> atau <b>Yoh 3:16</b> untuk langsung membukanya.</p>';
       body.innerHTML = h; return;
     }
     var html = "", ref = parseRef(q);
@@ -233,7 +234,6 @@
         ai.data.pilihan.forEach(function (p) { if (p.id >= 0 && p.id < texts.length && !used[p.id]) { used[p.id] = 1; html += card(p.id, { label: "Pilihan untuk Anda", k: "iman" }, re, p.alasan); } });
         var rest = r.results.filter(function (x) { return !used[x.id]; }).slice(0, 6);
         if (rest.length) html += '<div class="mini">Ayat lain yang terkait</div>' + rest.map(function (x) { return card(x.id, x.why, re); }).join("");
-        html += '<p class="hint" style="text-align:center">Dipilihkan dengan bantuan layanan Google Gemini. Jangan menulis data pribadi.</p>';
       } else if (!r.results.length) {
         html += '<div class="empty">Belum ada ayat yang cocok dengan “' + esc(q) + '”. Coba kata yang lebih umum, misalnya “takut”, “marah”, atau “keluarga”.</div>';
       } else {

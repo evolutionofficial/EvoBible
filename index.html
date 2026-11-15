@@ -28,17 +28,21 @@
   </div></header>
   <main class="inner">
     <p class="greet" id="greet"></p>
-    <h1 class="ask">Apa yang sedang Anda hadapi hari ini?</h1>
-    <form class="sfield" id="homeForm" role="search">
-      <svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input id="hq" type="search" placeholder="Tulis perasaan Anda" autocomplete="off" enterkeyhint="search" aria-label="Cari ayat berdasarkan perasaan">
-      <button type="submit" class="gobtn">Cari</button>
-    </form>
-    <p class="privacy" id="hPriv">Saat Anda menekan Cari, kalimat Anda dikirim lewat internet ke layanan Google Gemini untuk dipilihkan ayatnya. Jangan menulis nama atau data pribadi.</p>
-    <div class="chips" id="homeChips"></div>
-    <div class="install" id="install" hidden></div>
+    <h1 class="ask">Mari membaca Firman hari ini</h1>
+    <button class="cont big" id="cont"></button>
+    <button class="pick" id="pick" type="button">Pilih kitab lain</button>
     <article class="votd" id="votd" aria-label="Ayat hari ini"></article>
-    <button class="cont" id="cont" hidden></button>
+    <div class="install" id="install" hidden></div>
+    <section class="feel" aria-labelledby="feelH">
+      <h2 id="feelH">Sedang ada yang mengganjal di hati?</h2>
+      <p class="sub">Tulis perasaan Anda, kami carikan ayat yang cocok.</p>
+      <form class="sfield" id="homeForm" role="search">
+        <svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="hq" type="search" placeholder="Tulis perasaan Anda" autocomplete="off" enterkeyhint="search" aria-label="Cari ayat berdasarkan perasaan">
+        <button type="submit" class="gobtn">Cari</button>
+      </form>
+      <div class="chips" id="homeChips"></div>
+    </section>
     <div id="themes"></div>
   </main>
 </section>
@@ -94,8 +98,8 @@
 
 <nav class="tabbar" aria-label="Menu utama"><div class="inner" id="tabs">
   <button class="tab" data-v="home"><svg class="ico" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>Beranda</button>
-  <button class="tab" data-v="search"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Cari</button>
   <button class="tab" data-v="read"><svg class="ico" viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg>Baca</button>
+  <button class="tab" data-v="search"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Cari</button>
   <button class="tab" data-v="saved"><svg class="ico" viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>Sorotan</button>
 </div></nav>
 

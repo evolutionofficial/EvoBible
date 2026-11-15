@@ -243,3 +243,14 @@ svg { display: block; }
 .care .acts { display: flex; gap: 8px; flex-wrap: wrap; }
 .alasan { margin: 0 0 8px; font-size: 14.5px; line-height: 1.5; color: var(--muted); }
 .alasan b { color: var(--accent); font-weight: 700; }
+
+/* ---- beranda: baca dulu ---- */
+.cont.big { margin-top: 6px; padding: 18px 18px; border: 2px solid var(--accent); font-size: 1.15rem; }
+.cont.big small { font-size: 13.5px; }
+.cont.big b { font-size: 1.25rem; }
+.pick { margin-top: 10px; padding: 12px 18px; border-radius: 13px; background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: 15px; }
+.ask { font-size: 1.7rem; }
+.feel { margin-top: 26px; padding: 18px 16px 16px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); }
+.feel h2 { margin: 0 0 4px; font-size: 1.2rem; font-weight: 800; letter-spacing: -.01em; }
+.feel .sub { margin: 0 0 12px; color: var(--muted); font-size: 14.5px; line-height: 1.5; }
+.feel .chips { margin-top: 12px; }
