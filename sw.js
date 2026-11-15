@@ -11,7 +11,7 @@
 // Bump VERSION whenever the site files change so that devices download
 // a fresh cache and drop the old one.
 
-const VERSION = "v3";
+const VERSION = "v4";
 const CACHE = "evobible-" + VERSION;
 
 const PRECACHE = [
@@ -32,13 +32,26 @@ const PRECACHE = [
   "icons/favicon.svg"
 ];
 
-// Install: store the app shell, then activate this worker right away.
+// Salinan bersih: respons hasil pengalihan (redirect) tidak boleh dipakai untuk membuka halaman,
+// jika dipakai browser menampilkan ERR_FAILED. Jadi dibuat ulang tanpa tanda pengalihan.
+async function clean(r) {
+  if (!r.redirected) return r;
+  return new Response(await r.blob(), { status: 200, statusText: "OK", headers: r.headers });
+}
+
+// Install: simpan kerangka aplikasi, lalu aktifkan worker ini segera.
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches
-      .open(CACHE)
-      .then((cache) => cache.addAll(PRECACHE))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE).then(async (cache) => {
+      await Promise.all(
+        PRECACHE.map(async (url) => {
+          const r = await fetch(url, { cache: "reload" });
+          if (!r.ok) throw new Error("precache gagal: " + url);
+          await cache.put(url, await clean(r));
+        })
+      );
+      await self.skipWaiting();
+    })
   );
 });
 
@@ -81,8 +94,13 @@ self.addEventListener("fetch", (event) => {
 // Serve the cached app shell for page navigations, falling back to the network.
 async function handleNavigation(request) {
   const cache = await caches.open(CACHE);
-  const cached = await cache.match("index.html", { ignoreSearch: true });
-  return cached || fetch(request);
+  const cached = (await cache.match("index.html", { ignoreSearch: true })) || (await cache.match("./", { ignoreSearch: true }));
+  if (cached) return clean(cached);
+  try {
+    return await clean(await fetch(request));
+  } catch (e) {
+    return new Response("Tidak ada koneksi. Buka lagi saat internet tersedia.", { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+  }
 }
 
 // Return the cached copy at once and refresh it in the background.
