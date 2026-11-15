@@ -74,7 +74,7 @@
       }, function () { fail("jaringan"); });
   }
 
-  function toast(m) { var t = $("toast"); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, 1800); }
+  function toast(m) { var t = $("toast"); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, 3500); }
   function copyText(text, msg) {
     function done() { toast(msg || "Disalin"); }
     function fb() { var ta = document.createElement("textarea"); ta.value = text; ta.style.cssText = "position:fixed;opacity:0"; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); done(); } catch (e) { toast("Tidak bisa menyalin"); } document.body.removeChild(ta); }
@@ -106,6 +106,9 @@
     radii: [5, 10, 20],
     endpoints: ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter", "https://overpass.private.coffee/api/interpreter"]
   };
+  // Sakelar fitur: ubah menjadi true untuk menampilkan kembali tab Gereja (kodenya tetap ada).
+  var FEATURE_CHURCH = false;
+  if (!FEATURE_CHURCH) { document.querySelector('.tab[data-v="church"]').hidden = true; $("chSeg").parentNode.hidden = true; }
   var CH = Object.assign({ trad: null, kat: "all", prot: "all", rad: 5, place: null }, lsGet("evo.church", {}));
   CH.q = ""; CH.dq = ""; CH.items = []; CH.status = "idle"; CH.shown = 40;
   function saveCH() { lsSet("evo.church", { trad: CH.trad, kat: CH.kat, prot: CH.prot, rad: CH.rad, place: CH.place }); }
@@ -449,7 +452,7 @@ var ORN = {
       }
     }
     if (h === "cari") { showView("search"); renderSearch(); if (!S.q && !S.theme) { try { $("q").focus(); } catch (e) {} } window.scrollTo(0, 0); return; }
-    if (h === "gereja") { showView("church"); renderChurch(); window.scrollTo(0, 0); return; }
+    if (h === "gereja" && FEATURE_CHURCH) { showView("church"); renderChurch(); window.scrollTo(0, 0); return; }
     if (h === "tersimpan" || h === "sorotan") { showView("saved"); renderSaved(); window.scrollTo(0, 0); return; }
     if (h === "baca") { var last = lsGet("evo.last", { b: 0, c: 1 }); if (!BOOKS[last.b] || !BOOKS[last.b].ch[last.c - 1]) last = { b: 0, c: 1 }; showView("read"); renderChapter(last.b, last.c, 0); return; }
     showView("home"); renderHome(); window.scrollTo(0, 0);
