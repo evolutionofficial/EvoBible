@@ -213,9 +213,10 @@ svg { display: block; }
 @media (max-width: 420px) { .ask { font-size: 1.65rem; } .ch-head h1 { font-size: 2.4rem; } .selbar .info { display: none; } .selbar .in { padding-left: 6px; } }
 
 /* ---- ramah lansia ---- */
-.sfield input { height: 58px; font-size: 18px; padding-right: 96px; }
-.sfield .clr { right: 88px; }
-.gobtn { position: absolute; right: 7px; height: 44px; padding: 0 18px; border-radius: 13px; background: var(--accent); color: var(--accent-fg); font-weight: 800; font-size: 16px; }
+.sfield input { height: 58px; font-size: 18px; padding-right: 136px; text-overflow: ellipsis; }
+.sfield .clr { right: 126px; }
+#sForm input { padding-right: 170px; }
+.gobtn { position: absolute; right: 7px; height: 44px; padding: 0 16px; border-radius: 13px; background: var(--accent); color: var(--accent-fg); font-weight: 800; font-size: 16px; white-space: nowrap; }
 .gobtn:hover { filter: brightness(1.08); }
 .privacy { margin: 8px 2px 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
 .textib { font-weight: 800; font-size: 17px; letter-spacing: -.02em; width: 46px; }
@@ -522,3 +523,52 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .vn { font-size: .68em; }
 .tab, .greet, .votd .lab, .votd .vr, #prev small, #next small, .sbanner small, .sd, .sref, .vn, .cont small { font-size: 15px; }
 .vn { font-size: .7em; }
+
+/* ---- renungan 3 sesi per hari ---- */
+.feeldone .sub { margin: 0 0 10px; }
+.feeldone .lab { font-size: 13px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: .04em; margin: 4px 0 6px; }
+.feeldone .vt { margin: 0 0 6px; font-size: 18px; line-height: 1.55; }
+.feeldone .vr { font-weight: 800; color: var(--muted); margin-bottom: 14px; }
+.feeldone .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.feeldone .acts .btn { min-height: 48px; }
+.feeldone .note { margin: 12px 0 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
+.histbtn { display: block; width: 100%; margin-top: 12px; min-height: 48px; }
+.hist h3 { margin: 22px 0 8px; font-size: 1.05rem; font-weight: 800; }
+.sfield input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+
+/* ---- Evo Prayer ---- */
+.pray { margin: 6px 0 20px; }
+.pr-kicker { font-size: 13px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: .05em; }
+.pr-title { margin: 4px 0 14px; font-size: 1.55rem; font-weight: 800; line-height: 1.25; letter-spacing: -.01em; text-wrap: balance; }
+.pr-verse { padding: 16px 16px 10px; border-radius: 18px; background: var(--accent-soft); margin-bottom: 18px; }
+.pr-verse .vt { font-family: var(--read); font-size: 1.2rem; line-height: 1.6; margin: 0 0 8px; text-wrap: pretty; }
+.pr-verse .vr { font-weight: 800; color: var(--accent); font-size: 15px; }
+.pr-verse .txtbtn { margin: 6px 0 0 -12px; }
+.pr-sec { margin: 0 0 18px; }
+.pr-sec h3 { margin: 0 0 6px; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.pr-sec p { margin: 0 0 10px; font-size: 17px; line-height: 1.7; text-wrap: pretty; }
+.pr-doa { padding: 16px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); }
+.pr-doa p { font-family: var(--read); font-size: 18px; }
+.pr-cross { margin: 2px 0 14px; padding: 12px 14px; border-radius: 14px; background: var(--accent-soft); }
+.pr-cross small { display: block; font-size: 14.5px; color: var(--muted); margin-bottom: 4px; }
+.pr-cross p { margin: 0; font-weight: 700; }
+.pr-end { font-weight: 700; }
+.pr-acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 10px; }
+.pr-acts .btn { min-height: 48px; flex: 1 1 auto; }
+.pr-note { margin: 6px 0 18px; font-size: 14.5px; color: var(--muted); line-height: 1.55; }
+.feeldone .fd-title { margin: 0 0 8px; font-size: 1.15rem; font-weight: 800; line-height: 1.3; }
+.jr { margin: 0 0 10px; padding: 14px 16px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); }
+.jr summary { cursor: pointer; list-style: none; display: flex; flex-direction: column; gap: 2px; min-height: 44px; justify-content: center; }
+.jr summary::-webkit-details-marker { display: none; }
+.jr summary b { font-size: 17px; }
+.jr summary small { font-size: 14.5px; color: var(--muted); }
+.jr[open] summary { margin-bottom: 12px; }
+.jr-q { margin: 0 0 12px; font-size: 15px; color: var(--muted); font-style: italic; }
+.pr-acts .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 16px; }
+.pr-acts { align-items: center; }
+.pr-acts .btn.sec { border: 1.5px solid var(--line); }
+.pr-dtitle { margin: 0 0 10px; font-size: 1.1rem; font-weight: 800; line-height: 1.3; }
+.pr-story { margin: 0 0 16px; padding: 12px 14px; border-left: 3px solid var(--accent); background: var(--surface); border-radius: 0 12px 12px 0; }
+.pr-story small { display: block; font-size: 12.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.pr-story p { margin: 4px 0 0; font-style: italic; font-size: 16px; line-height: 1.55; }
+.feel .sub#feelSub { margin: 0 0 12px; }
