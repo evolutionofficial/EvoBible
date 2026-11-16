@@ -169,6 +169,7 @@
 <div class="scrim" id="shSet" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hSet">
   <div class="sh-head"><h2 id="hSet">Tampilan</h2><button class="ib" data-close aria-label="Tutup"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="sh-body">
+    <div class="acct" id="acct"></div>
     <div class="row"><span class="lbl">Ukuran huruf bacaan</span>
       <div class="stepper"><button id="fsDown" aria-label="Perkecil huruf">A−</button><output id="fsOut">19</output><button id="fsUp" aria-label="Perbesar huruf">A+</button></div></div>
     <div class="row"><span class="lbl">Tema warna</span>
@@ -191,9 +192,19 @@
   </div>
 </div></div>
 
+<div class="scrim" id="shTrad" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hTrad">
+  <div class="sh-head"><h2 id="hTrad">Selamat datang!</h2></div>
+  <div class="sh-body">
+    <p class="trad-q">Supaya renungan dan doa sesuai dengan tradisi gereja Anda, Anda beribadah sebagai:</p>
+    <div class="trad-opts"><button class="btn pri" type="button" data-trad="protestan">Kristen Protestan</button><button class="btn pri" type="button" data-trad="katolik">Katolik</button></div>
+    <p class="vnote">Bisa diubah kapan saja di Pengaturan (Kalender gerejawi).</p>
+    <button class="txtbtn" type="button" data-close>Nanti saja</button>
+  </div>
+</div></div>
 <script src="data.js"></script>
 <script src="engine.js"></script>
 <script src="engine-core.js"></script>
+<script src="vendor/supabase.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

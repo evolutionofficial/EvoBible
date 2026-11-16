@@ -474,7 +474,7 @@ var ORN = {
     Array.prototype.forEach.call($("seaSeg").children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.k === settings.sea)); });
     $("pvGrid").innerHTML = ORDER.map(function (id) { var m = SEA[id]; return '<button type="button" data-pv="' + id + '"><i style="background:linear-gradient(135deg,' + m.g[0] + "," + m.g[1] + ')"></i>' + esc(sname(id)) + "</button>"; }).join("");
   }
-  $("calSeg").onclick = function (e) { var k = e.target.dataset && e.target.dataset.k; if (!k) return; settings.cal = k; lsSet("evo.set", settings); syncSeasonUI(); refreshSeason(); };
+  $("calSeg").onclick = function (e) { var k = e.target.dataset && e.target.dataset.k; if (!k) return; settings.cal = k; lsSet("evo.set", settings); cloudTradisi(k); syncSeasonUI(); refreshSeason(); };
   $("seaSeg").onclick = function (e) { var k = e.target.dataset && e.target.dataset.k; if (!k) return; settings.sea = k; lsSet("evo.set", settings); syncSeasonUI(); refreshSeason(); };
   $("pvGrid").onclick = function (e) { var b = e.target.closest("[data-pv]"); if (!b) return; PV = b.dataset.pv; hide(); refreshSeason(); go("home"); window.scrollTo(0, 0); };
   function pvStep(d) { var i = ORDER.indexOf(PV); PV = ORDER[(i + d + ORDER.length) % ORDER.length]; refreshSeason(); }
@@ -497,7 +497,7 @@ var ORN = {
 
   /* ---------- sheets ---------- */
   function show(id) { hide(); $(id).hidden = false; open = id; }
-  function hide() { ["shBooks", "shSet", "shVoice", "shCat", "shSeason"].forEach(function (i) { $(i).hidden = true; }); open = null; }
+  function hide() { ["shBooks", "shSet", "shVoice", "shCat", "shSeason", "shTrad"].forEach(function (i) { $(i).hidden = true; }); open = null; }
   document.addEventListener("click", function (e) {
     if (e.target.closest("[data-close]")) hide(); else if (e.target.classList && e.target.classList.contains("scrim")) hide();
   });
@@ -719,7 +719,7 @@ var ORN = {
       var p0 = S.pr && S.pr.state === "done" ? S.pr.data : null; if (!p0) return;
       if (t.dataset.act === "prcopy") copyText(prayerOnly(p0), "Doa disalin");
       else if (t.dataset.act === "prshare") { if (navigator.share) navigator.share({ title: p0.judul, text: prayerText(p0) }).catch(function () {}); else copyText(prayerText(p0), "Renungan dan doa disalin"); }
-      else if (!journalHas(p0)) { var J = journal(); J.unshift({ t: Date.now(), q: S.q.trim(), p: p0 }); lsSet("evo.jurnal", J.slice(0, 60)); t.textContent = "Tersimpan di Jurnal Doa"; toast("Disimpan ke Jurnal Doa (tab Tersimpan)"); }
+      else if (!journalHas(p0)) { var J = journal(); var je0 = { id: uuid(), t: Date.now(), q: S.q.trim(), p: p0 }; J.unshift(je0); lsSet("evo.jurnal", J.slice(0, 500)); cloudJr(je0); t.textContent = "Tersimpan di Jurnal Doa"; toast("Disimpan ke Jurnal Doa (tab Tersimpan)"); }
       return;
     }
     if (t && (t.dataset.act === "copy" || t.dataset.act === "save")) {
@@ -736,7 +736,7 @@ var ORN = {
   function toggleHl(id, btn) {
     var k = keyOf(id), on = !hls[k];
     if (on) hls[k] = 1; else delete hls[k];
-    lsSet("evo.hl", hls);
+    lsSet("evo.hl", hls); cloudHl(on ? [k] : [], on ? [] : [k]);
     if (btn) btn.setAttribute("aria-pressed", String(on));
     toast(on ? "Ayat disimpan" : "Simpanan dihapus");
   }
@@ -753,7 +753,7 @@ var ORN = {
   function renderSaved() {
     var ids = Object.keys(hls).map(function (k) { var p = k.split(":").map(Number); return gid(p[0], p[1], p[2]); }).sort(function (a, b) { return a - b; });
     $("svCopy").hidden = !ids.length;
-    $("svBody").innerHTML = journalHtml() + (ids.length ? '<div class="found">' + ids.length + " ayat</div>" + ids.map(function (id) { return card(id, null, null).replace("Mengandung kata Anda", esc(BOOKS[bOf[id]].n)); }).join("") :
+    $("svBody").innerHTML = (sb && googleOn && !user ? '<div class="nudge"><p>Masuk dengan Google agar ayat tersimpan dan Jurnal Doa tidak hilang dan bisa dibuka di HP lain.</p><button class="btn pri gbtn" type="button" data-login="1">' + G_I + "Masuk dengan Google</button></div>" : "") + journalHtml() + (ids.length ? '<div class="found">' + ids.length + " ayat</div>" + ids.map(function (id) { return card(id, null, null).replace("Mengandung kata Anda", esc(BOOKS[bOf[id]].n)); }).join("") :
       '<div class="empty"><p style="margin:0 0 6px;font-weight:700;color:var(--fg)">Belum ada ayat tersimpan</p>Ketuk sebuah ayat saat membaca lalu pilih Simpan ayat, atau ketuk ikon penanda pada hasil pencarian.</div>');
     $("svBody").dataset.ids = ids.join(",");
   }
@@ -763,7 +763,7 @@ var ORN = {
       var J = journal(), je = J[+jb.dataset.i]; if (!je) return;
       if (jb.dataset.jr === "copy") copyText(prayerOnly(je.p), "Doa disalin");
       else if (jb.dataset.jr === "share") { if (navigator.share) navigator.share({ title: je.p.judul, text: prayerText(je.p) }).catch(function () {}); else copyText(prayerText(je.p), "Renungan dan doa disalin"); }
-      else if (jb.dataset.jr === "del") { J.splice(+jb.dataset.i, 1); lsSet("evo.jurnal", J); renderSaved(); toast("Dihapus dari Jurnal Doa"); }
+      else if (jb.dataset.jr === "del") { cloudJrDel(je.id); J.splice(+jb.dataset.i, 1); lsSet("evo.jurnal", J); renderSaved(); toast("Dihapus dari Jurnal Doa"); }
       return;
     }
     var t = e.target.closest("[data-act]"), cardEl = e.target.closest(".rcard"); if (!cardEl) return;
@@ -823,6 +823,7 @@ var ORN = {
   $("selHl").onclick = function () {
     var allHl = S.sel.every(function (v) { return hls[S.b + ":" + S.c + ":" + v]; });
     S.sel.forEach(function (v) { var k = S.b + ":" + S.c + ":" + v; if (allHl) delete hls[k]; else hls[k] = 1; $("v" + v).classList.toggle("hl", !allHl); });
+    var ks = S.sel.map(function (v) { return S.b + ":" + S.c + ":" + v; }); cloudHl(allHl ? [] : ks, allHl ? ks : []);
     lsSet("evo.hl", hls); toast(allHl ? "Simpanan dihapus" : "Ayat disimpan"); clearSel();
   };
   $("selCopy").onclick = function () {
@@ -1035,8 +1036,93 @@ var ORN = {
   });
   $("vAuto").onchange = function () { tts.auto = this.checked; saveTTS(); };
 
+  /* ---------- akun Google & sinkron (Supabase) ---------- */
+  var SB_URL = "https://ddydxagduxhzzsrlwgkd.supabase.co", SB_KEY = "sb_publishable_x1LuicZ10JRKUVeio9WsRw_BgAsA9oQ";
+  var sb = null, user = null, syncing = false, googleOn = false;
+  try { if (window.supabase && window.supabase.createClient) sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { flowType: "pkce", detectSessionInUrl: true, persistSession: true, autoRefreshToken: true } }); } catch (e) { sb = null; }
+  function noop() {}
+  function uuid() { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); var a = new Uint8Array(16); crypto.getRandomValues(a); a[6] = (a[6] & 15) | 64; a[8] = (a[8] & 63) | 128; var h = Array.prototype.map.call(a, function (b) { return ("0" + b.toString(16)).slice(-2); }).join(""); return h.slice(0, 8) + "-" + h.slice(8, 12) + "-" + h.slice(12, 16) + "-" + h.slice(16, 20) + "-" + h.slice(20); }
+  function pend() { var P = lsGet("evo.pend", null); return P && P.hl && P.jr ? P : { hl: [], jr: [] }; }
+  function jrow(e) { return { id: e.id, user_id: user.id, dibuat: new Date(e.t || Date.now()).toISOString(), cerita: String(e.q || "").slice(0, 600), data: e.p }; }
+  function signIn() {
+    if (!sb) { toast("Login belum bisa dimuat. Periksa internet lalu coba lagi."); return; }
+    if (navigator.onLine === false) { toast("Butuh internet untuk masuk."); return; }
+    sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname } }).then(function (r) { if (r && r.error) toast("Gagal membuka login Google."); });
+  }
+  function signOut() { if (!sb) return; sb.auth.signOut().then(function () { user = null; renderAkun(); toast("Anda sudah keluar. Simpanan tetap ada di HP ini."); }); }
+  function renderAkun() {
+    var box = $("acct"); if (!box) return;
+    if (!sb) { box.innerHTML = '<p class="acct-t">Akun</p><p class="acct-s">Login sedang tidak tersedia. Periksa internet lalu buka ulang aplikasi.</p>'; return; }
+    if (!user && !googleOn) { box.innerHTML = ""; box.hidden = true; return; }
+    box.hidden = false;
+    if (!user) { box.innerHTML = '<p class="acct-t">Akun</p><p class="acct-s">Masuk dengan Google supaya ayat tersimpan dan Jurnal Doa tersimpan selamanya di akun Anda dan bisa dibuka di HP lain.</p><button class="btn pri gbtn" type="button" data-login="1">' + G_I + "Masuk dengan Google</button>"; return; }
+    var m = user.user_metadata || {}, nm = m.full_name || m.name || "", em = user.email || "";
+    box.innerHTML = '<p class="acct-t">Akun</p><div class="acct-u">' + (m.avatar_url ? '<img src="' + esc(m.avatar_url) + '" alt="" referrerpolicy="no-referrer">' : "") + "<div><b>" + esc(nm || em) + "</b>" + (nm && em ? "<small>" + esc(em) + "</small>" : "") + '<small class="ok">' + (syncing ? "Menyinkronkan…" : "Ayat dan Jurnal Doa tersimpan di akun") + '</small></div></div><button class="btn sec" type="button" data-logout="1">Keluar</button>';
+  }
+  var G_I = '<svg class="gico" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+  document.addEventListener("click", function (e) {
+    if (e.target.closest("[data-login]")) { e.preventDefault(); signIn(); return; }
+    if (e.target.closest("[data-logout]")) { e.preventDefault(); signOut(); return; }
+    var tb = e.target.closest("[data-trad]");
+    if (tb) { var k = tb.dataset.trad; settings.cal = k; lsSet("evo.set", settings); syncSeasonUI(); refreshSeason(); cloudTradisi(k); hide(); toast(k === "katolik" ? "Gaya doa: Katolik" : "Gaya doa: Kristen Protestan"); }
+  });
+  function cloudTradisi(k) { if (sb && user) sb.from("profiles").upsert({ id: user.id, tradisi: k, diubah: new Date().toISOString() }, { onConflict: "id" }).then(noop, noop); }
+  function askTradisi() { if (open) { setTimeout(askTradisi, 1500); return; } show("shTrad"); }
+  function cloudHl(add, del) {
+    if (!sb || !user) return;
+    if (add.length) sb.from("ayat_tersimpan").upsert(add.map(function (k) { return { user_id: user.id, kunci: k }; }), { onConflict: "user_id,kunci", ignoreDuplicates: true }).then(noop, noop);
+    if (del.length) sb.from("ayat_tersimpan").delete().eq("user_id", user.id).in("kunci", del).then(function (r) { if (r && r.error) throw r.error; }).then(noop, function () { var P = pend(); P.hl = P.hl.concat(del); lsSet("evo.pend", P); });
+  }
+  function cloudJr(e) { if (sb && user && e && e.id) sb.from("jurnal_doa").upsert([jrow(e)], { onConflict: "id", ignoreDuplicates: true }).then(noop, noop); }
+  function cloudJrDel(id) { if (!sb || !user || !id) return; sb.from("jurnal_doa").delete().eq("id", id).then(function (r) { if (r && r.error) throw r.error; }).then(noop, function () { var P = pend(); P.jr.push(id); lsSet("evo.pend", P); }); }
+  function syncAll() {
+    if (!sb || !user || syncing) return; syncing = true; renderAkun();
+    var uid = user.id, P = pend(), skipHl = {}, skipJr = {};
+    P.hl.forEach(function (k) { skipHl[k] = 1; }); P.jr.forEach(function (i) { skipJr[i] = 1; });
+    var pre = [];
+    if (P.hl.length) pre.push(sb.from("ayat_tersimpan").delete().eq("user_id", uid).in("kunci", P.hl));
+    if (P.jr.length) pre.push(sb.from("jurnal_doa").delete().in("id", P.jr));
+    Promise.all(pre).then(function (r0) {
+      if (r0.every(function (r) { return !r.error; })) lsSet("evo.pend", { hl: [], jr: [] });
+      return Promise.all([
+        sb.from("profiles").select("tradisi").eq("id", uid).maybeSingle(),
+        sb.from("ayat_tersimpan").select("kunci"),
+        sb.from("jurnal_doa").select("id,dibuat,cerita,data").order("dibuat", { ascending: false }).limit(500)
+      ]);
+    }).then(function (res) {
+      var err = res[0].error || res[1].error || res[2].error; if (err) throw err;
+      var remote = {}; res[1].data.forEach(function (r) { var q = String(r.kunci).split(":").map(Number), bk = BOOKS[q[0]], ch = bk && bk.ch[q[1] - 1]; if (!skipHl[r.kunci] && ch && q[2] >= 1 && q[2] <= ch.v.length) remote[r.kunci] = 1; });
+      var up = Object.keys(hls).filter(function (k) { return !remote[k]; });
+      Object.keys(remote).forEach(function (k) { hls[k] = 1; }); lsSet("evo.hl", hls);
+      var J = journal(), have = {};
+      J.forEach(function (e) { if (!e.id) e.id = uuid(); have[e.id] = 1; });
+      var rj = {};
+      res[2].data.forEach(function (r) { if (skipJr[r.id]) return; rj[r.id] = 1; if (!have[r.id] && r.data) J.push({ id: r.id, t: Date.parse(r.dibuat) || Date.now(), q: r.cerita || "", p: r.data }); });
+      var upJ = J.filter(function (e) { return !rj[e.id]; });
+      J.sort(function (a, b) { return b.t - a.t; }); lsSet("evo.jurnal", J.slice(0, 500));
+      var jobs = [];
+      if (up.length) jobs.push(sb.from("ayat_tersimpan").upsert(up.map(function (k) { return { user_id: uid, kunci: k }; }), { onConflict: "user_id,kunci", ignoreDuplicates: true }));
+      if (upJ.length) jobs.push(sb.from("jurnal_doa").upsert(upJ.map(jrow), { onConflict: "id", ignoreDuplicates: true }));
+      var tr = res[0].data && res[0].data.tradisi;
+      if (tr === "katolik" || tr === "protestan") { if (settings.cal !== tr) { settings.cal = tr; lsSet("evo.set", settings); syncSeasonUI(); refreshSeason(); } }
+      else askTradisi();
+      return Promise.all(jobs);
+    }).then(function () { syncing = false; renderAkun(); if (S.view === "saved") renderSaved(); }, function () { syncing = false; renderAkun(); toast("Sinkron akun belum berhasil. Akan dicoba lagi saat aplikasi dibuka."); });
+  }
+  if (sb) {
+    sb.auth.onAuthStateChange(function (ev, session) {
+      var u = (session && session.user) || null, changed = (u && u.id) !== (user && user.id);
+      user = u; renderAkun();
+      if (u && changed) setTimeout(syncAll, 0);
+      if (ev === "SIGNED_IN" && /[?&]code=/.test(location.search)) { try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) {} toast("Berhasil masuk"); }
+    });
+    window.addEventListener("online", function () { if (user) syncAll(); });
+    fetch(SB_URL + "/auth/v1/settings", { headers: { apikey: SB_KEY } }).then(function (r) { return r.json(); }).then(function (j) { googleOn = !!(j && j.external && j.external.google); renderAkun(); if (S.view === "saved") renderSaved(); }, noop);
+  }
+
   if ("serviceWorker" in navigator && location.protocol !== "file:") { window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); }); }
 
   applySettings();
   route();
+  renderAkun();
 })();
