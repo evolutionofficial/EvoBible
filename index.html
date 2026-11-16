@@ -49,20 +49,19 @@
 
 <!-- CARI -->
 <section id="vSearch" class="view" hidden>
-  <header class="bar line">
-    <div class="inner" style="padding-top:8px">
-      <form class="sfield" id="sForm" role="search">
-        <svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input id="q" type="search" placeholder="Cari tema, kata, atau ayat (Yoh 3:16)" autocomplete="off" enterkeyhint="search" aria-label="Cari">
+  <div class="inner shero" id="sHero">
+    <h1 id="sTitle">Renungan</h1>
+    <p class="ssub" id="sSub"></p>
+    <form class="sbox" id="sForm" role="search">
+      <div class="sta">
+        <textarea id="q" rows="4" maxlength="500" autocomplete="off" enterkeyhint="send" placeholder="Hari ini aku merasa…" aria-label="Ceritakan isi hatimu"></textarea>
         <button type="button" class="clr" id="qclr" aria-label="Hapus" hidden><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-        <button type="submit" class="gobtn ai"><svg class="ico" viewBox="0 0 24 24"><path d="M12 3c.6 4.3 2.7 6.4 7 7-4.3.6-6.4 2.7-7 7-.6-4.3-2.7-6.4-7-7 4.3-.6 6.4-2.7 7-7z"/><path d="M19 15.5c.25 1.6 1 2.35 2.5 2.5-1.5.25-2.25 1-2.5 2.5-.25-1.5-1-2.25-2.5-2.5 1.5-.15 2.25-.9 2.5-2.5z"/></svg><span>Renungan</span></button>
-      </form>
-    </div>
-    <div class="inner modes"><div class="seg" id="mode">
-      <button data-m="tema" aria-pressed="true">Rekomendasi</button>
-      <button data-m="kata" aria-pressed="false">Kata persis</button>
-    </div></div>
-  </header>
+      </div>
+      <button type="submit" class="sgo" id="sGo" aria-label="Renungan"><svg class="ico" viewBox="0 0 24 24"><path class="x-sh" d="M12 3.5v17M6.8 8.6h10.4" transform="translate(0 1.1)"/><path class="x-hi" d="M12 3.5v17M6.8 8.6h10.4" transform="translate(0 -.7)"/><path d="M12 3.5v17M6.8 8.6h10.4"/></svg></button>
+    </form>
+    <div class="schips" id="sChips"></div>
+    <div hidden><div class="seg" id="mode"><button data-m="tema" aria-pressed="true">Rekomendasi</button><button data-m="kata" aria-pressed="false">Kata persis</button></div></div>
+  </div>
   <main class="inner sbody" id="sBody"></main>
 </section>
 

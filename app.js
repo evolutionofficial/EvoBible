@@ -582,7 +582,7 @@ var ORN = {
       }
     }
     if (h === "cari") { setSearchTab("tema"); showView("search"); renderSearch(); window.scrollTo(0, 0); return; }
-    if (h === "kata") { setSearchTab("kata"); showView("search", "kata"); renderSearch(); if (!S.q) { try { $("q").focus(); } catch (e) {} } window.scrollTo(0, 0); return; }
+    if (h === "kata") { setSearchTab("kata"); showView("search", "kata"); renderSearch(); window.scrollTo(0, 0); return; }
     if (h === "gereja" && FEATURE_CHURCH) { showView("church"); renderChurch(); window.scrollTo(0, 0); return; }
     if (h === "tersimpan" || h === "sorotan") { showView("saved"); renderSaved(); window.scrollTo(0, 0); return; }
     if (h === "baca") { var last = lsGet("evo.last", { b: 0, c: 1 }); if (!BOOKS[last.b] || !BOOKS[last.b].ch[last.c - 1]) last = { b: 0, c: 1 }; showView("read"); renderChapter(last.b, last.c, 0); return; }
@@ -658,7 +658,7 @@ var ORN = {
   });
 
   /* ---------- cari ---------- */
-  function startSearch(q) { S.q = q; S.theme = null; S.mode = "tema"; S.ai = null; S.pr = null; S.pendingAI = true; $("q").value = q; syncMode(); pushRecent(q); go("search"); }
+  function startSearch(q) { S.q = q; S.sub = true; S.theme = null; S.mode = "tema"; S.ai = null; S.pr = null; S.pendingAI = true; $("q").value = q; syncMode(); pushRecent(q); go("search"); }
   function openTheme(k) { S.theme = k; S.moreOpen = false; go("search"); }
   function pushRecent(q) { q = q.trim(); if (q.length < 3) return; recent = [q].concat(recent.filter(function (x) { return x !== q; })).slice(0, 6); lsSet("evo.recent", recent); }
   // Tab Renungan (cerita & doa) dan tab Cari (kata persis) memakai tampilan yang sama, dengan kotak isian masing-masing.
@@ -667,17 +667,37 @@ var ORN = {
     if (S.mode !== m) { S.qs[S.mode] = S.q; S.q = S.qs[m] || ""; $("q").value = S.q; S.theme = null; S.pendingAI = false; }
     S.mode = m;
     $("mode").parentNode.hidden = true;
-    $("q").placeholder = m === "kata" ? "Cari kata persis, misalnya: gembala" : "Ceritakan isi hatimu, atau ketik ayat (Yoh 3:16)";
+    $("q").placeholder = m === "kata" ? "gembala, kasih setia, Yoh 3:16" : "Hari ini aku merasa…";
     $("q").setAttribute("aria-label", m === "kata" ? "Cari kata persis" : "Ceritakan isi hatimu");
-    var gb = document.querySelector("#sForm .gobtn"); gb.classList.toggle("ai", m !== "kata");
-    gb.innerHTML = m === "kata" ? '<svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Cari</span>' : GO_SPARK + "<span>Renungan</span>";
+    $("sGo").innerHTML = m === "kata" ? S_LOUPE : S_CROSS; $("sGo").setAttribute("aria-label", m === "kata" ? "Cari" : "Renungan");
+    sHeroSync();
   }
+  /* ---------- panggung tab Renungan & Cari ---------- */
+  var S_CROSS = '<svg class="ico" viewBox="0 0 24 24"><path class="x-sh" d="M12 3.5v17M6.8 8.6h10.4" transform="translate(0 1.1)"/><path class="x-hi" d="M12 3.5v17M6.8 8.6h10.4" transform="translate(0 -.7)"/><path d="M12 3.5v17M6.8 8.6h10.4"/></svg>', S_LOUPE = '<svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+  var SG_TEMA = [["Takut akan masa depan", "aku takut menghadapi masa depan"], ["Sulit memaafkan", "bagaimana cara memaafkan orang yang menyakitiku"], ["Kehilangan", "sedih ditinggal orang tersayang"], ["Doa belum dijawab", "tuhan kenapa doaku tidak dijawab"], ["Merasa tak berharga", "merasa tidak berharga"], ["Ingin dekat Tuhan", "ingin lebih dekat dengan Tuhan"], ["Lelah", "aku lelah dan letih"]];
+  var SG_KATA = ["gembala", "kasih setia", "air hidup", "damai sejahtera", "terang", "Mzm 23"];
+  function sHeroSync() {
+    var kata = S.mode === "kata", v = $("vSearch");
+    v.classList.toggle("has", !!(S.sub && S.q.trim()) || !!S.theme); v.classList.toggle("kata", kata);
+    $("sForm").classList.toggle("ai", !kata);
+    $("sTitle").textContent = kata ? "Cari di Alkitab" : "Renungan " + sesNow().s.n.toLowerCase();
+    $("sSub").textContent = kata ? "Temukan kembali ayat dari kata yang kamu ingat." : "Ceritakan apa yang sedang kamu rasakan. Firman Tuhan menyertaimu.";
+    var list = kata ? SG_KATA.map(function (k) { return [k, k]; }) : SG_TEMA;
+    $("sChips").innerHTML = list.map(function (x) { return '<button type="button" class="schip" data-q="' + esc(x[1]) + '">' + esc(x[0]) + "</button>"; }).join("");
+  }
+  $("sChips").onclick = function (e) {
+    var t = e.target.closest("[data-q]"); if (!t) return;
+    S.q = t.dataset.q; $("q").value = S.q; S.sub = true; S.theme = null; S.ai = null; S.pr = null; S.pendingAI = S.mode === "tema"; renderSearch(); window.scrollTo(0, 0);
+  };
+  $("q").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); if ($("sForm").requestSubmit) $("sForm").requestSubmit(); else $("sForm").dispatchEvent(new Event("submit", { cancelable: true })); }
+  });
   function syncMode() { Array.prototype.forEach.call($("mode").children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.m === S.mode)); }); $("qclr").hidden = !$("q").value; }
   $("mode").onclick = function (e) { var m = e.target.dataset && e.target.dataset.m; if (!m) return; S.mode = m; S.theme = null; S.pendingAI = false; syncMode(); renderSearch(); };
   var qT;
-  $("q").addEventListener("input", function () { S.q = $("q").value; S.theme = null; S.ai = null; S.pendingAI = false; syncMode(); clearTimeout(qT); qT = setTimeout(renderSearch, 160); });
-  $("sForm").onsubmit = function (e) { e.preventDefault(); $("q").blur(); S.q = $("q").value; pushRecent(S.q); S.ai = null; S.pr = null; S.pendingAI = S.mode === "tema"; renderSearch(); };
-  $("qclr").onclick = function () { $("q").value = ""; S.q = ""; S.theme = null; syncMode(); renderSearch(); $("q").focus(); };
+  $("q").addEventListener("input", function () { S.q = $("q").value; S.ai = null; S.pendingAI = false; syncMode(); if (!S.q.trim() && S.sub) { S.sub = false; S.theme = null; renderSearch(); } });
+  $("sForm").onsubmit = function (e) { e.preventDefault(); S.q = $("q").value; if (!S.q.trim()) return; $("q").blur(); S.sub = true; S.theme = null; window.scrollTo(0, 0); S.ai = null; S.pr = null; S.pendingAI = S.mode === "tema"; renderSearch(); };
+  $("qclr").onclick = function () { $("q").value = ""; S.q = ""; S.sub = false; S.theme = null; syncMode(); renderSearch(); };
 
   function parseRef(q) {
     var m = /^\s*([1-3]?\s*[a-zA-Z][a-zA-Z.\s-]*?)\s*(\d+)(?:\s*[:.\s]\s*(\d+))?\s*$/.exec(q);
@@ -711,17 +731,9 @@ var ORN = {
   }
   function renderSearch() {
     var body = $("sBody"), q = S.q.trim();
-    syncMode();
+    syncMode(); sHeroSync();
     if (S.theme) return renderTheme(body);
-    if (!q && S.mode === "kata") { body.innerHTML = '<div class="empty"><p style="margin:0 0 6px;font-weight:700;color:var(--fg)">Cari kata di seluruh Alkitab</p>Ketik kata atau frasa persis, misalnya <b>gembala</b>, <b>kasih setia</b>, atau <b>air hidup</b>. Ayat yang memuat kata itu akan muncul di sini.</div>' + (recent.length ? '<div class="mini">Terakhir dicari</div><div class="chips" style="margin-top:0">' + recent.map(function (r) { return '<button class="chip" data-q="' + esc(r) + '">' + esc(r) + "</button>"; }).join("") + "</div>" : ""); return; }
-    if (!q) {
-      var h = '<div class="mini">Coba tanyakan</div><div class="sugg">';
-      ["aku takut menghadapi masa depan", "bagaimana cara memaafkan orang yang menyakitiku", "sedih ditinggal orang tersayang", "tuhan kenapa doaku tidak dijawab", "merasa tidak berharga", "ingin lebih dekat dengan Tuhan", "pemimpin yang baik"].forEach(function (s) { h += '<button data-q="' + esc(s) + '"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>' + esc(s) + "</button>"; });
-      h += "</div>";
-      if (recent.length) { h += '<div class="mini">Terakhir dicari</div><div class="chips" style="margin-top:0">' + recent.map(function (r) { return '<button class="chip" data-q="' + esc(r) + '">' + esc(r) + "</button>"; }).join("") + "</div>"; }
-      h += '<p class="hint">Ketik juga alamat ayat seperti <b>Mzm 23</b> atau <b>Yoh 3:16</b> untuk langsung membukanya.</p>';
-      body.innerHTML = h; return;
-    }
+    if (!S.sub || !q) { body.innerHTML = ""; return; }
     var html = "", ref = parseRef(q);
     if (ref) { html += '<button class="go" data-b="' + ref.b + '" data-c="' + ref.c + '" data-v="' + ref.v + '"><b>Buka ' + esc(BOOKS[ref.b].n + " " + ref.c + (ref.v ? ":" + ref.v : "")) + "</b>" + (ref.v ? "<span>" + esc(clean(BOOKS[ref.b].ch[ref.c - 1].v[ref.v - 1])) + "</span>" : "") + "</button>"; }
     var re = termRegex(q);
@@ -804,7 +816,7 @@ var ORN = {
       if (t.dataset.act === "copy") copyText(verseCopy(id)); else toggleHl(id, t);
       return;
     }
-    if ((t = e.target.closest("[data-q]"))) { S.q = t.dataset.q; $("q").value = S.q; S.theme = null; S.ai = null; S.pr = null; S.pendingAI = S.mode === "tema"; pushRecent(S.q); renderSearch(); return; }
+    if ((t = e.target.closest("[data-q]"))) { S.q = t.dataset.q; $("q").value = S.q; S.sub = true; S.theme = null; S.ai = null; S.pr = null; S.pendingAI = S.mode === "tema"; pushRecent(S.q); renderSearch(); return; }
     if ((t = e.target.closest("[data-tema]"))) { S.theme = t.dataset.tema; S.moreOpen = false; renderSearch(); window.scrollTo(0, 0); return; }
     if ((t = e.target.closest(".go"))) { openRef(+t.dataset.b, +t.dataset.c, +t.dataset.v); return; }
     if ((t = e.target.closest(".rcard"))) { var i2 = +t.dataset.id; if (S.q) pushRecent(S.q); openRef(bOf[i2], cOf[i2], vOf[i2]); }
