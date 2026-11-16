@@ -1010,7 +1010,7 @@ var ORN = {
   }
   function ttsHelp(code) {
     var n = idVoices().length;
-    $("ttsCode").textContent = "Keterangan teknis: " + code + " · suara Indonesia di HP ini: " + n + " · total suara: " + voices.length;
+    $("ttsCode").textContent = "Keterangan teknis: " + code + " · suara Indonesia di HP ini: " + n + " · total suara: " + voices.length + (voices.length ? " (" + voices.map(function (x) { return x.lang; }).filter(function (l, i, arr) { return arr.indexOf(l) === i; }).join(", ") + ")" : "");
     show("shTts");
   }
   function markVerse() {
