@@ -989,12 +989,22 @@ var ORN = {
     l.sort(function (a, b) { return vscore(b) - vscore(a); }); return l[0] || null;
   }
   function vtext(raw) { return raw.replace(/^¶/, "").replace(/^\(\d+-\d+\)\s*/, ""); }
-  function say(text, done) {
-    var u = new SpeechSynthesisUtterance(text), v = pickVoice(); u.lang = "id-ID";
-    if (v) { u.voice = v; u.lang = v.lang; }
+  // Cara bicara dicoba bertahap: 0 = suara Indonesia terpilih, 1 = hanya bahasa id-ID, 2 = suara bawaan HP.
+  // Cara yang berhasil diingat untuk HP ini (tts.mode).
+  function say(text, done, mode) {
+    if (mode === undefined) mode = tts.mode || 0;
+    var u = new SpeechSynthesisUtterance(text), v = mode === 0 ? pickVoice() : null;
+    if (mode < 2) u.lang = "id-ID";
+    if (v) { u.voice = v; u.lang = String(v.lang || "id-ID").replace("_", "-"); }
     u.rate = tts.rate; u.pitch = 1;
-    u.onend = function () { T.errs = 0; done(); };
-    u.onerror = function (e) { if (e && (e.error === "canceled" || e.error === "interrupted")) return; T.lastErr = (e && e.error) || "tidak diketahui"; if (++T.errs > 2) { stopTTS(); ttsHelp(T.lastErr); return; } done(); };
+    u.onend = function () { T.errs = 0; if ((tts.mode || 0) !== mode) { tts.mode = mode; saveTTS(); } done(); };
+    u.onerror = function (e) {
+      if (e && (e.error === "canceled" || e.error === "interrupted")) return;
+      T.lastErr = ((e && e.error) || "tidak diketahui") + " (cara " + (mode + 1) + ")";
+      if (mode < 2 && T.on) { say(text, done, mode + 1); return; }
+      if (++T.errs > 2) { stopTTS(); ttsHelp(T.lastErr); return; }
+      done();
+    };
     try { if (synth.paused) synth.resume(); } catch (x) {}
     synth.speak(u);
   }
