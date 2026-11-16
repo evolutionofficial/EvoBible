@@ -906,3 +906,38 @@ html::before {
 .ss-acts button span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 body.selopen #text { padding-bottom: 170px; }
 #selHide { justify-self: end; }
+
+/* =====================================================================
+   Bias cahaya di tepi kaca: bingkai gradasi + pendar dari dalam
+   ===================================================================== */
+:root, :root[data-season] {
+  --rim: linear-gradient(140deg, rgba(255, 255, 255, .98) 0%, rgba(196, 226, 255, .7) 12%, rgba(255, 255, 255, .12) 32%, rgba(255, 255, 255, 0) 52%, rgba(255, 222, 188, .45) 78%, rgba(255, 255, 255, .85) 100%);
+  --rim-w: 1.5px;
+  --rim-glow: inset 0 1px 1px rgba(255, 255, 255, .95), inset 0 0 16px rgba(255, 255, 255, .3), inset 0 -10px 18px -12px rgba(255, 255, 255, .45);
+  --glass-sh: var(--rim-glow), 0 16px 36px -18px rgba(14, 20, 30, .35);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]), :root[data-season]:not([data-theme="light"]) {
+    --rim: linear-gradient(140deg, rgba(255, 255, 255, .6) 0%, rgba(170, 210, 255, .35) 12%, rgba(255, 255, 255, .06) 32%, rgba(255, 255, 255, 0) 52%, rgba(255, 214, 170, .22) 78%, rgba(255, 255, 255, .42) 100%);
+    --rim-glow: inset 0 1px 1px rgba(255, 255, 255, .3), inset 0 0 16px rgba(255, 255, 255, .06), inset 0 -10px 18px -12px rgba(255, 255, 255, .12);
+    --glass-sh: var(--rim-glow), 0 20px 44px -18px rgba(0, 0, 0, .8);
+  }
+}
+:root[data-theme="dark"], :root[data-season][data-theme="dark"] {
+  --rim: linear-gradient(140deg, rgba(255, 255, 255, .6) 0%, rgba(170, 210, 255, .35) 12%, rgba(255, 255, 255, .06) 32%, rgba(255, 255, 255, 0) 52%, rgba(255, 214, 170, .22) 78%, rgba(255, 255, 255, .42) 100%);
+  --rim-glow: inset 0 1px 1px rgba(255, 255, 255, .3), inset 0 0 16px rgba(255, 255, 255, .06), inset 0 -10px 18px -12px rgba(255, 255, 255, .12);
+  --glass-sh: var(--rim-glow), 0 20px 44px -18px rgba(0, 0, 0, .8);
+}
+.sheet, .tabbar .inner, .cont, .finder, .feel, .rcard, .acct, .pr-doa, .jr, .empty, .cat, .tile, .nudge, .sumcard, .care { position: relative; }
+.sheet::after, .selsheet::after, .tabbar .inner::after, .cont::after, .finder::after, .feel::after, .rcard::after, .acct::after, .pr-doa::after, .jr::after, .empty::after, .cat::after, .tile::after, .nudge::after, .sumcard::after, .care::after {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  border-radius: inherit; padding: var(--rim-w); background: var(--rim);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.sheet, .selsheet, .tabbar .inner, .cont, .cont.big, .finder, .feel, .rcard, .acct, .pr-doa, .jr, .empty, .cat, .tile { border-color: transparent; box-shadow: var(--glass-sh); }
+.sheet, .selsheet { box-shadow: var(--rim-glow), 0 -20px 50px -22px rgba(0, 0, 0, .4); }
+.ss-acts button, .listen, .btn.sec, .seg button[aria-pressed="true"], .tab[aria-current="page"] {
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, .95), inset 1px 0 1px rgba(255, 255, 255, .45), inset 0 -1px 1px rgba(255, 255, 255, .3), inset 0 0 10px rgba(255, 255, 255, .28);
+}
+.bar, .bar.line { box-shadow: inset 0 -1px 0 rgba(255, 255, 255, .55), 0 1px 0 rgba(0, 0, 0, .04); }
