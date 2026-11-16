@@ -594,3 +594,9 @@ button, a, input, select, textarea, .rcard, .v, .tab { touch-action: manipulatio
 .exit-opts { display: flex; gap: 10px; }
 .exit-opts .btn { flex: 1; min-height: 56px; font-size: 17px; }
 .exit-opts .btn { display: flex; align-items: center; justify-content: center; height: 56px; padding: 0 16px; margin: 0; }
+/* ---- sorotan (stabilo) ayat ---- */
+.v.sr { background: var(--hl); border-radius: 4px; -webkit-box-decoration-break: clone; box-decoration-break: clone; padding: 1px 0; }
+.v.sr.sel { background: var(--sel); }
+.svseg { display: flex; margin: 4px 0 16px; }
+.svseg button { flex: 1; min-height: 48px; font-size: 16px; }
+@media (max-width: 420px) { .selbar button { padding: 0 12px; } .selbar .in { max-width: 100%; overflow-x: auto; } }
