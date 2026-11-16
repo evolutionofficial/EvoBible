@@ -499,7 +499,7 @@ var ORN = {
 
   /* ---------- sheets ---------- */
   function show(id) { hide(); $(id).hidden = false; open = id; }
-  function hide() { ["shBooks", "shSet", "shVoice", "shCat", "shSeason", "shTrad", "shExit"].forEach(function (i) { $(i).hidden = true; }); open = null; }
+  function hide() { ["shBooks", "shSet", "shVoice", "shCat", "shSeason", "shTrad", "shExit", "shTts"].forEach(function (i) { $(i).hidden = true; }); open = null; }
   document.addEventListener("click", function (e) {
     if (e.target.closest("[data-close]")) hide(); else if (e.target.classList && e.target.classList.contains("scrim")) hide();
   });
@@ -994,8 +994,14 @@ var ORN = {
     if (v) { u.voice = v; u.lang = v.lang; }
     u.rate = tts.rate; u.pitch = 1;
     u.onend = function () { T.errs = 0; done(); };
-    u.onerror = function (e) { if (e && (e.error === "canceled" || e.error === "interrupted")) return; if (++T.errs > 2) { stopTTS(); toast("Suara tidak bisa diputar di HP ini"); return; } done(); };
+    u.onerror = function (e) { if (e && (e.error === "canceled" || e.error === "interrupted")) return; T.lastErr = (e && e.error) || "tidak diketahui"; if (++T.errs > 2) { stopTTS(); ttsHelp(T.lastErr); return; } done(); };
+    try { if (synth.paused) synth.resume(); } catch (x) {}
     synth.speak(u);
+  }
+  function ttsHelp(code) {
+    var n = idVoices().length;
+    $("ttsCode").textContent = "Keterangan teknis: " + code + " · suara Indonesia di HP ini: " + n + " · total suara: " + voices.length;
+    show("shTts");
   }
   function markVerse() {
     Array.prototype.forEach.call(document.querySelectorAll(".v.speak"), function (el) { el.classList.remove("speak"); });
@@ -1035,9 +1041,9 @@ var ORN = {
     updatePlayer(); markVerse();
     say(vtext(ch.v[T.i]), function () { T.i++; step(tok, false); });
   }
-  function restartTTS() { synth.cancel(); T.tok++; T.paused = false; T.errs = 0; updatePlayer(); var tok = T.tok; setTimeout(function () { step(tok, false); }, 60); }
+  function restartTTS() { if (synth.speaking || synth.pending) synth.cancel(); T.tok++; T.paused = false; T.errs = 0; updatePlayer(); var tok = T.tok; setTimeout(function () { step(tok, false); }, 60); }
   function startTTS(b, c, i, intro, list) {
-    synth.cancel(); T.tok++; T.on = true; T.paused = false; T.b = b; T.c = c; T.i = i; T.errs = 0; T.list = list || null; T.k = 0;
+    if (synth.speaking || synth.pending) synth.cancel(); T.tok++; T.on = true; T.paused = false; T.b = b; T.c = c; T.i = i; T.errs = 0; T.list = list || null; T.k = 0;
     document.body.classList.add("speaking"); $("player").hidden = false; updatePlayer();
     var tok = T.tok; setTimeout(function () { step(tok, !!intro); }, 60);
   }
@@ -1047,6 +1053,7 @@ var ORN = {
   }
   $("btnListen").onclick = function () {
     if (T.on) { stopTTS(); return; }
+    if (voices.length && !idVoices().length && !tts.warned) { tts.warned = true; saveTTS(); ttsHelp("tidak ada suara Bahasa Indonesia"); return; }
     if (S.sel.length) { var list = S.sel.slice().sort(function (a, b) { return a - b; }); startTTS(S.b, S.c, list[0] - 1, false, list); }
     else startTTS(S.b, S.c, 0, true);
   };

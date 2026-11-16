@@ -660,3 +660,7 @@ body.imk-open { overflow: hidden; }
 .imk-act .btn { flex: 1; display: flex; align-items: center; justify-content: center; height: 54px; font-size: 17px; }
 .imk-act { align-items: center; }
 .imk-act .btn { margin: 0; }
+/* ---- panduan suara (TTS) ---- */
+.tts-steps { margin: 0 0 12px; padding-left: 22px; font-size: 16px; line-height: 1.55; }
+.tts-steps li { margin-bottom: 8px; }
+.tts-ok { width: 100%; min-height: 52px; margin-top: 6px; }
