@@ -1050,3 +1050,5 @@ body.autoscroll main.inner { padding-bottom: 96px; }
 .ch-t { min-width: 0; }
 .autobtn { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 42px; padding: 0 14px 0 11px; margin-bottom: 4px; border-radius: 999px; font-weight: 700; font-size: 14.5px; color: var(--accent); background: var(--glass, var(--accent-soft)); border: 1px solid var(--glass-br, var(--line)); box-shadow: var(--glass-sh, none); backdrop-filter: var(--blur, none); -webkit-backdrop-filter: var(--blur, none); }
 .autobtn .ico { width: 18px; height: 18px; stroke: currentColor; }
+
+#prev, #next { touch-action: manipulation; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }

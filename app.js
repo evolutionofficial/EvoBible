@@ -830,8 +830,20 @@ var ORN = {
   function setNav(btn, t) { btn.hidden = !t; if (t) btn.querySelector("b").textContent = BOOKS[t[0]].n + " " + t[1]; btn._t = t; }
   function prevOf(b, c) { if (c > 1) return [b, c - 1]; if (b > 0) return [b - 1, BOOKS[b - 1].ch.length]; return null; }
   function nextOf(b, c) { if (c < BOOKS[b].ch.length) return [b, c + 1]; if (b < BOOKS.length - 1) return [b + 1, 1]; return null; }
-  $("prev").onclick = function () { turnTo(this._t, -1); };
-  $("next").onclick = function () { turnTo(this._t, 1); };
+  $("prev").onclick = function () { if (Date.now() - (this._tapT || 0) < 900) return; turnTo(this._t, -1); };
+  $("next").onclick = function () { if (Date.now() - (this._tapT || 0) < 900) return; turnTo(this._t, 1); };
+  /* iPhone: ketukan pertama kadang hanya menghentikan gulir yang masih meluncur atau "memilih" tombol,
+     sehingga click baru datang di ketukan kedua. Tombol pasal langsung bereaksi saat jari diangkat. */
+  ["prev", "next"].forEach(function (id) {
+    var btn = $(id), st = null;
+    btn.addEventListener("touchstart", function (e) { var p = e.touches[0]; st = { x: p.clientX, y: p.clientY, t: Date.now() }; }, { passive: true });
+    btn.addEventListener("touchend", function (e) {
+      var p = e.changedTouches[0], s0 = st; st = null;
+      if (!s0 || (SW && SW.on) || Math.abs(p.clientX - s0.x) > 12 || Math.abs(p.clientY - s0.y) > 12 || Date.now() - s0.t > 700) return;
+      if (e.cancelable) e.preventDefault();
+      btn._tapT = Date.now(); turnTo(btn._t, id === "next" ? 1 : -1);
+    });
+  });
 
   /* ---------- animasi gulungan halaman (pindah pasal) ----------
      Punggung buku di kiri. Salinan halaman ditaruh di atas pasal yang baru dirender, lalu
