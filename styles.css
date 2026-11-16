@@ -664,3 +664,150 @@ body.imk-open { overflow: hidden; }
 .tts-steps { margin: 0 0 12px; padding-left: 22px; font-size: 16px; line-height: 1.55; }
 .tts-steps li { margin-bottom: 8px; }
 .tts-ok { width: 100%; min-height: 52px; margin-top: 6px; }
+
+/* =====================================================================
+   Tampilan v2 — "Cahaya jendela kaca"
+   Cahaya lembut warna masa gerejawi di belakang, panel kaca buram di depan.
+   Lapisan ini sengaja diletakkan paling akhir agar menimpa gaya lama.
+   ===================================================================== */
+:root, :root[data-season] {
+  --fg: #171b21; --muted: #59616c; --line: rgba(23, 27, 33, .09);
+  --bg: color-mix(in oklab, var(--s1, #3a5683) 5%, #e8eaed);
+  --accent: color-mix(in oklab, var(--s1, #2c4a7c) 80%, #10141a);
+  --accent-fg: #ffffff;
+  --accent-soft: color-mix(in oklab, var(--accent) 11%, transparent);
+  --sel: color-mix(in oklab, var(--accent) 20%, transparent);
+  --surface: rgba(255, 255, 255, .7);
+  --glass: rgba(255, 255, 255, .5);
+  --glass-hi: rgba(250, 251, 252, .78);
+  --glass-br: rgba(255, 255, 255, .72);
+  --glass-sh: inset 0 1px 0 rgba(255, 255, 255, .75), 0 14px 34px -18px rgba(14, 20, 30, .32), 0 2px 6px -3px rgba(14, 20, 30, .1);
+  --blur: blur(26px) saturate(185%);
+  --amb: .9;
+  --tabh: 88px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]), :root[data-season]:not([data-theme="light"]) {
+    --fg: #e9ebee; --muted: #9ca3ad; --line: rgba(255, 255, 255, .08);
+    --bg: color-mix(in oklab, var(--s1, #3a5683) 9%, #0b0d10);
+    --accent: color-mix(in oklab, var(--s1, #3a5683) 48%, #eef0f2);
+    --accent-fg: #0d1014;
+    --accent-soft: color-mix(in oklab, var(--accent) 15%, transparent);
+    --sel: color-mix(in oklab, var(--accent) 26%, transparent);
+    --surface: rgba(40, 44, 50, .62);
+    --glass: rgba(32, 36, 42, .5);
+    --glass-hi: rgba(30, 34, 40, .8);
+    --glass-br: rgba(255, 255, 255, .09);
+    --glass-sh: inset 0 1px 0 rgba(255, 255, 255, .07), 0 18px 44px -18px rgba(0, 0, 0, .75);
+    --amb: .55;
+  }
+}
+:root[data-theme="dark"], :root[data-season][data-theme="dark"] {
+  --fg: #e9ebee; --muted: #9ca3ad; --line: rgba(255, 255, 255, .08);
+  --bg: color-mix(in oklab, var(--s1, #3a5683) 9%, #0b0d10);
+  --accent: color-mix(in oklab, var(--s1, #3a5683) 48%, #eef0f2);
+  --accent-fg: #0d1014;
+  --accent-soft: color-mix(in oklab, var(--accent) 15%, transparent);
+  --sel: color-mix(in oklab, var(--accent) 26%, transparent);
+  --surface: rgba(40, 44, 50, .62);
+  --glass: rgba(32, 36, 42, .5);
+  --glass-hi: rgba(30, 34, 40, .8);
+  --glass-br: rgba(255, 255, 255, .09);
+  --glass-sh: inset 0 1px 0 rgba(255, 255, 255, .07), 0 18px 44px -18px rgba(0, 0, 0, .75);
+  --amb: .55;
+}
+
+/* cahaya latar */
+html { background: var(--bg); }
+body, :root[data-season] body { background: transparent; background-image: none; }
+html::before {
+  content: ""; position: fixed; inset: -12%; z-index: -1; pointer-events: none; opacity: var(--amb);
+  background:
+    radial-gradient(38% 30% at 10% 4%, color-mix(in oklab, var(--s1, #3a5683) 30%, transparent), transparent 72%),
+    radial-gradient(34% 26% at 96% 24%, color-mix(in oklab, var(--s2, #9fb4d8) 30%, transparent), transparent 72%),
+    radial-gradient(46% 32% at 24% 94%, color-mix(in oklab, var(--s1, #3a5683) 16%, transparent), transparent 72%);
+}
+body::before { background: var(--glass-hi); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); }
+
+/* bilah atas */
+.bar, .bar.line { background: var(--glass); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); border-bottom: 1px solid var(--line); }
+:root[data-season] .bar::after { height: 2px; opacity: .45; }
+.brand { font-weight: 700; letter-spacing: -.01em; }
+
+/* menu bawah: kapsul kaca melayang */
+.tabbar { left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); padding-bottom: 0; background: none; border: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.tabbar .inner { max-width: 30rem; height: 68px; padding: 6px; gap: 4px; border-radius: 28px; background: var(--glass-hi); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); border: 1px solid var(--glass-br); box-shadow: var(--glass-sh); }
+.tab { border-radius: 22px; font-size: 13.5px; font-weight: 600; gap: 2px; transition: background .2s, color .2s; }
+.tab .ico { width: 24px; height: 24px; }
+.tab[aria-current="page"] { background: color-mix(in oklab, var(--accent) 13%, transparent); color: var(--accent); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35); }
+body { padding-bottom: calc(var(--tabh) + env(safe-area-inset-bottom, 0px) + 8px); }
+
+/* panel dari bawah */
+.scrim { background: rgba(10, 12, 16, .3); }
+.sheet, .selsheet { background: var(--glass-hi); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); border: 1px solid var(--glass-br); border-bottom: 0; border-radius: 30px 30px 0 0; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 -20px 50px -22px rgba(0, 0, 0, .4); }
+.ss-acts button { background: var(--glass); border: 1px solid var(--glass-br); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45); font-weight: 600; }
+.ss-acts #selHl[aria-pressed="true"] { border-color: transparent; }
+.toast { background: color-mix(in oklab, var(--fg) 86%, transparent); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); }
+.imk { background: var(--bg); }
+.imk-act, .imk-top { background: var(--glass-hi); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); border-color: var(--line); }
+
+/* kartu kaca */
+.cont, .cont.big, .finder, .feel, .rcard, .sumcard, .care, .pr-doa, .jr, .acct, .nudge, .chcard, .empty {
+  background: var(--glass); border: 1px solid var(--glass-br); box-shadow: var(--glass-sh);
+}
+.cont, .cont.big, .finder, .feel, .acct, .pr-doa { -webkit-backdrop-filter: blur(18px) saturate(170%); backdrop-filter: blur(18px) saturate(170%); }
+.cont, .cont.big, .finder, .feel, .rcard { border-radius: 22px; }
+.cont:hover, .rcard:hover { border-color: var(--glass-br); background: var(--glass-hi); }
+.empty { border-radius: 22px; padding: 22px 18px; }
+
+/* ayat hari ini */
+.votd { border-radius: 28px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 24px 44px -26px color-mix(in oklab, var(--s1, #2c4a7c) 85%, #000); }
+.votd .lab { font-weight: 600; }
+.votd .acts button, :root[data-season] .votd .acts button { border-radius: 999px; background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .24); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); font-weight: 600; }
+.sbanner { border-radius: 20px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2); }
+
+/* tombol, pilihan, isian */
+.btn { border-radius: 16px; font-weight: 700; letter-spacing: -.005em; }
+.btn.pri, .fgo, .gobtn { background: var(--accent); color: var(--accent-fg); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 8px 18px -10px color-mix(in oklab, var(--accent) 80%, #000); font-weight: 700; }
+.btn.sec { background: var(--glass); color: var(--accent); border: 1px solid var(--glass-br); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45); }
+.fgo { border-radius: 16px; }
+.seg { background: color-mix(in oklab, var(--fg) 6%, transparent); border: 1px solid var(--line); border-radius: 16px; padding: 4px; }
+.seg button { border-radius: 12px; font-weight: 600; }
+.seg button[aria-pressed="true"] { background: var(--glass-hi); color: var(--fg); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), 0 4px 12px -6px rgba(0, 0, 0, .3); }
+.fbook { background: var(--accent-soft); border-radius: 14px; }
+.fn, .sfield input, .imk-ctl textarea, .imk-ctl input:not([type]) { background: color-mix(in oklab, var(--fg) 4%, transparent); border: 1px solid var(--line); border-radius: 14px; }
+.sfield input { border-radius: 18px; }
+
+/* huruf: lebih tenang dan seperti buku */
+.greet { font-family: var(--read); font-size: 1.35rem; font-weight: 500; color: var(--fg); letter-spacing: -.005em; }
+.sv-head h1, .ch-head h1 { font-family: var(--read); font-weight: 600; letter-spacing: -.02em; }
+.ch-head h1 { font-size: 2.6rem; }
+.ch-head .bk { font-family: var(--read); font-style: italic; font-weight: 500; font-size: 17px; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.text h3 { font-family: var(--read); font-style: italic; font-weight: 600; font-size: .86em; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.feel h2, .sh-head h2, .pr-title, .fd-title { letter-spacing: -.01em; }
+.feel h2 { font-family: var(--read); font-weight: 600; font-size: 1.45rem; }
+.votd .lab, .tag, .flabel, .sec h2, .mini, .season .tag, .drhead .tag, .ss-lab, .pr-kicker, .pr-sec h3, .imk-lab, .acct-t, .lab {
+  text-transform: none; letter-spacing: 0; font-weight: 600;
+}
+.mini, .ss-lab, .imk-lab, .acct-t, .pr-sec h3 { font-size: 15px; color: var(--muted); }
+.pr-kicker { font-size: 14px; color: var(--accent); }
+.pr-title { font-family: var(--read); font-weight: 600; }
+
+/* sorotan ayat tetap terbaca di atas kaca */
+.v.sel { border-radius: 6px; }
+
+/* jika perangkat tidak mendukung efek kaca, pakai permukaan padat */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root { --glass: rgba(255, 255, 255, .92); --glass-hi: #fbfbfc; }
+  :root[data-theme="dark"] { --glass: #1d2127; --glass-hi: #1a1e23; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root, :root[data-season] { --glass: var(--bg); --glass-hi: var(--bg); }
+}
+
+/* penyesuaian: kurangi warna yang terlalu ramai */
+.listen { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--glass-br); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4); }
+.listen.on { background: var(--accent); color: var(--accent-fg); }
+.votd, .sbanner { filter: saturate(.8); }
+.sbanner { border: 1px solid rgba(255, 255, 255, .18); }
+.cat, .tile { background: color-mix(in oklab, hsl(var(--h) var(--ts) var(--tl)) 55%, transparent); border: 1px solid var(--glass-br); box-shadow: var(--glass-sh); }
