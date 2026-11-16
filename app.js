@@ -885,12 +885,17 @@ var ORN = {
     function fr(ts) {
       if (!t0) t0 = ts;
       var p = Math.min(1, (ts - t0) / dur), s = s0 + (s1 - s0) * ease(p);
-      curlPlace(o, tiltAt(s), s);
+      curlPlace(o, tiltAt(s), s); curlRun.last = performance.now();
       if (p < 1) requestAnimationFrame(fr); else done();
     }
     requestAnimationFrame(fr);
   }
   function curlClean(o, base, done) { requestAnimationFrame(function () { o.ov.remove(); if (base) base.ov.remove(); TURN = null; if (done) done(); }); }
+  /* pengaman: bila karena apa pun lapisan gulungan tertinggal tanpa animasi berjalan, bersihkan */
+  setInterval(function () {
+    if (!TURN || (SW && SW.on && !SW.rel)) { curlRun.last = performance.now(); return; }
+    if (performance.now() - (curlRun.last || 0) > 2500) { Array.prototype.forEach.call(document.querySelectorAll(".curl"), function (n) { n.remove(); }); TURN = null; }
+  }, 1000);
   function turnTo(t, dir, done) {
     if (!t) return;
     if (RM || TURN || S.view !== "read") { openRef(t[0], t[1]); if (done) done(); return; }
@@ -934,14 +939,11 @@ var ORN = {
       curlClean(sw.o, sw.base);
     });
   }
-  $("vRead").addEventListener("touchstart", function (e) {
-    SW = null;
-    if (RM || TURN || e.touches.length > 1 || (e.target.closest && e.target.closest("input,select,textarea,.finder"))) return;
-    var p = e.touches[0], now = performance.now();
-    SW = { x0: p.clientX, y0: p.clientY, x: p.clientX, y: p.clientY, on: false, hist: [[p.clientX, now]] };
-  }, { passive: true });
-  $("vRead").addEventListener("touchmove", function (e) {
-    var sw = SW; if (!sw) return;
+  /* Di iPhone, touchmove/touchend dikirim ke elemen yang pertama disentuh meski elemen itu sudah
+     dibuang (teks pasal dirender ulang saat geser dimulai) dan tidak menggelembung ke #vRead.
+     Karena itu pendengar dipasang juga langsung pada elemen sasaran dan pada document. */
+  function swMove(e) {
+    var sw = SW; if (!sw || sw.lastEv === e) return; sw.lastEv = e;
     if (e.touches.length > 1) { if (!sw.on) SW = null; return; }
     var p = e.touches[0], dx = p.clientX - sw.x0, dy = p.clientY - sw.y0;
     sw.x = p.clientX; sw.y = p.clientY; sw.hist.push([p.clientX, performance.now()]); if (sw.hist.length > 6) sw.hist.shift();
@@ -953,9 +955,23 @@ var ORN = {
       swBegin(sw, dir, t);
     }
     if (e.cancelable) e.preventDefault();
-  }, { passive: false });
-  $("vRead").addEventListener("touchend", swRelease);
-  $("vRead").addEventListener("touchcancel", swRelease);
+  }
+  function swEnd() {
+    var sw = SW; if (sw && sw.tgt) { sw.tgt.removeEventListener("touchmove", swMove); sw.tgt.removeEventListener("touchend", swEnd); sw.tgt.removeEventListener("touchcancel", swEnd); }
+    swRelease();
+  }
+  $("vRead").addEventListener("touchstart", function (e) {
+    if (SW && SW.on) return;
+    SW = null;
+    if (RM || TURN || e.touches.length > 1 || (e.target.closest && e.target.closest("input,select,textarea,.finder"))) return;
+    var p = e.touches[0], now = performance.now(), tg = e.target;
+    SW = { x0: p.clientX, y0: p.clientY, x: p.clientX, y: p.clientY, on: false, hist: [[p.clientX, now]], tgt: tg };
+    tg.addEventListener("touchmove", swMove, { passive: false }); tg.addEventListener("touchend", swEnd); tg.addEventListener("touchcancel", swEnd);
+  }, { passive: true });
+  document.addEventListener("touchmove", swMove, { passive: false });
+  document.addEventListener("touchend", swEnd);
+  document.addEventListener("touchcancel", swEnd);
+  document.addEventListener("visibilitychange", function () { if (document.hidden) swEnd(); });
 
   /* ---------- gulir otomatis ----------
      Posisi disimpan sebagai pecahan piksel dan dimajukan tiap frame menurut waktu nyata,
