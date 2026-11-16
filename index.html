@@ -79,7 +79,7 @@
   </div></header>
   <main class="inner rmain">
     <div class="finder-wrap fread" id="finderRead"></div>
-    <div class="ch-head"><div class="bk" id="chBook"></div><h1 id="chNum"></h1></div>
+    <div class="ch-head"><div class="ch-t"><div class="bk" id="chBook"></div><h1 id="chNum"></h1></div><button class="autobtn" id="btnAuto" type="button" aria-pressed="false"><svg class="ico" viewBox="0 0 24 24"><path d="m6 5 6 6 6-6"/><path d="m6 13 6 6 6-6"/></svg><span>Gulir otomatis</span></button></div>
     <article class="text" id="text"></article>
     <nav class="pn" aria-label="Pasal">
       <button id="prev"><small>Sebelumnya</small><b></b></button>
@@ -134,6 +134,13 @@
   <div class="pvt"><small>Pratinjau tema</small><b id="pvName"></b></div>
   <button id="pvNext" type="button" aria-label="Masa berikutnya">&#8250;</button>
   <button id="pvDone" type="button" class="done">Selesai</button>
+</div></div>
+<div class="asbar" id="asbar" hidden><div class="in">
+  <button id="asSlow" type="button" aria-label="Lebih pelan"><svg class="ico" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+  <div class="asinfo"><small>Gulir otomatis</small><b id="asSpd">Sedang</b></div>
+  <button id="asFast" type="button" aria-label="Lebih cepat"><svg class="ico" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg></button>
+  <button id="asPlay" type="button" class="main" aria-label="Jeda"></button>
+  <button id="asStop" type="button" aria-label="Hentikan gulir otomatis"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
 </div></div>
 <div class="player" id="player" hidden><div class="in">
   <div class="pinfo"><small>Sedang dibacakan</small><b id="pTitle"></b></div>

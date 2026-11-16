@@ -514,7 +514,7 @@ var ORN = {
     S.view = v; tabV = tabV || v;
     Object.keys(VIEWS).forEach(function (k) { $(VIEWS[k]).hidden = k !== v; });
     Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (t) { if (t.dataset.v === tabV) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current"); }); placeInd(true);
-    if (v !== "read") clearSel(true);
+    if (v !== "read") { clearSel(true); asStop(); }
   }
   function route() {
     if (open !== "shVoice") hide();
@@ -830,12 +830,87 @@ var ORN = {
   function setNav(btn, t) { btn.hidden = !t; if (t) btn.querySelector("b").textContent = BOOKS[t[0]].n + " " + t[1]; btn._t = t; }
   function prevOf(b, c) { if (c > 1) return [b, c - 1]; if (b > 0) return [b - 1, BOOKS[b - 1].ch.length]; return null; }
   function nextOf(b, c) { if (c < BOOKS[b].ch.length) return [b, c + 1]; if (b < BOOKS.length - 1) return [b + 1, 1]; return null; }
-  $("prev").onclick = function () { if (this._t) openRef(this._t[0], this._t[1]); };
-  $("next").onclick = function () { if (this._t) openRef(this._t[0], this._t[1]); };
+  $("prev").onclick = function () { turnTo(this._t, -1); };
+  $("next").onclick = function () { turnTo(this._t, 1); };
+
+  /* ---------- animasi gulungan halaman (pindah pasal) ----------
+     Salinan halaman lama ditaruh di atas pasal baru, lalu tergulung dari sudut bawah
+     (kanan untuk berikutnya, kiri untuk sebelumnya) agak miring ke atas. Semua gerak
+     memakai transform per frame (requestAnimationFrame) sehingga halus, tanpa repaint teks. */
+  var RM = false; try { RM = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+  var TURN = null;
+  function turnTo(t, dir, done) {
+    if (!t) return;
+    if (RM || TURN || S.view !== "read") { openRef(t[0], t[1]); if (done) done(); return; }
+    var main = document.querySelector("#vRead .rmain"), r = main.getBoundingClientRect(), W = innerWidth, H = innerHeight;
+    var ov = document.createElement("div"), wrap = document.createElement("div"), pg = document.createElement("div"), sh = document.createElement("div"), roll = document.createElement("div");
+    ov.className = "curl"; ov.setAttribute("aria-hidden", "true"); wrap.className = "curl-w"; pg.className = "curl-p"; sh.className = "curl-s"; roll.className = "curl-r";
+    var cl = main.cloneNode(true); Array.prototype.forEach.call(cl.querySelectorAll("[id]"), function (n) { n.removeAttribute("id"); });
+    cl.style.cssText = "position:absolute;margin:0;left:" + r.left + "px;top:" + r.top + "px;width:" + r.width + "px";
+    pg.style.width = W + "px"; pg.style.height = H + "px"; pg.appendChild(cl); wrap.appendChild(pg); wrap.appendChild(sh);
+    ov.appendChild(wrap); ov.appendChild(roll); document.body.appendChild(ov);
+    var a = 0.3, dx = dir > 0 ? -Math.cos(a) : Math.cos(a), dy = -Math.sin(a), nx = -dy, ny = dx;
+    var P0x = dir > 0 ? W : 0, P0y = H, deg = Math.atan2(dy, dx) * 180 / Math.PI, L = Math.ceil(Math.hypot(W, H) * 2) + 8;
+    var span = W * Math.cos(a) + H * Math.sin(a), RW = 58, D = 780, t0 = 0;
+    wrap.style.width = wrap.style.height = L + "px"; roll.style.height = L + "px";
+    function place(e) {
+      var w = RW * (.34 + .66 * e), s = e * (span + RW + 30);
+      var Ox = P0x + s * dx - L / 2 * nx, Oy = P0y + s * dy - L / 2 * ny;
+      wrap.style.transform = "translate3d(" + Ox + "px," + Oy + "px,0) rotate(" + deg + "deg)";
+      pg.style.transform = "rotate(" + (-deg) + "deg) translate3d(" + (-Ox) + "px," + (-Oy) + "px,0)";
+      roll.style.transform = "translate3d(" + (Ox - w * dx) + "px," + (Oy - w * dy) + "px,0) rotate(" + deg + "deg) scaleX(" + (w / RW) + ")";
+    }
+    place(0); TURN = ov;
+    openRef(t[0], t[1]);
+    function frame(ts) {
+      if (!t0) t0 = ts;
+      var p = Math.min(1, (ts - t0) / D), e = p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+      place(e);
+      if (p < 1) requestAnimationFrame(frame); else { ov.remove(); TURN = null; if (done) done(); }
+    }
+    requestAnimationFrame(function () { requestAnimationFrame(frame); });
+  }
+
+  /* ---------- gulir otomatis ----------
+     Posisi disimpan sebagai pecahan piksel dan dimajukan tiap frame menurut waktu nyata,
+     jadi geraknya halus (bukan loncat 1 piksel). Berhenti sejenak saat layar disentuh,
+     dan di akhir pasal otomatis menggulung ke pasal berikutnya. */
+  var AS_SP = [10, 16, 24, 34, 48], AS_N = ["Sangat pelan", "Pelan", "Sedang", "Cepat", "Sangat cepat"];
+  var AS = { on: false, run: false, sp: Math.min(4, Math.max(0, +lsGet("evo.as", 2) || 0)), y: 0, last: 0, hold: 0, endT: 0 };
+  var AS_PAUSE = '<svg class="ico" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg>', AS_PLAY = '<svg class="ico" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg>';
+  function asUi() {
+    $("asbar").hidden = !AS.on; document.body.classList.toggle("autoscroll", AS.on);
+    $("btnAuto").classList.toggle("on", AS.on); $("btnAuto").setAttribute("aria-pressed", AS.on ? "true" : "false");
+    $("asSpd").textContent = AS_N[AS.sp]; $("asSlow").disabled = AS.sp === 0; $("asFast").disabled = AS.sp === AS_SP.length - 1;
+    $("asPlay").innerHTML = AS.run ? AS_PAUSE : AS_PLAY; $("asPlay").setAttribute("aria-label", AS.run ? "Jeda" : "Lanjutkan");
+  }
+  function asLoop(ts) {
+    if (!AS || !AS.on) return; requestAnimationFrame(asLoop);
+    var dt = AS.last ? Math.min(64, ts - AS.last) : 0; AS.last = ts;
+    if (!AS.run || TURN || AS.hold > ts || S.view !== "read" || S.sel.length || document.hidden || T.on) { AS.y = scrollY; AS.endT = 0; return; }
+    var max = document.documentElement.scrollHeight - innerHeight;
+    if (Math.abs(scrollY - AS.y) > 3) AS.y = scrollY;
+    if (AS.y >= max - 1) {
+      if (!AS.endT) AS.endT = ts + 1800;
+      else if (ts > AS.endT) { AS.endT = 0; var nt = nextOf(S.b, S.c); if (nt) turnTo(nt, 1, function () { AS.y = 0; AS.hold = performance.now() + 1500; }); else { AS.run = false; asUi(); toast("Sudah sampai akhir Alkitab"); } }
+      return;
+    }
+    AS.y = Math.min(max, AS.y + AS_SP[AS.sp] * dt / 1000); window.scrollTo(0, AS.y);
+  }
+  function asStart() { AS.on = true; AS.run = true; AS.y = scrollY; AS.last = 0; AS.hold = 0; asUi(); requestAnimationFrame(asLoop); }
+  function asStop() { if (!AS || !AS.on) return; AS.on = false; AS.run = false; asUi(); }
+  $("btnAuto").onclick = function () { if (AS.on) asStop(); else { if (T.on) stopTTS(); asStart(); } };
+  $("asStop").onclick = asStop;
+  $("asPlay").onclick = function () { AS.run = !AS.run; AS.hold = 0; AS.last = 0; asUi(); };
+  $("asSlow").onclick = function () { if (AS.sp > 0) { AS.sp--; lsSet("evo.as", AS.sp); asUi(); } };
+  $("asFast").onclick = function () { if (AS.sp < AS_SP.length - 1) { AS.sp++; lsSet("evo.as", AS.sp); asUi(); } };
+  addEventListener("touchstart", function (e) { if (AS.on && !(e.target.closest && e.target.closest(".asbar"))) AS.hold = Infinity; }, { passive: true });
+  ["touchend", "touchcancel"].forEach(function (ev) { addEventListener(ev, function () { if (AS.on && AS.hold === Infinity) AS.hold = performance.now() + 1500; }, { passive: true }); });
+  addEventListener("wheel", function () { if (AS.on) AS.hold = performance.now() + 1500; }, { passive: true });
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") { if (open) hide(); else clearSel(); return; }
     if (S.view !== "read" || open || /input|textarea/i.test(e.target.tagName || "")) return;
-    var t = e.key === "ArrowLeft" ? $("prev")._t : e.key === "ArrowRight" ? $("next")._t : null; if (t) openRef(t[0], t[1]);
+    var t = e.key === "ArrowLeft" ? $("prev")._t : e.key === "ArrowRight" ? $("next")._t : null; if (t) turnTo(t, e.key === "ArrowLeft" ? -1 : 1);
   });
   $("text").addEventListener("click", function (e) {
     var v = e.target.closest(".v"); if (!v) return;
@@ -1071,7 +1146,7 @@ var ORN = {
   }
   function restartTTS() { if (synth.speaking || synth.pending) synth.cancel(); T.tok++; T.paused = false; T.errs = 0; updatePlayer(); var tok = T.tok; setTimeout(function () { step(tok, false); }, 60); }
   function startTTS(b, c, i, intro, list) {
-    if (synth.speaking || synth.pending) synth.cancel(); T.tok++; T.on = true; T.paused = false; T.b = b; T.c = c; T.i = i; T.errs = 0; T.list = list || null; T.k = 0;
+    asStop(); if (synth.speaking || synth.pending) synth.cancel(); T.tok++; T.on = true; T.paused = false; T.b = b; T.c = c; T.i = i; T.errs = 0; T.list = list || null; T.k = 0;
     document.body.classList.add("speaking"); $("player").hidden = false; updatePlayer();
     var tok = T.tok; setTimeout(function () { step(tok, !!intro); }, 60);
   }
