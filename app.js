@@ -1252,6 +1252,7 @@ var ORN = {
   function placeInd(animate) {
     var cur = $("tabs").querySelector('.tab[aria-current="page"]');
     if (!cur || !cur.offsetWidth) { tabInd.style.opacity = "0"; indPos = null; return; }
+    if (cur.classList.contains("tab-c")) { if (indAnim) try { indAnim.cancel(); } catch (e) {} tabInd.style.opacity = "0"; indPos = { x: cur.offsetLeft, w: cur.offsetWidth }; tabInd.style.transform = "translateX(" + indPos.x + "px)"; tabInd.style.width = indPos.w + "px"; return; }
     var x = cur.offsetLeft, w = cur.offsetWidth, a = indPos, reduce = false;
     try { reduce = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
     tabInd.style.opacity = "1";
