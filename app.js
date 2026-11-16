@@ -57,7 +57,7 @@
   function renderIfCurrent(key) { if (S.view === "search" && !S.theme && S.mode === "tema" && aiKey(S.q) === key) renderSearch(); }
   /* ---------- sesi renungan: 3x sehari (pagi 05-11:59, siang 12-16:59, malam 17-04:59) ---------- */
   // MODE UJI: true = kotak cerita selalu muncul & bisa dipakai berkali-kali (tanpa batas 3 sesi/hari). Ubah ke false untuk mengaktifkan batas lagi.
-  var TEST_NO_LIMIT = false;
+  var TEST_NO_LIMIT = true;
   var SES = [{ k: "pagi", n: "Pagi", a: 5, b: 12 }, { k: "siang", n: "Siang", a: 12, b: 17 }, { k: "malam", n: "Malam", a: 17, b: 29 }];
   function sesNow() {
     var d = new Date(), h = d.getHours(), hh = h < 5 ? h + 24 : h, s = SES[0];
@@ -70,7 +70,7 @@
   function sesAllowed(q) { if (TEST_NO_LIMIT) return true; var u = sesUsed(); return !u || u.key === aiKey(q); }
   function sesMark(q) { var n = sesNow(), L = sesLog(), e = L.s[n.s.k]; if (!e || (TEST_NO_LIMIT && e.key !== aiKey(q))) { L.s[n.s.k] = { q: q.trim(), key: aiKey(q), ids: [] }; lsSet("evo.ses", L); } }
   function sesSetIds(key, ids, force) { var n = sesNow(), L = sesLog(), e = L.s[n.s.k]; if (e && e.key === key && (force || !e.ids.length) && ids.length && e.ids.join() !== ids.slice(0, 5).join()) { e.ids = ids.slice(0, 5); lsSet("evo.ses", L); } }
-  function sesNextText() { if (TEST_NO_LIMIT) return "Mode uji: renungan dan doa bisa dicoba tanpa batas"; var k = sesNow().s.k; return k === "pagi" ? "Sesi siang dibuka pukul 12.00" : k === "siang" ? "Sesi malam dibuka pukul 17.00" : "Sesi pagi dibuka besok pukul 05.00"; }
+  function sesNextText() { if (TEST_NO_LIMIT) return "Tulis cerita lain kapan saja untuk renungan dan doa yang baru"; var k = sesNow().s.k; return k === "pagi" ? "Sesi siang dibuka pukul 12.00" : k === "siang" ? "Sesi malam dibuka pukul 17.00" : "Sesi pagi dibuka besok pukul 05.00"; }
   function histHtml() {
     var L = sesLog(), h = "";
     SES.forEach(function (s) {
@@ -122,7 +122,7 @@
   }
   function prayerHtml(p, q) {
     var h = '<article class="pray"><div class="pr-kicker">Evo Prayer · Renungan ' + (SES_N[p.sesi] || "") + '</div><h2 class="pr-title">' + esc(p.judul) + "</h2>" + (q ? '<div class="pr-story"><small>Cerita saya</small><p>“' + esc(q) + '”</p></div>' : "");
-    h += prayerBody(p).replace('(AYT)</div></div>', '(AYT)</div><button class="txtbtn" type="button" data-act="prread" data-id="' + p.id + '">Baca pasalnya</button></div>');
+    h += prayerBody(p).replace('(AYT)</div></div>', '(AYT)</div><button class="txtbtn" type="button" data-act="prread" data-id="' + p.id + '">Baca pasalnya</button><button class="txtbtn" type="button" data-act="primg" data-id="' + p.id + '">Buat gambar</button></div>');
     h += '<div class="pr-acts"><button class="btn pri" type="button" data-act="prcopy">Salin doa</button><button class="btn sec" type="button" data-act="prshare">Bagikan</button><button class="btn sec" type="button" data-act="prsave">' + (journalHas(p) ? "Tersimpan di Jurnal Doa" : "Simpan ke Jurnal Doa") + "</button></div>";
     h += '<p class="pr-note">Doa ini disusun AI untuk membantu Anda menemukan kata-kata, bukan pesan langsung dari Tuhan. Silakan ubah, lewati, atau berdoa dengan kata-kata Anda sendiri.</p></article>';
     return h;
@@ -507,13 +507,13 @@ var ORN = {
 
   /* ---------- routing ---------- */
   var VIEWS = { home: "vHome", search: "vSearch", read: "vRead", saved: "vSaved", church: "vChurch" };
-  var NAMES = { home: "beranda", search: "cari", read: "baca", saved: "tersimpan", church: "gereja" };
+  var NAMES = { home: "beranda", search: "cari", kata: "kata", read: "baca", saved: "tersimpan", church: "gereja" };
   function go(v) { var h = NAMES[v]; if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
   function openRef(b, c, v, v2) { var h = BOOKS[b].a + "-" + c + (v ? "-" + v + (v2 && v2 >= v ? "-" + v2 : "") : ""); if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
-  function showView(v) {
-    S.view = v;
+  function showView(v, tabV) {
+    S.view = v; tabV = tabV || v;
     Object.keys(VIEWS).forEach(function (k) { $(VIEWS[k]).hidden = k !== v; });
-    Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (t) { if (t.dataset.v === v) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current"); }); placeInd(true);
+    Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (t) { if (t.dataset.v === tabV) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current"); }); placeInd(true);
     if (v !== "read") clearSel(true);
   }
   function route() {
@@ -525,7 +525,8 @@ var ORN = {
         showView("read"); renderChapter(i, c, v, m[4] ? Math.min(+m[4], BOOKS[i].ch[c - 1].v.length) : 0); return;
       }
     }
-    if (h === "cari") { showView("search"); renderSearch(); if (!S.q && !S.theme) { try { $("q").focus(); } catch (e) {} } window.scrollTo(0, 0); return; }
+    if (h === "cari") { setSearchTab("tema"); showView("search"); renderSearch(); window.scrollTo(0, 0); return; }
+    if (h === "kata") { setSearchTab("kata"); showView("search", "kata"); renderSearch(); if (!S.q) { try { $("q").focus(); } catch (e) {} } window.scrollTo(0, 0); return; }
     if (h === "gereja" && FEATURE_CHURCH) { showView("church"); renderChurch(); window.scrollTo(0, 0); return; }
     if (h === "tersimpan" || h === "sorotan") { showView("saved"); renderSaved(); window.scrollTo(0, 0); return; }
     if (h === "baca") { var last = lsGet("evo.last", { b: 0, c: 1 }); if (!BOOKS[last.b] || !BOOKS[last.b].ch[last.c - 1]) last = { b: 0, c: 1 }; showView("read"); renderChapter(last.b, last.c, 0); return; }
@@ -583,7 +584,7 @@ var ORN = {
     if (u.ids.length) { var id = u.ids[0]; h += (u.pr ? "" : '<div class="lab">Rekomendasi untuk Anda</div>') + '<p class="vt">' + esc(clean(texts[id])) + '</p><div class="vr">' + esc(refOf(id)) + "</div>"; }
     h += '<div class="acts"><button class="btn pri" type="button" data-ses="open">' + (u.pr ? "Buka renungan dan doa" : u.ids.length > 1 ? "Lihat " + (u.ids.length - 1) + " ayat yang berhubungan" : "Lihat renungan") + "</button>";
     if (n.s.k === "malam") h += '<button class="btn sec" type="button" data-ses="hist">Riwayat hari ini</button>';
-    h += '</div><p class="note">' + esc(sesNextText()) + ". Renungan bisa dipakai tiga kali sehari: pagi, siang, dan malam.</p>";
+    h += '</div><p class="note">' + esc(sesNextText()) + (TEST_NO_LIMIT ? ".</p>" : ". Renungan bisa dipakai tiga kali sehari: pagi, siang, dan malam.</p>");
     box.innerHTML = h; box.hidden = false;
   }
   setInterval(function () { if (S.view === "home" && !document.hidden) renderFeel(); }, 60000);
@@ -604,6 +605,16 @@ var ORN = {
   function startSearch(q) { S.q = q; S.theme = null; S.mode = "tema"; S.ai = null; S.pr = null; S.pendingAI = true; $("q").value = q; syncMode(); pushRecent(q); go("search"); }
   function openTheme(k) { S.theme = k; S.moreOpen = false; go("search"); }
   function pushRecent(q) { q = q.trim(); if (q.length < 3) return; recent = [q].concat(recent.filter(function (x) { return x !== q; })).slice(0, 6); lsSet("evo.recent", recent); }
+  // Tab Renungan (cerita & doa) dan tab Cari (kata persis) memakai tampilan yang sama, dengan kotak isian masing-masing.
+  S.qs = { tema: "", kata: "" };
+  function setSearchTab(m) {
+    if (S.mode !== m) { S.qs[S.mode] = S.q; S.q = S.qs[m] || ""; $("q").value = S.q; S.theme = null; S.pendingAI = false; }
+    S.mode = m;
+    $("mode").parentNode.hidden = true;
+    $("q").placeholder = m === "kata" ? "Cari kata persis, misalnya: gembala" : "Ceritakan isi hatimu, atau ketik ayat (Yoh 3:16)";
+    $("q").setAttribute("aria-label", m === "kata" ? "Cari kata persis" : "Ceritakan isi hatimu");
+    document.querySelector("#sForm .gobtn").textContent = m === "kata" ? "Cari" : "Renungan";
+  }
   function syncMode() { Array.prototype.forEach.call($("mode").children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.m === S.mode)); }); $("qclr").hidden = !$("q").value; }
   $("mode").onclick = function (e) { var m = e.target.dataset && e.target.dataset.m; if (!m) return; S.mode = m; S.theme = null; S.pendingAI = false; syncMode(); renderSearch(); };
   var qT;
@@ -633,15 +644,18 @@ var ORN = {
   function hilite(t, re) { var s = clean(t); if (!re) return esc(s); var out = "", last = 0, m; re.lastIndex = 0; while ((m = re.exec(s))) { if (!m[0]) { re.lastIndex++; continue; } out += esc(s.slice(last, m.index)) + "<mark>" + esc(m[0]) + "</mark>"; last = m.index + m[0].length; } return out + esc(s.slice(last)); }
   var SAVE_I = '<svg class="ico" viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>';
   var COPY_I = '<svg class="ico" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>';
+  var IMG_I = '<svg class="ico" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg>';
+  function imgVerse(id) { if (window.EvoGambar) EvoGambar.open({ text: clean(texts[id]), ref: refOf(id), toast: toast }); }
   function card(id, why, re, alasan) {
     var w = why ? '<span class="why" style="--h:' + hueOf(why.k) + '">' + (why.label ? esc(why.label) : (why.a ? "Ayat kunci" : "Terkait") + " · " + esc(why.n)) + "</span>" : '<span class="why lexw">Mengandung kata Anda</span>';
     return '<div class="rcard" data-id="' + id + '" role="button" tabindex="0"><div class="rref">' + esc(refOf(id)) + '</div><div class="rtx">' + hilite(texts[id], re) + '</div>' + (alasan ? '<p class="alasan"><b>Mengapa cocok:</b> ' + esc(alasan) + "</p>" : "") + '<div class="rft">' + w +
-      '<button class="mini-ib" data-act="copy" aria-label="Salin ayat">' + COPY_I + '</button><button class="mini-ib" data-act="save" aria-pressed="' + (!!hls[keyOf(id)]) + '" aria-label="Simpan ayat">' + SAVE_I + "</button></div></div>";
+      '<button class="mini-ib" data-act="img" aria-label="Buat gambar ayat">' + IMG_I + '</button><button class="mini-ib" data-act="copy" aria-label="Salin ayat">' + COPY_I + '</button><button class="mini-ib" data-act="save" aria-pressed="' + (!!hls[keyOf(id)]) + '" aria-label="Simpan ayat">' + SAVE_I + "</button></div></div>";
   }
   function renderSearch() {
     var body = $("sBody"), q = S.q.trim();
     syncMode();
     if (S.theme) return renderTheme(body);
+    if (!q && S.mode === "kata") { body.innerHTML = '<div class="empty"><p style="margin:0 0 6px;font-weight:700;color:var(--fg)">Cari kata di seluruh Alkitab</p>Ketik kata atau frasa persis, misalnya <b>gembala</b>, <b>kasih setia</b>, atau <b>air hidup</b>. Ayat yang memuat kata itu akan muncul di sini.</div>' + (recent.length ? '<div class="mini">Terakhir dicari</div><div class="chips" style="margin-top:0">' + recent.map(function (r) { return '<button class="chip" data-q="' + esc(r) + '">' + esc(r) + "</button>"; }).join("") + "</div>" : ""); return; }
     if (!q) {
       var h = '<div class="mini">Coba tanyakan</div><div class="sugg">';
       ["aku takut menghadapi masa depan", "bagaimana cara memaafkan orang yang menyakitiku", "sedih ditinggal orang tersayang", "tuhan kenapa doaku tidak dijawab", "merasa tidak berharga", "ingin lebih dekat dengan Tuhan", "pemimpin yang baik"].forEach(function (s) { h += '<button data-q="' + esc(s) + '"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>' + esc(s) + "</button>"; });
@@ -684,7 +698,7 @@ var ORN = {
         sesSetIds(key, top.map(function (x) { return x.id; }));
       }
       var se = sesUsed();
-      if (se && se.key === key) html += '<p class="hint">' + esc(sesNextText()) + ". Satu renungan untuk setiap sesi: pagi, siang, dan malam.</p>" + histPart();
+      if (se && se.key === key) html += '<p class="hint">' + esc(sesNextText()) + (TEST_NO_LIMIT ? ".</p>" : ". Satu renungan untuk setiap sesi: pagi, siang, dan malam.</p>") + histPart();
     } else {
       var terms = q.toLowerCase().split(/\s+/).filter(Boolean), res = [], total = 0;
       for (var i = 0; i < texts.length; i++) {
@@ -718,6 +732,7 @@ var ORN = {
     if (t && t.dataset.act === "sesopen") { var su = sesUsed(); if (su) { S.q = su.q; $("q").value = su.q; S.theme = null; S.mode = "tema"; S.ai = null; S.pr = null; S.pendingAI = true; syncMode(); renderSearch(); window.scrollTo(0, 0); } return; }
     if (t && t.dataset.act === "prretry") { S.pr = null; S.pendingAI = true; renderSearch(); return; }
     if (t && t.dataset.act === "prread") { var pid = +t.dataset.id; openRef(bOf[pid], cOf[pid], vOf[pid]); return; }
+    if (t && t.dataset.act === "primg") { imgVerse(+t.dataset.id); return; }
     if (t && /^pr(copy|share|save)$/.test(t.dataset.act)) {
       var p0 = S.pr && S.pr.state === "done" ? S.pr.data : null; if (!p0) return;
       if (t.dataset.act === "prcopy") copyText(prayerOnly(p0), "Doa disalin");
@@ -725,6 +740,7 @@ var ORN = {
       else if (!journalHas(p0)) { var J = journal(); var je0 = { id: uuid(), t: Date.now(), q: S.q.trim(), p: p0 }; J.unshift(je0); lsSet("evo.jurnal", J.slice(0, 500)); cloudJr(je0); t.textContent = "Tersimpan di Jurnal Doa"; toast("Disimpan ke Jurnal Doa (tab Tersimpan)"); }
       return;
     }
+    if (t && t.dataset.act === "img") { var ce = t.closest(".rcard"); if (ce) imgVerse(+ce.dataset.id); return; }
     if (t && (t.dataset.act === "copy" || t.dataset.act === "save")) {
       var cardEl = t.closest(".rcard"), id = +cardEl.dataset.id;
       if (t.dataset.act === "copy") copyText(verseCopy(id)); else toggleHl(id, t);
@@ -784,6 +800,7 @@ var ORN = {
     }
     var t = e.target.closest("[data-act]"), cardEl = e.target.closest(".rcard"); if (!cardEl) return;
     var id = +cardEl.dataset.id;
+    if (t && t.dataset.act === "img") { imgVerse(id); return; }
     if (t && t.dataset.act === "copy") { copyText(verseCopy(id)); return; }
     if (t && t.dataset.act === "save") { toggleHl(id, t); renderSaved(); return; }
     openRef(bOf[id], cOf[id], vOf[id]);
@@ -864,6 +881,7 @@ var ORN = {
   }
   $("selCopy").onclick = function () { copyText(selText()); clearSel(); };
   $("selShare").onclick = function () { var t = selText(); if (navigator.share) navigator.share({ text: t }).catch(function () {}); else copyText(t); clearSel(); };
+  $("selImg").onclick = function () { var s = S.sel.slice().sort(function (a, b) { return a - b; }), bk = BOOKS[S.b], ch = bk.ch[S.c - 1]; if (!s.length || !window.EvoGambar) return; var tx = s.map(function (n) { return clean(ch.v[n - 1]); }).join(" "); EvoGambar.open({ text: tx, ref: bk.n + " " + S.c + ":" + rangeStr(s), toast: toast }); clearSel(); };
   (function () {
     // geser panel ke bawah untuk menyembunyikan
     var sh = $("selbar"), y0 = null, dy = 0, pid = null;
