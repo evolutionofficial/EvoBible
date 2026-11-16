@@ -438,7 +438,63 @@ var ORN = {
   $("seasonBanner").onclick = openSeason;
   $("sBadge").onclick = openSeason;
   $("shSeason").addEventListener("click", function (e) { var t = e.target.closest("[data-sref]"); if (!t) return; var m = SEA[t.dataset.sref].v; hide(); openRef(bookIdx(m[0]), m[1], m[2]); });
-  (function () { var y0 = null; var dr = $("shSeason"); dr.addEventListener("touchstart", function (e) { y0 = e.touches[0].clientY; }, { passive: true }); dr.addEventListener("touchend", function (e) { if (y0 !== null && e.changedTouches[0].clientY - y0 < -50) hide(); y0 = null; }); })();
+  /* ---------- laci masa gerejawi: tutup dengan gerak dinamis & ikut jari ----------
+     Tutup: turun sedikit (ancang-ancang), lalu melesat ke atas makin cepat sambil mengecil,
+     latar buram memudar. Geser ke atas: laci menempel di jari; dilepas jauh/cepat = tutup dari
+     posisi itu, kalau tidak memantul kembali. Ditarik ke bawah: melar seperti karet. */
+  var DR = { closing: false, anim: null, fade: null };
+  var DR_RM = false; try { DR_RM = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+  function drEl() { return $("shSeason").querySelector(".drawer"); }
+  function drY(el) { var m = /translateY\((-?[\d.]+)px\)/.exec(el.style.transform || ""); return m ? parseFloat(m[1]) : 0; }
+  function drClose() {
+    var sc = $("shSeason"), el = drEl();
+    if (sc.hidden || DR.closing) return DR.closing;
+    if (DR_RM || !el.animate) return false;
+    DR.closing = true; sc.style.pointerEvents = "none";
+    var y = drY(el), h = el.getBoundingClientRect().height + 40;
+    el.style.animation = "none";
+    DR.anim = el.animate([
+      { transform: "translateY(" + y + "px) scale(1)", easing: "cubic-bezier(.3,.7,.4,1)" },
+      { transform: "translateY(" + (y + 16) + "px) scale(1.012)", offset: .24, easing: "cubic-bezier(.55,0,.85,.25)" },
+      { transform: "translateY(" + (-h) + "px) scale(.94)" }
+    ], { duration: 480, fill: "forwards" });
+    DR.fade = sc.animate([{ opacity: 1 }, { opacity: 1, offset: .3 }, { opacity: 0 }], { duration: 480, fill: "forwards", easing: "ease-in" });
+    DR.anim.onfinish = function () {
+      sc.hidden = true; DR.closing = false; sc.style.pointerEvents = "";
+      try { DR.anim.cancel(); DR.fade.cancel(); } catch (e) {}
+      el.style.transform = ""; el.style.animation = ""; DR.anim = DR.fade = null;
+    };
+    return true;
+  }
+  function drCancelClose() {
+    if (!DR.closing) return;
+    try { DR.anim.onfinish = null; DR.anim.cancel(); DR.fade.cancel(); } catch (e) {}
+    var el = drEl(); el.style.transform = ""; el.style.animation = ""; DR.closing = false; DR.anim = DR.fade = null; $("shSeason").style.pointerEvents = "";
+  }
+  (function () {
+    var sc = $("shSeason"), d = null;
+    sc.addEventListener("touchstart", function (e) {
+      var el = drEl(); if (DR.closing || e.touches.length > 1) { d = null; return; }
+      d = { y0: e.touches[0].clientY, y: e.touches[0].clientY, t0: performance.now(), on: false, atEnd: el.scrollTop + el.clientHeight >= el.scrollHeight - 2, hist: [] };
+    }, { passive: true });
+    sc.addEventListener("touchmove", function (e) {
+      if (!d) return; var el = drEl(), y = e.touches[0].clientY, dy = y - d.y0;
+      d.y = y; d.hist.push([y, performance.now()]); if (d.hist.length > 5) d.hist.shift();
+      if (!d.on) { if (Math.abs(dy) < 8) return; if (dy < 0 && !d.atEnd) { d = null; return; } if (dy > 0 && el.scrollTop > 0) { d = null; return; } d.on = true; el.style.animation = "none"; }
+      var ty = dy < 0 ? dy : Math.pow(dy, .72);
+      el.style.transform = "translateY(" + ty + "px)";
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+    function end() {
+      if (!d || !d.on) { d = null; return; }
+      var el = drEl(), dy = d.y - d.y0, h = d.hist, v = h.length > 1 && performance.now() - h[h.length - 1][1] < 100 ? (h[h.length - 1][0] - h[0][0]) / Math.max(1, h[h.length - 1][1] - h[0][1]) : 0; d = null;
+      if (dy < -60 || v < -.5) { hide(); return; }
+      var y = drY(el);
+      var a = el.animate([{ transform: "translateY(" + y + "px)" }, { transform: "translateY(" + (y < 0 ? 8 : -6) + "px)", offset: .55 }, { transform: "translateY(0px)" }], { duration: 380, easing: "cubic-bezier(.2,.8,.3,1)" });
+      el.style.transform = ""; a.onfinish = function () { el.style.animation = ""; };
+    }
+    sc.addEventListener("touchend", end); sc.addEventListener("touchcancel", end);
+  })();
 
   /* ---------- Katolik: Injil harian ---------- */
   var KAT0 = dn(2026, 10, 16), KAT = ["Lk 18:35-43","Lk 19:1-10","Lk 19:11-28","Lk 19:41-44","Lk 19:45-48","Lk 20:27-40","Mt 25:31-46","Lk 21:1-4","Lk 21:5-11","Lk 21:12-19","Lk 21:20-28","Lk 21:29-33","Lk 21:34-36","Mk 13:33-37","Mt 4:18-22","Lk 10:21-24","Mt 15:29-37","Mt 7:21","Mt 9:27-31","Mt 9:35","Mk 1:1-8","Lk 5:17-26","Lk 1:26-38","Mt 11:28-30","Mt 11:11-15","Mt 11:16-19","Lk 1:26-38","Jn 1:6-8","Mt 21:23-27","Mt 21:28-32","Lk 7:18-23","Mt 1:1-17","Mt 1:18-25","Lk 1:5-25","Lk 1:26-38","Lk 1:39-45","Lk 1:46-56","Lk 1:57-66","Lk 1:67-79","Jn 1:1-18","Mt 10:17-22","Lk 2:22-40","Mt 2:13-18","Lk 2:22-35","Lk 2:36-40","Jn 1:1-18","Lk 2:16-21","Jn 1:19-28","Mt 2:1-12","Mt 4:12-17","Mk 6:34-44","Mk 6:45-52","Lk 4:14-22","Lk 5:12-16","Jn 3:22-30","Mk 1:7-11","Mk 1:14-20","Mk 1:21-28","Mk 1:29-39","Mk 1:40-45","Mk 2:1-12","Mk 2:13-17","Jn 1:35-42","Mk 2:18-22","Mk 2:23-28","Mk 3:1-6","Mk 3:7-12","Mk 3:13-19","Mk 3:20-21","Mk 1:14-20","Mk 16:15-18","Mk 3:31-35","Mk 4:1-20","Mk 4:21-25","Mk 4:26-34","Mk 4:35-41","Mk 1:21-28","Mk 5:1-20","Lk 2:22-40","Mk 6:1-6","Mk 6:7-13","Mk 6:14-29","Mk 6:30-34","Mk 1:29-39","Mk 6:53-56","Mk 7:1-13","Mt 6:1-6","Lk 9:22-25","Mt 9:14-15","Lk 5:27-32","Mk 1:12-15","Mt 25:31-46","Mt 6:7-15","Lk 11:29-32","Mt 7:7-12","Mt 5:20-26","Mt 5:43-48","Mk 9:2-10","Mt 16:13-19","Mt 23:1-12","Mt 20:17-28","Lk 16:19-31","Mt 21:33-43","Lk 15:1-3","Jn 2:13-25","Lk 4:24-30","Mt 18:21-35","Mt 5:17-19","Lk 11:14-23","Mk 12:28-34","Lk 18:9-14","Jn 3:14-21","Jn 4:43-54","Jn 5:1-16","Jn 5:17-30","Jn 5:31-47","Jn 7:1-2","Jn 7:40-53","Jn 12:20-33","Jn 8:1-11","Jn 8:21-30","Jn 8:31-42","Jn 8:51-59","Mt 1:16","Jn 11:45-56","Mk 14:1-15","Jn 12:1-11","Jn 13:21-33","Mt 26:14-25","Jn 13:1-15","Jn 18:1—19:42","Mk 16:1-7","Jn 20:1-9","Mt 28:8-15","Jn 20:11-18","Lk 24:13-35","Lk 24:35-48","Jn 21:1-14","Mk 16:9-15","Jn 20:19-31","Lk 1:26-38","Jn 3:7-15","Jn 3:16-21","Jn 3:31-36","Jn 6:1-15","Jn 6:16-21","Lk 24:35-48","Jn 6:22-29","Jn 6:30-35","Jn 6:35-40","Jn 6:44-51","Jn 6:52-59","Jn 6:60-69","Jn 10:11-18","Jn 10:1-10","Jn 10:22-30","Jn 12:44-50","Jn 13:16-20","Jn 14:1-6","Jn 14:7-14","Jn 15:1-8","Jn 14:21-26","Jn 14:27-31","Jn 15:1-8","Jn 15:9-11","Jn 15:12-17","Jn 15:18-21","Jn 15:9-17","Jn 14:6-14","Jn 16:5-11","Jn 16:12-15","Mk 16:15-20","Jn 16:20-23","Jn 16:23-28","Jn 17:11-19","Jn 16:29-33","Jn 17:1-11","Jn 17:11-19","Jn 17:20-26","Jn 15:9-17","Jn 21:20-25","Jn 20:19-23","Jn 19:25-34","Mk 9:30-37","Mk 9:38-40","Mk 9:41-50","Mk 10:1-12","Mk 10:13-16","Mt 28:16-20","Mk 10:17-27","Mk 10:28-31","Mk 10:32-45","Mk 10:46-52","Mk 11:11-26","Mk 11:27-33","Mk 14:12-16","Lk 1:39-56","Mk 12:13-17","Mk 12:18-27","Mk 12:28-34","Jn 19:31-37","Mk 12:38-44","Mk 3:20-35","Mt 5:1-12","Mt 5:13-16","Mt 5:17-19","Mt 5:20-26","Mt 5:27-32","Mt 5:33-37","Mk 4:26-34","Mt 5:38-42","Mt 5:43-48","Mt 6:1-6","Mt 6:7-15","Mt 6:19-23","Mt 6:24-34","Mk 4:35-41","Mt 7:1-5","Mt 7:6","Mt 7:15-20","Lk 1:57-66","Mt 8:1-4","Mt 8:5-17","Mk 5:21-43","Mt 8:18-22","Mt 16:13-19","Mt 8:28-34","Mt 9:1-8","Mt 9:9-13","Jn 20:24-29","Mk 6:1-6","Mt 9:18-26","Mt 9:32-38","Mt 10:1-7","Mt 10:7-15","Mt 10:16-23","Mt 10:24-33","Mk 6:7-13","Mt 10:34—11:1","Mt 11:20-24","Mt 11:25-27","Mt 11:28-30","Mt 12:1-8","Mt 12:14-21","Mk 6:30-34","Mt 12:38-42","Mt 12:46-50","Mt 13:1-9","Jn 20:1-2","Mt 13:18-23","Mt 13:24-30","Jn 6:1-15","Mt 13:31-35","Mt 13:36-43","Mt 13:44-46","Jn 11:19-27","Mt 13:54-58","Mt 14:1-12","Jn 6:24-35","Mt 14:13-21","Mt 14:22-36","Mt 15:21-28","Mt 16:13-23","Mk 9:2-10","Mt 17:14-20","Jn 6:41-51","Mt 17:22-27","Jn 12:24-26","Mt 18:15-20","Mt 18:21","Mt 19:3-12","Mt 19:13-15","Lk 1:39-56","Mt 19:16-22","Mt 19:23-30","Mt 20:1-16","Mt 22:1-14","Mt 22:34-40","Mt 23:1-12","Jn 6:60-69","Mt 23:13-22","Jn 1:45-51","Mt 23:27-32","Mt 24:42-51","Mt 25:1-13","Mt 25:14-30","Mk 7:1-8","Lk 4:16-30","Lk 4:31-37","Lk 4:38-44","Lk 5:1-11","Lk 5:33-39","Lk 6:1-5","Mk 7:31-37","Lk 6:6-11","Lk 6:12-19","Mt 1:1-16","Lk 6:27-38","Lk 6:39-42","Lk 6:43-49","Mk 8:27-35","Lk 7:1-10","Jn 3:13-17","Jn 19:25-27","Lk 7:36-50","Lk 8:1-3","Lk 8:4-15","Mk 9:30-37","Lk 8:16-18","Mt 9:9-13","Lk 9:1-6","Lk 9:7-9","Lk 9:18-22","Lk 9:43-45","Mk 9:38-43","Lk 9:46-50","Lk 9:51-56","Jn 1:47-51","Lk 10:1-12","Lk 10:13-16","Mt 18:1-5","Mk 10:2-16","Lk 10:25-37","Lk 10:38-42","Lk 11:1-4","Lk 11:5-13","Lk 11:15-26","Lk 11:27-28","Mk 10:17-30","Lk 11:29-32","Lk 11:37-41","Lk 11:42-46","Lk 11:47-54","Lk 12:1-7","Lk 12:8-12","Mk 10:35-45","Lk 10:1-9","Lk 12:35-38","Lk 12:39-48","Lk 12:49-53","Lk 12:54-59","Lk 13:1-9","Mk 10:46-52","Lk 13:10-17","Lk 13:18-21","Lk 13:22-30","Lk 6:12-16","Lk 14:1-6","Lk 14:1","Mk 12:28-34","Mt 5:1-12","Jn 6:37-40","Lk 14:25-33","Lk 15:1-10","Lk 16:1-8","Lk 16:9-15","Mk 12:38-44","Lk 17:1-6","Jn 2:13-22","Lk 17:11-19","Lk 17:20-25","Lk 17:26-37","Lk 18:1-8","Mk 13:24-32","Lk 18:35-43","Lk 19:1-10","Lk 19:11-28","Lk 19:41-44","Lk 19:45-48","Lk 20:27-40","Jn 18:33-37","Lk 21:1-4","Lk 21:5-11","Lk 21:12-19","Lk 17:11-19","Lk 21:29-33","Lk 21:34-36","Lk 21:25-28","Mt 8:5-11","Mt 4:18-22","Mt 15:29-37","Mt 7:21","Mt 9:27-31","Mt 9:35","Lk 3:1-6","Lk 5:17-26","Mt 18:12-14","Lk 1:26-38","Mt 11:11-15","Mt 11:16-19","Mt 17:9","Lk 3:10-18","Mt 21:23-27","Mt 21:28-32","Lk 7:18-23","Lk 7:24-30","Mt 1:1-17","Mt 1:18-25","Lk 1:39-45","Lk 1:26-38","Lk 1:39-45","Lk 1:46-56","Lk 1:57-66","Lk 1:67-79","Jn 1:1-18","Lk 2:41-52","Jn 20:1","Mt 2:13-18","Lk 2:22-35","Lk 2:36-40","Jn 1:1-18"], KAB = { Mt: "Matius", Mk: "Markus", Lk: "Lukas", Jn: "Yohanes" };
@@ -498,8 +554,8 @@ var ORN = {
   $("themeSeg").onclick = function (e) { var t = e.target.dataset && e.target.dataset.t; if (!t) return; settings.theme = t; lsSet("evo.set", settings); applySettings(); };
 
   /* ---------- sheets ---------- */
-  function show(id) { hide(); $(id).hidden = false; open = id; }
-  function hide() { ["shBooks", "shSet", "shVoice", "shCat", "shSeason", "shTrad", "shExit", "shTts"].forEach(function (i) { $(i).hidden = true; }); open = null; }
+  function show(id) { hide(); if (id === "shSeason") drCancelClose(); $(id).hidden = false; open = id; }
+  function hide() { ["shBooks", "shSet", "shVoice", "shCat", "shSeason", "shTrad", "shExit", "shTts"].forEach(function (i) { if (i === "shSeason" && drClose()) return; $(i).hidden = true; }); open = null; }
   document.addEventListener("click", function (e) {
     if (e.target.closest("[data-close]")) hide(); else if (e.target.classList && e.target.classList.contains("scrim")) hide();
   });
