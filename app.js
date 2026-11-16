@@ -532,7 +532,7 @@ var ORN = {
     if (h === "baca") { var last = lsGet("evo.last", { b: 0, c: 1 }); if (!BOOKS[last.b] || !BOOKS[last.b].ch[last.c - 1]) last = { b: 0, c: 1 }; showView("read"); renderChapter(last.b, last.c, 0); return; }
     showView("home"); renderHome(); window.scrollTo(0, 0);
   }
-  window.addEventListener("hashchange", function () { if (!NAV_REPLACE) route(); });
+  window.addEventListener("hashchange", function () { if (NAV_REPLACE) return; if (SKIP_H && location.hash === SKIP_H) { SKIP_H = null; return; } SKIP_H = null; route(); });
   $("tabs").onclick = function (e) { var t = e.target.closest(".tab"); if (t) go(t.dataset.v); };
 
   /* ---------- beranda ---------- */
@@ -834,42 +834,128 @@ var ORN = {
   $("next").onclick = function () { turnTo(this._t, 1); };
 
   /* ---------- animasi gulungan halaman (pindah pasal) ----------
-     Salinan halaman lama ditaruh di atas pasal baru, lalu tergulung dari sudut bawah
-     (kanan untuk berikutnya, kiri untuk sebelumnya) agak miring ke atas. Semua gerak
-     memakai transform per frame (requestAnimationFrame) sehingga halus, tanpa repaint teks. */
+     Punggung buku di kiri. Salinan halaman ditaruh di atas pasal yang baru dirender, lalu
+     tergulung menjadi silinder kertas. Garis lipatan: dot(p, d) = m + s, d = arah gulungan
+     (ke kiri, miring menurut tilt), m = posisi sudut terdepan, s = jarak lipatan dari sudut itu.
+     tilt > 0: sudut bawah-kanan memimpin; tilt < 0: sudut atas-kanan memimpin.
+     Tombol: animasi otomatis. Geser jari: gulungan menempel pada jari. Semua gerak hanya transform. */
   var RM = false; try { RM = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
-  var TURN = null;
+  var TURN = null, SW = null;
+  function EIO(p) { return p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2; }
+  function EO(p) { return 1 - Math.pow(1 - p, 3); }
+  function curMain() { return document.querySelector("#vRead .rmain"); }
+  /* render pasal saat itu juga (animasi butuh hasilnya langsung); hashchange berikutnya dilewati */
+  var SKIP_H = null;
+  function goNow(b, c) {
+    if (NAV_REPLACE) { openRef(b, c); return; }
+    var h = "#" + BOOKS[b].a + "-" + c;
+    showView("read"); renderChapter(b, c, 0);
+    if (location.hash !== h) { SKIP_H = h; location.hash = h; }
+  }
+  function curlLayer(main, masked) {
+    var r = main.getBoundingClientRect(), W = innerWidth, H = innerHeight;
+    var ov = document.createElement("div"), pg = document.createElement("div");
+    ov.className = "curl"; ov.setAttribute("aria-hidden", "true"); pg.className = "curl-p"; pg.style.width = W + "px"; pg.style.height = H + "px";
+    var cl = main.cloneNode(true); Array.prototype.forEach.call(cl.querySelectorAll("[id]"), function (n) { n.removeAttribute("id"); });
+    cl.style.cssText = "position:absolute;margin:0;left:" + r.left + "px;top:" + r.top + "px;width:" + r.width + "px";
+    pg.appendChild(cl);
+    var o = { ov: ov, pg: pg, W: W, H: H, L: Math.ceil(Math.hypot(W, H) * 2) + 8, RW: Math.round(Math.min(160, Math.max(100, W * .32))) };
+    if (!masked) { ov.appendChild(pg); document.body.appendChild(ov); return o; }
+    o.wrap = document.createElement("div"); o.wrap.className = "curl-w"; o.sh = document.createElement("div"); o.sh.className = "curl-s"; o.roll = document.createElement("div"); o.roll.className = "curl-r";
+    o.wrap.style.width = o.wrap.style.height = o.L + "px"; o.roll.style.height = o.L + "px"; o.roll.style.width = o.RW + "px"; o.sh.style.width = Math.round(o.RW * .55) + "px";
+    o.wrap.appendChild(pg); o.wrap.appendChild(o.sh); ov.appendChild(o.wrap); ov.appendChild(o.roll); document.body.appendChild(ov);
+    return o;
+  }
+  function curlGeo(o, tilt) {
+    var dx = -Math.cos(tilt), dy = -Math.sin(tilt), m = Infinity, M = -Infinity, P = null;
+    [[0, 0], [o.W, 0], [0, o.H], [o.W, o.H]].forEach(function (c) { var v = c[0] * dx + c[1] * dy; if (v < m) { m = v; P = c; } if (v > M) M = v; });
+    return { dx: dx, dy: dy, P: P, m: m, end: M - m + o.RW + 40 };
+  }
+  function curlPlace(o, tilt, s) {
+    var g = curlGeo(o, tilt), f = Math.max(0, Math.min(1, s / g.end)), k = .3 + .7 * Math.min(1, f * 2.4), w = o.RW * k;
+    var nx = -g.dy, ny = g.dx, L = o.L, deg = Math.atan2(g.dy, g.dx) * 180 / Math.PI;
+    var Ox = g.P[0] + s * g.dx - L / 2 * nx, Oy = g.P[1] + s * g.dy - L / 2 * ny;
+    o.wrap.style.transform = "translate3d(" + Ox + "px," + Oy + "px,0) rotate(" + deg + "deg)";
+    o.pg.style.transform = "rotate(" + (-deg) + "deg) translate3d(" + (-Ox) + "px," + (-Oy) + "px,0)";
+    o.roll.style.transform = "translate3d(" + (Ox - w * g.dx) + "px," + (Oy - w * g.dy) + "px,0) rotate(" + deg + "deg) scaleX(" + k + ")";
+    o.sh.style.transform = "scaleX(" + k + ")";
+  }
+  function curlRun(o, tiltAt, s0, s1, dur, ease, done) {
+    var t0 = 0;
+    function fr(ts) {
+      if (!t0) t0 = ts;
+      var p = Math.min(1, (ts - t0) / dur), s = s0 + (s1 - s0) * ease(p);
+      curlPlace(o, tiltAt(s), s);
+      if (p < 1) requestAnimationFrame(fr); else done();
+    }
+    requestAnimationFrame(fr);
+  }
+  function curlClean(o, base, done) { requestAnimationFrame(function () { o.ov.remove(); if (base) base.ov.remove(); TURN = null; if (done) done(); }); }
   function turnTo(t, dir, done) {
     if (!t) return;
     if (RM || TURN || S.view !== "read") { openRef(t[0], t[1]); if (done) done(); return; }
-    var main = document.querySelector("#vRead .rmain"), r = main.getBoundingClientRect(), W = innerWidth, H = innerHeight;
-    var ov = document.createElement("div"), wrap = document.createElement("div"), pg = document.createElement("div"), sh = document.createElement("div"), roll = document.createElement("div");
-    ov.className = "curl"; ov.setAttribute("aria-hidden", "true"); wrap.className = "curl-w"; pg.className = "curl-p"; sh.className = "curl-s"; roll.className = "curl-r";
-    var cl = main.cloneNode(true); Array.prototype.forEach.call(cl.querySelectorAll("[id]"), function (n) { n.removeAttribute("id"); });
-    cl.style.cssText = "position:absolute;margin:0;left:" + r.left + "px;top:" + r.top + "px;width:" + r.width + "px";
-    pg.style.width = W + "px"; pg.style.height = H + "px"; pg.appendChild(cl); wrap.appendChild(pg); wrap.appendChild(sh);
-    ov.appendChild(wrap); ov.appendChild(roll); document.body.appendChild(ov);
-    var a = 0.3, dx = dir > 0 ? -Math.cos(a) : Math.cos(a), dy = -Math.sin(a), nx = -dy, ny = dx;
-    var P0x = dir > 0 ? W : 0, P0y = H, deg = Math.atan2(dy, dx) * 180 / Math.PI, L = Math.ceil(Math.hypot(W, H) * 2) + 8;
-    var span = W * Math.cos(a) + H * Math.sin(a), RW = 58, D = 780, t0 = 0;
-    wrap.style.width = wrap.style.height = L + "px"; roll.style.height = L + "px";
-    function place(e) {
-      var w = RW * (.34 + .66 * e), s = e * (span + RW + 30);
-      var Ox = P0x + s * dx - L / 2 * nx, Oy = P0y + s * dy - L / 2 * ny;
-      wrap.style.transform = "translate3d(" + Ox + "px," + Oy + "px,0) rotate(" + deg + "deg)";
-      pg.style.transform = "rotate(" + (-deg) + "deg) translate3d(" + (-Ox) + "px," + (-Oy) + "px,0)";
-      roll.style.transform = "translate3d(" + (Ox - w * dx) + "px," + (Oy - w * dy) + "px,0) rotate(" + deg + "deg) scaleX(" + (w / RW) + ")";
-    }
-    place(0); TURN = ov;
-    openRef(t[0], t[1]);
-    function frame(ts) {
-      if (!t0) t0 = ts;
-      var p = Math.min(1, (ts - t0) / D), e = p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
-      place(e);
-      if (p < 1) requestAnimationFrame(frame); else { ov.remove(); TURN = null; if (done) done(); }
-    }
-    requestAnimationFrame(function () { requestAnimationFrame(frame); });
+    TURN = true;
+    var o, base = null, E, tiltAt;
+    if (dir > 0) { o = curlLayer(curMain(), true); goNow(t[0], t[1]); }
+    else { base = curlLayer(curMain(), false); goNow(t[0], t[1]); o = curlLayer(curMain(), true); }
+    E = curlGeo(o, .1).end;
+    tiltAt = function (s) { return .42 - .32 * Math.min(1, s / E); };
+    var s0 = dir > 0 ? 0 : E, s1 = dir > 0 ? E : 0;
+    curlPlace(o, tiltAt(s0), s0);
+    curlRun(o, tiltAt, s0, s1, 1250, EIO, function () { curlClean(o, base, done); });
   }
+
+  /* geser jari untuk pindah pasal: kiri = berikutnya, kanan = sebelumnya */
+  function swTilt(sw, s) {
+    var t = sw.tb - (sw.y - sw.y0) / sw.o.H * .9; t = Math.max(-.6, Math.min(.6, t));
+    return t * (1 - .55 * Math.min(1, s / sw.E));
+  }
+  function swBegin(sw, dir, t) {
+    TURN = true; sw.on = true; sw.dir = dir; sw.old = [S.b, S.c, scrollY]; sw.base = null;
+    if (dir > 0) { sw.o = curlLayer(curMain(), true); goNow(t[0], t[1]); }
+    else { sw.base = curlLayer(curMain(), false); goNow(t[0], t[1]); sw.o = curlLayer(curMain(), true); }
+    sw.E = curlGeo(sw.o, 0).end; sw.tb = (sw.y0 / sw.o.H - .5) * .8; sw.s = dir > 0 ? 0 : sw.E;
+    curlPlace(sw.o, swTilt(sw, sw.s), sw.s);
+    (function fr() {
+      if (sw.rel) return;
+      var tl = swTilt(sw, sw.s), g = curlGeo(sw.o, tl), tg = sw.x * g.dx + sw.y * g.dy - g.m + sw.o.RW * .45;
+      tg = Math.max(0, Math.min(sw.E, tg)); sw.s += (tg - sw.s) * .32;
+      curlPlace(sw.o, tl, sw.s); requestAnimationFrame(fr);
+    })();
+  }
+  function swRelease() {
+    var sw = SW; SW = null; if (!sw || !sw.on) return; sw.rel = true;
+    var h = sw.hist, a = h[0], b = h[h.length - 1], vx = b[1] - a[1] > 0 ? (b[0] - a[0]) / (b[1] - a[1]) : 0;
+    var fx = sw.x / sw.o.W, go = sw.dir > 0 ? (vx < -.35 || (fx < .55 && vx < .25)) : (vx > .35 || (fx > .45 && vx > -.25));
+    var tb = swTilt(sw, 0), to = (sw.dir > 0) === go ? sw.E : 0, dist = Math.abs(to - sw.s);
+    var dur = Math.max(280, Math.min(750, dist / Math.max(.7, Math.abs(vx))));
+    curlRun(sw.o, function (s) { return tb * (1 - .55 * Math.min(1, s / sw.E)); }, sw.s, to, dur, EO, function () {
+      if (!go) { goNow(sw.old[0], sw.old[1]); window.scrollTo(0, sw.old[2]); }
+      curlClean(sw.o, sw.base);
+    });
+  }
+  $("vRead").addEventListener("touchstart", function (e) {
+    SW = null;
+    if (RM || TURN || e.touches.length > 1 || (e.target.closest && e.target.closest("input,select,textarea,.finder"))) return;
+    var p = e.touches[0], now = performance.now();
+    SW = { x0: p.clientX, y0: p.clientY, x: p.clientX, y: p.clientY, on: false, hist: [[p.clientX, now]] };
+  }, { passive: true });
+  $("vRead").addEventListener("touchmove", function (e) {
+    var sw = SW; if (!sw) return;
+    if (e.touches.length > 1) { if (!sw.on) SW = null; return; }
+    var p = e.touches[0], dx = p.clientX - sw.x0, dy = p.clientY - sw.y0;
+    sw.x = p.clientX; sw.y = p.clientY; sw.hist.push([p.clientX, performance.now()]); if (sw.hist.length > 6) sw.hist.shift();
+    if (!sw.on) {
+      if (Math.abs(dy) > 12 && Math.abs(dy) >= Math.abs(dx)) { SW = null; return; }
+      if (Math.abs(dx) < 14 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+      var dir = dx < 0 ? 1 : -1, t = dir > 0 ? $("next")._t : $("prev")._t;
+      if (!t || TURN) { SW = null; return; }
+      swBegin(sw, dir, t);
+    }
+    if (e.cancelable) e.preventDefault();
+  }, { passive: false });
+  $("vRead").addEventListener("touchend", swRelease);
+  $("vRead").addEventListener("touchcancel", swRelease);
 
   /* ---------- gulir otomatis ----------
      Posisi disimpan sebagai pecahan piksel dan dimajukan tiap frame menurut waktu nyata,
