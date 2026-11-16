@@ -141,10 +141,20 @@
   <button id="pVoice" type="button">Suara</button>
   <button id="pStop" type="button" class="stop">Henti</button>
 </div></div>
-<div class="selbar" id="selbar" hidden><div class="in">
-  <span class="info" id="selInfo"></span>
-  <button id="selCopy">Salin</button><button id="selSr">Soroti</button><button id="selHl">Simpan</button><button id="selClear" aria-label="Batalkan pilihan">Batal</button>
-</div></div>
+<div class="selsheet" id="selbar" role="dialog" aria-label="Pilihan ayat" aria-hidden="true">
+  <div class="ss-grab" aria-hidden="true"><span></span></div>
+  <div class="ss-head"><span class="info" id="selInfo"></span><button class="ib" id="selHide" type="button" aria-label="Sembunyikan panel"><svg class="ico" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button></div>
+  <div class="ss-lab">Soroti dengan warna</div>
+  <div class="ss-colors" id="selColors" role="group" aria-label="Warna sorotan">
+    <button type="button" data-c="y" style="--c:var(--sr-y)" aria-label="Kuning"></button><button type="button" data-c="g" style="--c:var(--sr-g)" aria-label="Hijau"></button><button type="button" data-c="b" style="--c:var(--sr-b)" aria-label="Biru"></button><button type="button" data-c="p" style="--c:var(--sr-p)" aria-label="Merah muda"></button><button type="button" data-c="o" style="--c:var(--sr-o)" aria-label="Oranye"></button><button type="button" class="none" id="selNone" aria-label="Hapus sorotan" hidden><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M6.5 17.5l11-11"/></svg></button>
+  </div>
+  <div class="ss-acts">
+    <button type="button" id="selCopy"><svg class="ico" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg><span>Salin</span></button>
+    <button type="button" id="selShare"><svg class="ico" viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg><span>Bagikan</span></button>
+    <button type="button" id="selHl" aria-pressed="false"><svg class="ico" viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg><span id="selHlT">Simpan</span></button>
+    <button type="button" id="selClear"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg><span>Batal</span></button>
+  </div>
+</div>
 <div class="toast" id="toast" role="status" hidden></div>
 
 <div class="scrim" id="shBooks" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hBooks">

@@ -39,6 +39,8 @@
   /* ---------- state ---------- */
   var S = { view: "home", b: 0, c: 1, sel: [], q: "", mode: "tema", theme: null, moreOpen: false, pendingAI: false, ai: null, histOpen: false };
   var hls = lsGet("evo.hl", {}), sors = lsGet("evo.sor", {});
+  var SR_C = { y: "Kuning", g: "Hijau", b: "Biru", p: "Merah muda", o: "Oranye" };
+  Object.keys(sors).forEach(function (k) { if (!SR_C[sors[k]]) sors[k] = "y"; });
   var settings = lsGet("evo.set", { fs: 21, theme: "auto" });
   if (!settings.cal) settings.cal = "protestan";
   if (!settings.sea) settings.sea = "on";
@@ -756,7 +758,7 @@ var ORN = {
   function renderSorot(seg) {
     var ids = keyIds(sors);
     $("svCopy").hidden = !ids.length;
-    $("svBody").innerHTML = seg + (ids.length ? '<div class="found">' + ids.length + " ayat disorot</div>" + ids.map(function (id) { return card(id, null, null).replace("Mengandung kata Anda", esc(BOOKS[bOf[id]].n)); }).join("") :
+    $("svBody").innerHTML = seg + (ids.length ? '<div class="found">' + ids.length + " ayat disorot</div>" + ids.map(function (id) { return card(id, null, null).replace("Mengandung kata Anda", esc(BOOKS[bOf[id]].n)).replace('class="rcard"', 'class="rcard" style="border-left:6px solid var(--sr-' + (sors[keyOf(id)] || "y") + ')"'); }).join("") :
       '<div class="empty"><p style="margin:0 0 6px;font-weight:700;color:var(--fg)">Belum ada ayat yang disorot</p>Saat membaca, ketuk sebuah ayat lalu pilih Soroti. Sorotan menandai ayat yang penting atau sudah Anda baca, dan selalu terlihat saat pasal itu dibuka.</div>');
     $("svBody").dataset.ids = ids.join(",");
   }
@@ -797,7 +799,7 @@ var ORN = {
     ch.v.forEach(function (raw, i) {
       var n = i + 1, brk = i === 0 || raw.charAt(0) === "¶" || h[i] !== undefined;
       if (brk) { if (op) html += "</p>"; if (h[i] !== undefined) html += "<h3>" + esc(h[i]) + "</h3>"; html += "<p>"; op = true; }
-      html += '<span class="v' + (hls[b + ":" + c + ":" + n] ? " hl" : "") + (sors[b + ":" + c + ":" + n] ? " sr" : "") + '" data-v="' + n + '" id="v' + n + '"><b class="vn">' + n + "</b>" + esc(plain(raw)) + " </span>";
+      html += '<span class="v' + (hls[b + ":" + c + ":" + n] ? " hl" : "") + (sors[b + ":" + c + ":" + n] ? " sr sr-" + sors[b + ":" + c + ":" + n] : "") + '" data-v="' + n + '" id="v' + n + '"><b class="vn">' + n + "</b>" + esc(plain(raw)) + " </span>";
     });
     if (op) html += "</p>";
     $("text").innerHTML = html;
@@ -821,36 +823,54 @@ var ORN = {
     var v = e.target.closest(".v"); if (!v) return;
     var n = +v.dataset.v, i = S.sel.indexOf(n);
     if (S.quiet) { S.quiet = false; if (i >= 0) { updateSel(); return; } }
-    if (i >= 0) { S.sel.splice(i, 1); v.classList.remove("sel"); } else { S.sel.push(n); v.classList.add("sel"); }
+    if (i >= 0) { S.sel.splice(i, 1); v.classList.remove("sel"); } else { S.sel.push(n); v.classList.add("sel"); } S.selHidden = false;
     updateSel();
   });
-  function clearSel(silent) { S.sel = []; S.quiet = false; Array.prototype.forEach.call(document.querySelectorAll(".v.sel"), function (el) { el.classList.remove("sel"); }); if (silent) $("selbar").hidden = true; else updateSel(); }
+  function clearSel(silent) { S.sel = []; S.quiet = false; Array.prototype.forEach.call(document.querySelectorAll(".v.sel"), function (el) { el.classList.remove("sel"); }); if (silent) { $("selbar").classList.remove("on"); document.body.classList.remove("selopen"); } else updateSel(); }
   function rangeStr(nums) { var s = nums.slice().sort(function (a, b) { return a - b; }), out = [], i = 0; while (i < s.length) { var j = i; while (j + 1 < s.length && s[j + 1] === s[j] + 1) j++; out.push(j > i ? s[i] + "-" + s[j] : String(s[i])); i = j + 1; } return out.join(","); }
   function updateSel() {
-    var n = S.sel.length; $("selbar").hidden = n === 0 || !!S.quiet; if (!n) return;
-    $("selInfo").textContent = n + " ayat dipilih";
+    var n = S.sel.length, on = n > 0 && !S.quiet && !S.selHidden, sh = $("selbar");
+    sh.classList.toggle("on", on); sh.setAttribute("aria-hidden", String(!on)); document.body.classList.toggle("selopen", on);
+    if (!n) { S.selHidden = false; return; }
+    var srt = S.sel.slice().sort(function (a, b) { return a - b; });
+    $("selInfo").textContent = BOOKS[S.b].n + " " + S.c + ":" + rangeStr(srt) + (n > 1 ? " · " + n + " ayat" : "");
     var allHl = S.sel.every(function (v) { return hls[S.b + ":" + S.c + ":" + v]; });
-    $("selHl").textContent = allHl ? "Hapus simpanan" : "Simpan";
-    var allSr = S.sel.every(function (v) { return sors[S.b + ":" + S.c + ":" + v]; });
-    $("selSr").textContent = allSr ? "Hapus sorotan" : "Soroti";
+    $("selHlT").textContent = allHl ? "Hapus simpan" : "Simpan";
+    $("selHl").setAttribute("aria-pressed", String(allHl));
+    var cs = S.sel.map(function (v) { return sors[S.b + ":" + S.c + ":" + v] || ""; }), same = cs.every(function (c) { return c === cs[0]; }) ? cs[0] : "";
+    Array.prototype.forEach.call($("selColors").querySelectorAll("[data-c]"), function (b) { b.setAttribute("aria-pressed", String(!!same && b.dataset.c === same)); });
+    $("selNone").hidden = !cs.some(Boolean);
   }
   $("selClear").onclick = function () { clearSel(); };
+  $("selHide").onclick = function () { S.selHidden = true; updateSel(); };
   $("selHl").onclick = function () {
     var allHl = S.sel.every(function (v) { return hls[S.b + ":" + S.c + ":" + v]; });
     S.sel.forEach(function (v) { var k = S.b + ":" + S.c + ":" + v; if (allHl) delete hls[k]; else hls[k] = 1; $("v" + v).classList.toggle("hl", !allHl); });
     var ks = S.sel.map(function (v) { return S.b + ":" + S.c + ":" + v; }); cloudHl(allHl ? [] : ks, allHl ? ks : []);
     lsSet("evo.hl", hls); toast(allHl ? "Simpanan dihapus" : "Ayat disimpan"); clearSel();
   };
-  $("selSr").onclick = function () {
-    var vs = S.sel.slice(), ks = vs.map(function (v) { return S.b + ":" + S.c + ":" + v; }), allSr = ks.every(function (k) { return sors[k]; });
-    ks.forEach(function (k, i) { if (allSr) delete sors[k]; else sors[k] = 1; var el = $("v" + vs[i]); if (el) el.classList.toggle("sr", !allSr); });
-    lsSet("evo.sor", sors); cloudSor(allSr ? [] : ks, allSr ? ks : []); toast(allSr ? "Sorotan dihapus" : "Ayat disorot"); clearSel();
+  function srClass(el, c) { el.className = el.className.replace(/\s*\bsr(-[a-z])?\b/g, ""); if (c) el.classList.add("sr", "sr-" + c); }
+  $("selColors").onclick = function (e) {
+    var bt = e.target.closest("button"); if (!bt || !S.sel.length) return;
+    var c = bt.dataset.c || "", vs = S.sel.slice(), ks = vs.map(function (v) { return S.b + ":" + S.c + ":" + v; });
+    ks.forEach(function (k, i) { if (c) sors[k] = c; else delete sors[k]; var el = $("v" + vs[i]); if (el) srClass(el, c); });
+    lsSet("evo.sor", sors); cloudSor(c ? ks : [], c ? [] : ks, c); toast(c ? "Disorot " + SR_C[c].toLowerCase() : "Sorotan dihapus"); clearSel();
   };
-  $("selCopy").onclick = function () {
+  function selText() {
     var s = S.sel.slice().sort(function (a, b) { return a - b; }), bk = BOOKS[S.b], ch = bk.ch[S.c - 1];
     var body = s.map(function (n) { var t = clean(ch.v[n - 1]); return s.length > 1 ? n + " " + t : t; }).join("\n");
-    copyText(body + "\n\n" + bk.n + " " + S.c + ":" + rangeStr(s) + " (AYT)"); clearSel();
-  };
+    return body + "\n\n" + bk.n + " " + S.c + ":" + rangeStr(s) + " (AYT)";
+  }
+  $("selCopy").onclick = function () { copyText(selText()); clearSel(); };
+  $("selShare").onclick = function () { var t = selText(); if (navigator.share) navigator.share({ text: t }).catch(function () {}); else copyText(t); clearSel(); };
+  (function () {
+    // geser panel ke bawah untuk menyembunyikan
+    var sh = $("selbar"), y0 = null, dy = 0, pid = null;
+    sh.addEventListener("pointerdown", function (e) { if (e.target.closest("button")) return; y0 = e.clientY; dy = 0; pid = e.pointerId; sh.classList.add("drag"); try { sh.setPointerCapture(pid); } catch (x) {} });
+    sh.addEventListener("pointermove", function (e) { if (y0 === null) return; dy = Math.max(0, e.clientY - y0); sh.style.transform = "translateY(" + dy + "px)"; });
+    function up() { if (y0 === null) return; y0 = null; sh.classList.remove("drag"); sh.style.transform = ""; if (dy > 60) { S.selHidden = true; updateSel(); } }
+    sh.addEventListener("pointerup", up); sh.addEventListener("pointercancel", up);
+  })();
 
   /* ---------- pilih kitab ---------- */
   var tab = 0, pick = -1, fmode = false, bq = "";
@@ -1096,10 +1116,10 @@ var ORN = {
   function cloudJr(e) { if (sb && user && e && e.id) sb.from("jurnal_doa").upsert([jrow(e)], { onConflict: "id", ignoreDuplicates: true }).then(noop, noop); }
   function cloudJrDel(id) { if (!sb || !user || !id) return; sb.from("jurnal_doa").delete().eq("id", id).then(function (r) { if (r && r.error) throw r.error; }).then(noop, function () { var P = pend(); P.jr.push(id); lsSet("evo.pend", P); }); }
   function validKey(k) { var q = String(k).split(":").map(Number), bk = BOOKS[q[0]], ch = bk && bk.ch[q[1] - 1]; return !!(ch && q[2] >= 1 && q[2] <= ch.v.length); }
-  function markChapter() { if (S.view !== "read") return; Array.prototype.forEach.call(document.querySelectorAll("#vRead .v[data-v]"), function (el) { var k = S.b + ":" + S.c + ":" + el.dataset.v; el.classList.toggle("hl", !!hls[k]); el.classList.toggle("sr", !!sors[k]); }); }
-  function cloudSor(add, del) {
+  function markChapter() { if (S.view !== "read") return; Array.prototype.forEach.call(document.querySelectorAll("#vRead .v[data-v]"), function (el) { var k = S.b + ":" + S.c + ":" + el.dataset.v; el.classList.toggle("hl", !!hls[k]); srClass(el, sors[k] || ""); }); }
+  function cloudSor(add, del, c) {
     if (!sb || !user) return;
-    if (add.length) sb.from("sorotan").upsert(add.map(function (k) { return { user_id: user.id, kunci: k }; }), { onConflict: "user_id,kunci", ignoreDuplicates: true }).then(noop, noop);
+    if (add.length) sb.from("sorotan").upsert(add.map(function (k) { return { user_id: user.id, kunci: k, warna: c || sors[k] || "y" }; }), { onConflict: "user_id,kunci" }).then(noop, noop);
     if (del.length) sb.from("sorotan").delete().eq("user_id", user.id).in("kunci", del).then(function (r) { if (r && r.error) throw r.error; }).then(noop, function () { var P = pend(); P.sr = P.sr.concat(del); lsSet("evo.pend", P); });
   }
   function syncAll() {
@@ -1116,16 +1136,16 @@ var ORN = {
         sb.from("profiles").select("tradisi").eq("id", uid).maybeSingle(),
         sb.from("ayat_tersimpan").select("kunci"),
         sb.from("jurnal_doa").select("id,dibuat,cerita,data").order("dibuat", { ascending: false }).limit(500),
-        sb.from("sorotan").select("kunci")
+        sb.from("sorotan").select("kunci,warna")
       ]);
     }).then(function (res) {
       var err = res[0].error || res[1].error || res[2].error || res[3].error; if (err) throw err;
       var remote = {}; res[1].data.forEach(function (r) { if (!skipHl[r.kunci] && validKey(r.kunci)) remote[r.kunci] = 1; });
       var up = Object.keys(hls).filter(function (k) { return !remote[k]; });
       Object.keys(remote).forEach(function (k) { hls[k] = 1; }); lsSet("evo.hl", hls);
-      var rs = {}; res[3].data.forEach(function (r) { if (!skipSr[r.kunci] && validKey(r.kunci)) rs[r.kunci] = 1; });
+      var rs = {}; res[3].data.forEach(function (r) { if (!skipSr[r.kunci] && validKey(r.kunci)) rs[r.kunci] = SR_C[r.warna] ? r.warna : "y"; });
       var upS = Object.keys(sors).filter(function (k) { return !rs[k]; });
-      Object.keys(rs).forEach(function (k) { sors[k] = 1; }); lsSet("evo.sor", sors);
+      Object.keys(rs).forEach(function (k) { sors[k] = rs[k]; }); lsSet("evo.sor", sors);
       var J = journal(), have = {};
       J.forEach(function (e) { if (!e.id) e.id = uuid(); have[e.id] = 1; });
       var rj = {};
@@ -1134,7 +1154,7 @@ var ORN = {
       J.sort(function (a, b) { return b.t - a.t; }); lsSet("evo.jurnal", J.slice(0, 500));
       var jobs = [];
       if (up.length) jobs.push(sb.from("ayat_tersimpan").upsert(up.map(function (k) { return { user_id: uid, kunci: k }; }), { onConflict: "user_id,kunci", ignoreDuplicates: true }));
-      if (upS.length) jobs.push(sb.from("sorotan").upsert(upS.map(function (k) { return { user_id: uid, kunci: k }; }), { onConflict: "user_id,kunci", ignoreDuplicates: true }));
+      if (upS.length) jobs.push(sb.from("sorotan").upsert(upS.map(function (k) { return { user_id: uid, kunci: k, warna: sors[k] || "y" }; }), { onConflict: "user_id,kunci", ignoreDuplicates: true }));
       if (upJ.length) jobs.push(sb.from("jurnal_doa").upsert(upJ.map(jrow), { onConflict: "id", ignoreDuplicates: true }));
       var tr = res[0].data && res[0].data.tradisi;
       if (tr === "katolik" || tr === "protestan") { if (settings.cal !== tr) { settings.cal = tr; lsSet("evo.set", settings); syncSeasonUI(); refreshSeason(); } }
