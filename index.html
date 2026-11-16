@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>EvoBible</title>
 <meta name="description" content="Alkitab Indonesia (AYT) dengan pencarian ayat berdasarkan perasaan. Bisa dibaca tanpa internet.">
 <meta name="theme-color" content="#2f66f5" media="(prefers-color-scheme: light)">
@@ -201,6 +201,14 @@
     <button class="txtbtn" type="button" data-close>Nanti saja</button>
   </div>
 </div></div>
+<div class="scrim" id="shExit" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hExit">
+  <div class="sh-head"><h2 id="hExit">Keluar?</h2></div>
+  <div class="sh-body">
+    <p class="trad-q">Tutup aplikasi EvoBible?</p>
+    <div class="exit-opts"><button class="btn sec" type="button" data-close>Tidak</button><button class="btn pri" type="button" data-exit="1">Ya</button></div>
+  </div>
+</div></div>
+
 <script src="data.js"></script>
 <script src="engine.js"></script>
 <script src="engine-core.js"></script>

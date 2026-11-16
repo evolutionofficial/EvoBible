@@ -588,3 +588,9 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .trad-q { margin: 0 0 14px; font-size: 17px; line-height: 1.5; }
 .trad-opts { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
 .trad-opts .btn { min-height: 56px; font-size: 17px; }
+/* ---- tanpa zoom ketuk-dua-kali / cubit (sama dengan Evo Lirik), tanpa navigasi swipe samping ---- */
+html, body { touch-action: pan-x pan-y; overscroll-behavior-x: none; }
+button, a, input, select, textarea, .rcard, .v, .tab { touch-action: manipulation; }
+.exit-opts { display: flex; gap: 10px; }
+.exit-opts .btn { flex: 1; min-height: 56px; font-size: 17px; }
+.exit-opts .btn { display: flex; align-items: center; justify-content: center; height: 56px; padding: 0 16px; margin: 0; }
