@@ -613,7 +613,8 @@ var ORN = {
     $("mode").parentNode.hidden = true;
     $("q").placeholder = m === "kata" ? "Cari kata persis, misalnya: gembala" : "Ceritakan isi hatimu, atau ketik ayat (Yoh 3:16)";
     $("q").setAttribute("aria-label", m === "kata" ? "Cari kata persis" : "Ceritakan isi hatimu");
-    document.querySelector("#sForm .gobtn").textContent = m === "kata" ? "Cari" : "Renungan";
+    var gb = document.querySelector("#sForm .gobtn"); gb.classList.toggle("ai", m !== "kata");
+    gb.innerHTML = m === "kata" ? '<svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Cari</span>' : GO_SPARK + "<span>Renungan</span>";
   }
   function syncMode() { Array.prototype.forEach.call($("mode").children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.m === S.mode)); }); $("qclr").hidden = !$("q").value; }
   $("mode").onclick = function (e) { var m = e.target.dataset && e.target.dataset.m; if (!m) return; S.mode = m; S.theme = null; S.pendingAI = false; syncMode(); renderSearch(); };
@@ -644,6 +645,7 @@ var ORN = {
   function hilite(t, re) { var s = clean(t); if (!re) return esc(s); var out = "", last = 0, m; re.lastIndex = 0; while ((m = re.exec(s))) { if (!m[0]) { re.lastIndex++; continue; } out += esc(s.slice(last, m.index)) + "<mark>" + esc(m[0]) + "</mark>"; last = m.index + m[0].length; } return out + esc(s.slice(last)); }
   var SAVE_I = '<svg class="ico" viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>';
   var COPY_I = '<svg class="ico" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>';
+  var GO_SPARK = '<svg class="ico" viewBox="0 0 24 24"><path d="M12 3c.6 4.3 2.7 6.4 7 7-4.3.6-6.4 2.7-7 7-.6-4.3-2.7-6.4-7-7 4.3-.6 6.4-2.7 7-7z"/><path d="M19 15.5c.25 1.6 1 2.35 2.5 2.5-1.5.25-2.25 1-2.5 2.5-.25-1.5-1-2.25-2.5-2.5 1.5-.15 2.25-.9 2.5-2.5z"/></svg>';
   var IMG_I = '<svg class="ico" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg>';
   function imgVerse(id) { if (window.EvoGambar) EvoGambar.open({ text: clean(texts[id]), ref: refOf(id), toast: toast }); }
   function card(id, why, re, alasan) {
@@ -1123,7 +1125,7 @@ var ORN = {
       + '<input class="fn fv1" data-k="v1" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="Ayat" aria-label="Ayat" enterkeyhint="go">'
       + '<i class="dash">\u2013</i>'
       + '<input class="fn fv2" data-k="v2" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="s/d" aria-label="Sampai ayat" enterkeyhint="go">'
-      + '</div><button class="fgo" type="submit">Buka ayat</button></form>';
+      + '</div><button class="fgo" type="submit"><svg class="ico" viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg><span>Buka ayat</span></button></form>';
   }
   function visibleFinder() { var l = document.querySelectorAll(".finder"); for (var i = 0; i < l.length; i++) if (l[i].offsetParent !== null) return l[i]; return null; }
   function syncFinders() {

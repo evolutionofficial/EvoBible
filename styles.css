@@ -1052,3 +1052,43 @@ body.autoscroll main.inner { padding-bottom: 96px; }
 .autobtn .ico { width: 18px; height: 18px; stroke: currentColor; }
 
 #prev, #next { touch-action: manipulation; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
+
+/* ---- tombol utama "permata": gradasi warna masa liturgi, kilap kaca, tepi bercahaya ---- */
+:root { --pb: var(--s1, #1d4ff0); }
+.btn.pri, .fgo, .gobtn {
+  --pb-hi: color-mix(in srgb, var(--pb) 74%, #fff); --pb-lo: color-mix(in srgb, var(--pb) 70%, #000);
+  position: relative; overflow: hidden; isolation: isolate; color: #fff; font-weight: 800; letter-spacing: .01em; border: 0;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-shadow: 0 1px 1px rgba(0, 0, 0, .28);
+  background:
+    radial-gradient(120% 95% at 28% -25%, rgba(255, 255, 255, .42), rgba(255, 255, 255, 0) 58%),
+    linear-gradient(160deg, var(--pb-hi) 0%, var(--pb) 46%, var(--pb-lo) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), inset 0 0 0 1px rgba(255, 255, 255, .14), inset 0 -3px 8px rgba(0, 0, 0, .2),
+    0 1px 2px rgba(0, 0, 0, .18), 0 12px 24px -12px color-mix(in srgb, var(--pb) 85%, #000);
+  transition: transform .15s ease, filter .15s ease, box-shadow .2s ease; }
+.btn.pri:hover, .fgo:hover, .gobtn:hover { filter: brightness(1.07) saturate(1.05); }
+.btn.pri:active, .fgo:active, .gobtn:active { transform: scale(.97); filter: brightness(.96); }
+.btn.pri .ico, .fgo .ico, .gobtn .ico { width: 19px; height: 19px; flex: none; stroke: currentColor; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .25)); }
+.fgo { display: flex; width: 100%; }
+/* mode gelap: tetap pekat dengan teks putih, plus cahaya lembut di sekelilingnya */
+:root[data-theme="dark"] .btn.pri, :root[data-theme="dark"] .fgo, :root[data-theme="dark"] .gobtn { --pb-hi: color-mix(in srgb, var(--pb) 80%, #fff); --pb-lo: color-mix(in srgb, var(--pb) 62%, #000);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4), inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent), inset 0 -3px 8px rgba(0, 0, 0, .25), 0 0 22px -6px color-mix(in srgb, var(--accent) 55%, transparent), 0 12px 24px -12px #000; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.pri, :root:not([data-theme="light"]) .fgo, :root:not([data-theme="light"]) .gobtn { --pb-hi: color-mix(in srgb, var(--pb) 80%, #fff); --pb-lo: color-mix(in srgb, var(--pb) 62%, #000);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4), inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent), inset 0 -3px 8px rgba(0, 0, 0, .25), 0 0 22px -6px color-mix(in srgb, var(--accent) 55%, transparent), 0 12px 24px -12px #000; } }
+/* tombol Renungan (AI): gradasi ke warna kedua masa liturgi, ikon kilau, kilatan cahaya seirama lampu kolom */
+.gobtn.ai { background:
+    radial-gradient(120% 95% at 28% -25%, rgba(255, 255, 255, .42), rgba(255, 255, 255, 0) 58%),
+    linear-gradient(120deg, var(--pb-lo) 0%, var(--pb) 42%, color-mix(in srgb, var(--pb) 62%, var(--s2, #5fd0ff)) 100%); }
+.gobtn.ai .ico { fill: currentColor; stroke: none; width: 18px; height: 18px; }
+.gobtn.ai::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, .5) 50%, transparent 62%) no-repeat; background-size: 260% 100%; background-position: 160% 0;
+  animation: goShine 3.2s ease-in-out infinite; }
+@keyframes goShine { 0%, 55% { background-position: 160% 0; } 100% { background-position: -60% 0; } }
+@media (prefers-reduced-motion: reduce) { .gobtn.ai::after { animation: none; opacity: 0; } }
+.gobtn { padding: 0 15px; }
+/* kolom "Bagaimana harimu?": kaca pembesar dibuang (ini bukan pencarian), ruang dipakai untuk tombol */
+#homeForm > .ico { display: none; }
+#homeForm input { padding-left: 18px; padding-right: 156px; }
+#homeForm .clr { right: 146px; }
+#sForm input { padding-right: 178px; }
+.sfield .gobtn .ico { position: static; left: auto; color: inherit; }
+.sfield .gobtn { position: absolute; right: 7px; left: auto; }
