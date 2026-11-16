@@ -497,7 +497,7 @@ var ORN = {
 
   /* ---------- sheets ---------- */
   function show(id) { hide(); $(id).hidden = false; open = id; }
-  function hide() { ["shBooks", "shSet", "shVoice", "shCat", "shSeason", "shTrad"].forEach(function (i) { $(i).hidden = true; }); open = null; }
+  function hide() { ["shBooks", "shSet", "shVoice", "shCat", "shSeason", "shTrad", "shExit"].forEach(function (i) { $(i).hidden = true; }); open = null; }
   document.addEventListener("click", function (e) {
     if (e.target.closest("[data-close]")) hide(); else if (e.target.classList && e.target.classList.contains("scrim")) hide();
   });
@@ -506,8 +506,8 @@ var ORN = {
   /* ---------- routing ---------- */
   var VIEWS = { home: "vHome", search: "vSearch", read: "vRead", saved: "vSaved", church: "vChurch" };
   var NAMES = { home: "beranda", search: "cari", read: "baca", saved: "tersimpan", church: "gereja" };
-  function go(v) { var h = NAMES[v]; if (location.hash.slice(1) === h) route(); else location.hash = h; }
-  function openRef(b, c, v, v2) { var h = BOOKS[b].a + "-" + c + (v ? "-" + v + (v2 && v2 >= v ? "-" + v2 : "") : ""); if (location.hash.slice(1) === h) route(); else location.hash = h; }
+  function go(v) { var h = NAMES[v]; if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
+  function openRef(b, c, v, v2) { var h = BOOKS[b].a + "-" + c + (v ? "-" + v + (v2 && v2 >= v ? "-" + v2 : "") : ""); if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
   function showView(v) {
     S.view = v;
     Object.keys(VIEWS).forEach(function (k) { $(VIEWS[k]).hidden = k !== v; });
@@ -529,7 +529,7 @@ var ORN = {
     if (h === "baca") { var last = lsGet("evo.last", { b: 0, c: 1 }); if (!BOOKS[last.b] || !BOOKS[last.b].ch[last.c - 1]) last = { b: 0, c: 1 }; showView("read"); renderChapter(last.b, last.c, 0); return; }
     showView("home"); renderHome(); window.scrollTo(0, 0);
   }
-  window.addEventListener("hashchange", route);
+  window.addEventListener("hashchange", function () { if (!NAV_REPLACE) route(); });
   $("tabs").onclick = function (e) { var t = e.target.closest(".tab"); if (t) go(t.dataset.v); };
 
   /* ---------- beranda ---------- */
@@ -1119,6 +1119,41 @@ var ORN = {
     window.addEventListener("online", function () { if (user) syncAll(); });
     fetch(SB_URL + "/auth/v1/settings", { headers: { apikey: SB_KEY } }).then(function (r) { return r.json(); }).then(function (j) { googleOn = !!(j && j.external && j.external.google); renderAkun(); if (S.view === "saved") renderSaved(); }, noop);
   }
+
+  /* ---------- tombol Back (Android / aplikasi terpasang) dan swipe-back ----------
+     Pola sama dengan Evo Lirik: Back menutup panel, lalu naik ke Beranda, dan di Beranda bertanya "Keluar?".
+     Di iPhone tidak ada penjaga (swipe tepi akan memperlihatkan halaman penjaga); cukup navigasi tanpa riwayat
+     sehingga swipe-back tidak berpindah-pindah halaman. */
+  var IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  var BACK_GUARD = false;
+  try { BACK_GUARD = !IOS && !!history.pushState && (isStandalone() || /Android/i.test(navigator.userAgent)); } catch (e) {}
+  var NAV_REPLACE = BACK_GUARD || IOS, curHash = location.hash;
+  (function () {
+    if (!BACK_GUARD) return;
+    var exiting = false, L0 = history.length, needTouch = false;
+    function arm() { try { history.pushState({ evo: 1 }, "", location.pathname + location.search + curHash); } catch (e) {} }
+    try { history.replaceState({ evo: 0 }, "", location.href); arm(); } catch (e) { return; }
+    needTouch = true;
+    // Chrome melewati entri riwayat yang dibuat tanpa sentuhan; jadi penjaga dipasang ulang pada sentuhan berikutnya.
+    function touchArm() { if (exiting || !needTouch) return; var ua = navigator.userActivation; if (ua && !ua.isActive) return; needTouch = false; arm(); }
+    ["pointerup", "touchend", "click", "keydown"].forEach(function (ev) { addEventListener(ev, touchArm, { capture: true, passive: true }); });
+    function goBack() {
+      if (open) { hide(); return; }
+      if (S.view === "read" && S.sel.length) { clearSel(); return; }
+      if (S.view === "search" && S.theme) { S.theme = null; renderSearch(); window.scrollTo(0, 0); return; }
+      if (S.view !== "home") { go("home"); return; }
+      show("shExit");
+    }
+    addEventListener("popstate", function () { if (exiting) return; arm(); needTouch = true; goBack(); });
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest("[data-exit]")) return;
+      exiting = true; hide();
+      try { history.go(-Math.max(2, history.length - L0 + 1)); } catch (x) {}
+      setTimeout(function () { try { window.close(); } catch (y) {} }, 400);
+    });
+  })();
+  /* Safari mengabaikan user-scalable=no: blokir hanya gesture zoom halaman */
+  document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
 
   if ("serviceWorker" in navigator && location.protocol !== "file:") { window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); }); }
 
