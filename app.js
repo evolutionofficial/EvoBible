@@ -457,7 +457,7 @@ var ORN = {
     return out;
   }
   function katVotd(g) {
-    return '<div class="lab">Injil hari ini · bacaan Misa</div><p class="vt">' + esc(katText(g, 230)) + '</p><div class="vr">' + esc(g.label) + '</div><div class="acts"><button data-kat="read">Baca dan dengarkan</button><button data-kat="copy">Salin</button><button data-mkimg="1">Buat gambar</button></div>';
+    return '<div class="lab">Injil hari ini · bacaan Misa</div><p class="vt">' + esc(katText(g, 230)) + '</p><div class="vr">' + esc(g.label) + '</div><div class="acts icons"><button data-kat="read" aria-label="Baca dan dengarkan" title="Baca dan dengarkan"><svg class="ico" viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg></button><button data-kat="copy" aria-label="Salin" title="Salin"><svg class="ico" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button><button data-mkimg="1" aria-label="Buat gambar" title="Buat gambar"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg></button></div>';
   }
   function applySeason() {
     var id = activeSeasonId(), root = document.documentElement;
@@ -563,7 +563,7 @@ var ORN = {
   function renderHome() {
     $("greet").textContent = greeting();
     var id = votdId(), th = themeOfVerse(id);
-    $("votd").innerHTML = '<div class="lab">Ayat hari ini' + (th ? " · " + esc(th.n) : "") + '</div><p class="vt">' + esc(clean(texts[id])) + '</p><div class="vr">' + esc(refOf(id)) + '</div><div class="acts"><button data-act="read" data-id="' + id + '">Baca pasalnya</button><button data-act="copy" data-id="' + id + '">Salin</button><button data-mkimg="1">Buat gambar</button></div>' + (activeSeasonId() ? '<div class="orn">' + ornSvg(activeSeasonId()) + "</div>" : "");
+    $("votd").innerHTML = '<div class="lab">Ayat hari ini' + (th ? " · " + esc(th.n) : "") + '</div><p class="vt">' + esc(clean(texts[id])) + '</p><div class="vr">' + esc(refOf(id)) + '</div><div class="acts icons"><button data-act="read" data-id="' + id + '" aria-label="Baca pasalnya" title="Baca pasalnya"><svg class="ico" viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg></button><button data-act="copy" data-id="' + id + '" aria-label="Salin" title="Salin"><svg class="ico" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button><button data-mkimg="1" aria-label="Buat gambar" title="Buat gambar"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg></button></div>' + (activeSeasonId() ? '<div class="orn">' + ornSvg(activeSeasonId()) + "</div>" : "");
     var kg = settings.cal === "katolik" ? katToday() : null;
     if (kg) { $("votd").innerHTML = katVotd(kg) + (activeSeasonId() ? '<div class="orn">' + ornSvg(activeSeasonId()) + "</div>" : ""); $("votd").dataset.kat = "1"; } else delete $("votd").dataset.kat;
     var last = lsGet("evo.last", null), cont = $("cont");
