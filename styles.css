@@ -976,3 +976,15 @@ body.selopen #text { padding-bottom: 170px; }
 }
 .seg button[aria-pressed="true"] { background-color: rgba(255, 255, 255, .32); }
 .bar, .bar.line { box-shadow: inset 0 -1px 0 rgba(255, 255, 255, .25), 0 1px 0 rgba(0, 0, 0, .05); }
+
+/* =====================================================================
+   Panel di atas konten: konten di belakangnya selalu diburamkan
+   ===================================================================== */
+.scrim { background: rgba(10, 12, 16, .28); -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%); }
+.drawer { background-color: var(--glass-hi); background-image: var(--glass-sheen); border: 0; box-shadow: var(--rim-glow), 0 22px 50px -20px rgba(0, 0, 0, .45); }
+.selsheet { -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .scrim { background: rgba(10, 12, 16, .55); }
+  .drawer, .sheet, .selsheet { background-color: var(--bg); }
+}
+.drverse .lab, .drhead .tag { text-transform: none; letter-spacing: 0; font-weight: 600; font-size: 15px; }
