@@ -866,3 +866,43 @@ html::before {
 :root[data-theme="dark"] .seg button[aria-pressed="true"] { background-color: rgba(255, 255, 255, .12); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .seg button[aria-pressed="true"] { background-color: rgba(255, 255, 255, .12); } }
 .scrim { background: rgba(10, 12, 16, .18); }
+
+/* =====================================================================
+   Stabilo lebih terang + panel ayat ringkas (dua baris, ikon saja)
+   ===================================================================== */
+.v.sr-y { background: rgba(255, 214, 10, .62); }
+.v.sr-g { background: rgba(52, 199, 89, .46); }
+.v.sr-b { background: rgba(76, 157, 255, .46); }
+.v.sr-p { background: rgba(255, 111, 177, .46); }
+.v.sr-o { background: rgba(255, 159, 10, .55); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .v.sr-y { background: rgba(255, 214, 10, .4); }
+  :root:not([data-theme="light"]) .v.sr-g { background: rgba(52, 199, 89, .4); }
+  :root:not([data-theme="light"]) .v.sr-b { background: rgba(76, 157, 255, .42); }
+  :root:not([data-theme="light"]) .v.sr-p { background: rgba(255, 111, 177, .4); }
+  :root:not([data-theme="light"]) .v.sr-o { background: rgba(255, 159, 10, .42); }
+}
+:root[data-theme="dark"] .v.sr-y { background: rgba(255, 214, 10, .4); }
+:root[data-theme="dark"] .v.sr-g { background: rgba(52, 199, 89, .4); }
+:root[data-theme="dark"] .v.sr-b { background: rgba(76, 157, 255, .42); }
+:root[data-theme="dark"] .v.sr-p { background: rgba(255, 111, 177, .4); }
+:root[data-theme="dark"] .v.sr-o { background: rgba(255, 159, 10, .42); }
+.v.sr.sel, .v.sel { background: var(--sel); }
+
+.selsheet { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "grab grab" "info acts" "colors hide"; column-gap: 8px; row-gap: 4px; padding: 0 14px calc(10px + env(safe-area-inset-bottom, 0px)); border-radius: 26px 26px 0 0; }
+.ss-grab { grid-area: grab; padding: 6px 0 2px; }
+.ss-grab span { width: 36px; height: 4px; }
+.ss-head { display: contents; }
+.ss-head .info { grid-area: info; align-self: center; font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#selHide { grid-area: hide; width: 44px; height: 44px; align-self: center; }
+.ss-lab { display: none; }
+.ss-colors { grid-area: colors; margin: 0; gap: 10px; flex-wrap: nowrap; min-height: 44px; }
+.ss-colors button { width: 32px; height: 32px; border-width: 1.5px; }
+.ss-colors button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--fg); }
+.ss-colors .none .ico { width: 18px; height: 18px; }
+.ss-acts { grid-area: acts; display: flex; gap: 4px; }
+.ss-acts button { width: 44px; height: 44px; min-height: 0; padding: 0; border-radius: 50%; gap: 0; }
+.ss-acts button .ico { width: 21px; height: 21px; }
+.ss-acts button span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+body.selopen #text { padding-bottom: 170px; }
+#selHide { justify-self: end; }
