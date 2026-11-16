@@ -600,3 +600,33 @@ button, a, input, select, textarea, .rcard, .v, .tab { touch-action: manipulatio
 .svseg { display: flex; margin: 4px 0 16px; }
 .svseg button { flex: 1; min-height: 48px; font-size: 16px; }
 @media (max-width: 420px) { .selbar button { padding: 0 12px; } .selbar .in { max-width: 100%; overflow-x: auto; } }
+/* ---- panel ayat dari bawah + warna sorotan ---- */
+:root { --sr-y: #ffd60a; --sr-g: #34c759; --sr-b: #4c9dff; --sr-p: #ff6fb1; --sr-o: #ff9f0a; }
+.v.sr { background: none; }
+.v.sr-y { background: rgba(255, 214, 10, .38); }
+.v.sr-g { background: rgba(52, 199, 89, .28); }
+.v.sr-b { background: rgba(76, 157, 255, .28); }
+.v.sr-p { background: rgba(255, 111, 177, .28); }
+.v.sr-o { background: rgba(255, 159, 10, .32); }
+.v.sr.sel, .v.sel { background: var(--sel); }
+.selsheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; max-width: 40rem; margin: 0 auto; background: var(--surface); color: var(--fg); border-radius: 22px 22px 0 0; box-shadow: 0 -10px 34px rgba(0, 0, 0, .22); padding: 4px 16px calc(14px + env(safe-area-inset-bottom, 0px)); transform: translateY(115%); visibility: hidden; transition: transform .32s cubic-bezier(.2, .85, .25, 1), visibility 0s linear .32s; touch-action: none; }
+.selsheet.on { transform: translateY(0); visibility: visible; transition: transform .32s cubic-bezier(.2, .85, .25, 1), visibility 0s; }
+.selsheet.drag { transition: none; }
+.ss-grab { display: flex; justify-content: center; padding: 6px 0 2px; cursor: grab; }
+.ss-grab span { width: 44px; height: 5px; border-radius: 3px; background: var(--line); }
+.ss-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ss-head .info { font-weight: 800; font-size: 16px; }
+.ss-head .ib { width: 48px; height: 48px; flex: none; }
+.ss-lab { margin: 4px 0 8px; font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ss-colors { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 0 0 16px; }
+.ss-colors button { width: 44px; height: 44px; border-radius: 50%; background: var(--c); border: 2px solid rgba(0, 0, 0, .1); transition: transform .15s; }
+.ss-colors button:active { transform: scale(.9); }
+.ss-colors button[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--fg); }
+.ss-colors .none { background: transparent; border: 2px dashed var(--muted); color: var(--muted); display: flex; align-items: center; justify-content: center; }
+.ss-colors .none .ico { width: 22px; height: 22px; }
+.ss-acts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.ss-acts button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 66px; border-radius: 14px; background: var(--accent-soft); color: var(--fg); font-weight: 700; font-size: 14px; }
+.ss-acts button .ico { width: 22px; height: 22px; }
+.ss-acts #selHl[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+body.selopen #text { padding-bottom: 300px; }
+@media (prefers-reduced-motion: reduce) { .selsheet, .selsheet.on { transition: none; } }
