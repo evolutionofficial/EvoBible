@@ -513,7 +513,7 @@ var ORN = {
   function showView(v) {
     S.view = v;
     Object.keys(VIEWS).forEach(function (k) { $(VIEWS[k]).hidden = k !== v; });
-    Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (t) { if (t.dataset.v === v) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current"); });
+    Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (t) { if (t.dataset.v === v) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current"); }); placeInd(true);
     if (v !== "read") clearSel(true);
   }
   function route() {
@@ -1226,6 +1226,33 @@ var ORN = {
   })();
   /* Safari mengabaikan user-scalable=no: blokir hanya gesture zoom halaman */
   document.addEventListener("gesturestart", function (e) { e.preventDefault(); });
+
+  /* ---------- penanda tab yang bergeser (kapsul kaca cair) ---------- */
+  var tabInd = document.createElement("span"), indPos = null, indAnim = null;
+  tabInd.className = "tab-ind"; tabInd.setAttribute("aria-hidden", "true");
+  $("tabs").insertBefore(tabInd, $("tabs").firstChild);
+  function placeInd(animate) {
+    var cur = $("tabs").querySelector('.tab[aria-current="page"]');
+    if (!cur || !cur.offsetWidth) { tabInd.style.opacity = "0"; indPos = null; return; }
+    var x = cur.offsetLeft, w = cur.offsetWidth, a = indPos, reduce = false;
+    try { reduce = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+    tabInd.style.opacity = "1";
+    tabInd.style.transform = "translateX(" + x + "px)"; tabInd.style.width = w + "px";
+    indPos = { x: x, w: w };
+    if (!animate || !a || reduce || !tabInd.animate || (a.x === x && a.w === w)) return;
+    if (indAnim) try { indAnim.cancel(); } catch (e) {}
+    var right = x > a.x, steps = Math.max(1, Math.round(Math.abs(x - a.x) / w)), dur = Math.min(520, 260 + steps * 80);
+    // sisi depan melaju lebih dulu, sisi belakang menyusul: kapsul memanjang lalu mengerut di tujuan
+    var l1 = right ? a.x + (x - a.x) * .25 : a.x + (x - a.x) * .8, r1 = right ? a.x + a.w + (x + w - a.x - a.w) * .8 : a.x + a.w + (x + w - a.x - a.w) * .25;
+    var l2 = right ? x - w * .06 : x, r2 = right ? x + w : x + w * 1.06;
+    indAnim = tabInd.animate([
+      { transform: "translateX(" + a.x + "px) scaleY(1)", width: a.w + "px" },
+      { transform: "translateX(" + l1 + "px) scaleY(.9)", width: (r1 - l1) + "px", offset: .45 },
+      { transform: "translateX(" + l2 + "px) scaleY(.97)", width: (r2 - l2) + "px", offset: .8 },
+      { transform: "translateX(" + x + "px) scaleY(1)", width: w + "px" }
+    ], { duration: dur, easing: "cubic-bezier(.32, .72, .24, 1)" });
+  }
+  window.addEventListener("resize", function () { placeInd(false); });
 
   if ("serviceWorker" in navigator && location.protocol !== "file:") { window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); }); }
 
