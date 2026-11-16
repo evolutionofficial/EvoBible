@@ -457,7 +457,7 @@ var ORN = {
     return out;
   }
   function katVotd(g) {
-    return '<div class="lab">Injil hari ini · bacaan Misa</div><p class="vt">' + esc(katText(g, 230)) + '</p><div class="vr">' + esc(g.label) + '</div><div class="acts"><button data-kat="read">Baca dan dengarkan</button><button data-kat="copy">Salin</button></div>';
+    return '<div class="lab">Injil hari ini · bacaan Misa</div><p class="vt">' + esc(katText(g, 230)) + '</p><div class="vr">' + esc(g.label) + '</div><div class="acts"><button data-kat="read">Baca dan dengarkan</button><button data-kat="copy">Salin</button><button data-mkimg="1">Buat gambar</button></div>';
   }
   function applySeason() {
     var id = activeSeasonId(), root = document.documentElement;
@@ -562,7 +562,7 @@ var ORN = {
   function renderHome() {
     $("greet").textContent = greeting();
     var id = votdId(), th = themeOfVerse(id);
-    $("votd").innerHTML = '<div class="lab">Ayat hari ini' + (th ? " · " + esc(th.n) : "") + '</div><p class="vt">' + esc(clean(texts[id])) + '</p><div class="vr">' + esc(refOf(id)) + '</div><div class="acts"><button data-act="read" data-id="' + id + '">Baca pasalnya</button><button data-act="copy" data-id="' + id + '">Salin</button></div>' + (activeSeasonId() ? '<div class="orn">' + ornSvg(activeSeasonId()) + "</div>" : "");
+    $("votd").innerHTML = '<div class="lab">Ayat hari ini' + (th ? " · " + esc(th.n) : "") + '</div><p class="vt">' + esc(clean(texts[id])) + '</p><div class="vr">' + esc(refOf(id)) + '</div><div class="acts"><button data-act="read" data-id="' + id + '">Baca pasalnya</button><button data-act="copy" data-id="' + id + '">Salin</button><button data-mkimg="1">Buat gambar</button></div>' + (activeSeasonId() ? '<div class="orn">' + ornSvg(activeSeasonId()) + "</div>" : "");
     var kg = settings.cal === "katolik" ? katToday() : null;
     if (kg) { $("votd").innerHTML = katVotd(kg) + (activeSeasonId() ? '<div class="orn">' + ornSvg(activeSeasonId()) + "</div>" : ""); $("votd").dataset.kat = "1"; } else delete $("votd").dataset.kat;
     var last = lsGet("evo.last", null), cont = $("cont");
@@ -591,6 +591,7 @@ var ORN = {
   $("homeForm").onsubmit = function (e) { e.preventDefault(); var q = $("hq").value.trim(); if (!q) return; $("hq").blur(); if (!parseRef(q) && !CRISIS.test(q) && !sesAllowed(q)) { renderFeel(); return; } $("hq").value = ""; S.histOpen = false; startSearch(q); };
   $("vHome").addEventListener("click", function (e) {
     var t;
+    if ((t = e.target.closest("[data-mkimg]"))) { var vb = $("votd"), vt = vb.querySelector(".vt"), vr = vb.querySelector(".vr"); if (window.EvoGambar) EvoGambar.open({ text: vt ? vt.textContent : "", ref: vr ? vr.textContent : "", toast: toast }); return; }
     if ((t = e.target.closest("[data-ses]"))) { var su = sesUsed(); if (su) { S.histOpen = t.dataset.ses === "hist"; startSearch(su.q); } return; }
     if ((t = e.target.closest("[data-kat]"))) { var kg = katToday(); if (!kg) return; if (t.dataset.kat === "copy") copyText(katText(kg, 0) + "\n\n" + kg.label + " (AYT)"); else openRef(kg.b, kg.c, kg.v1, kg.v2); return; }
     if ((t = e.target.closest("[data-cat]"))) { openCat(+t.dataset.cat); return; }
@@ -1191,6 +1192,7 @@ var ORN = {
     function touchArm() { if (exiting || !needTouch) return; var ua = navigator.userActivation; if (ua && !ua.isActive) return; needTouch = false; arm(); }
     ["pointerup", "touchend", "click", "keydown"].forEach(function (ev) { addEventListener(ev, touchArm, { capture: true, passive: true }); });
     function goBack() {
+      if (window.EvoGambar && EvoGambar.isOpen()) { EvoGambar.close(); return; }
       if (open) { hide(); return; }
       if (S.view === "read" && S.sel.length) { clearSel(); return; }
       if (S.view === "search" && S.theme) { S.theme = null; renderSearch(); window.scrollTo(0, 0); return; }
