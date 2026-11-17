@@ -1918,12 +1918,12 @@ var ORN = {
       var cur = $("tabs").querySelector('.tab[aria-current="page"]:not(.tab-c)') || tdNear(p.x0 - p.ox);
       p.w = cur.offsetWidth; var ts = tdTabs(); p.min = ts[0].offsetLeft; p.max = ts[ts.length - 1].offsetLeft + ts[ts.length - 1].offsetWidth - p.w;
       tabInd.style.opacity = "1"; tabInd.style.width = p.w + "px";
-      p.r0 = $("tabs").getBoundingClientRect(); p.k0 = p.r0.width / ($("tabs").offsetWidth || p.r0.width);
+      var r0 = $("tabs").getBoundingClientRect(); p.cx0 = r0.left + r0.width / 2; p.k0 = 1.045;
       document.body.classList.add("tabdrag");
     }
     var dt = Math.max(8, e.timeStamp - p.lt); p.v = p.v * .6 + ((e.clientX - p.lx) / dt) * .4; p.lx = e.clientX; p.lt = e.timeStamp;
     // posisi jari diukur terhadap ukuran panel saat geser dimulai (tidak ikut melar)
-    var cx = (e.clientX - p.r0.left) / p.k0, raw = cx - p.w / 2, x = Math.max(p.min, Math.min(p.max, raw)), s = Math.min(.28, Math.abs(p.v) * .22);
+    var cx = (e.clientX - p.cx0) / p.k0 + $("tabs").offsetWidth / 2, raw = cx - p.w / 2, x = Math.max(p.min, Math.min(p.max, raw)), s = Math.min(.28, Math.abs(p.v) * .22);
     // ditarik melewati tab paling ujung: panel melar ke arah tarikan, sisi seberangnya menahan (karet)
     var over = raw > p.max ? raw - p.max : raw < p.min ? raw - p.min : 0, el = $("tabs");
     if (over) {
