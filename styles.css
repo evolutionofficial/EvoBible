@@ -1336,3 +1336,30 @@ body.autoscroll main.inner { padding-bottom: 96px; }
 .ksdoa { margin-top: 22px; padding: 2px 18px 6px; border-radius: 18px; background: var(--soft-bg); box-shadow: var(--panel-emb); }
 .ksdoa .ksh3 { margin-top: 14px; }
 .ksdoa p { font-style: italic; }
+
+/* ---- penanda tab: tetesan air (waterball) ---- */
+.tab-ind { top: 4px; bottom: 4px; border-radius: 50%; overflow: visible;
+  background-color: transparent;
+  background-image:
+    radial-gradient(90% 70% at 50% 108%, color-mix(in oklab, var(--accent) 34%, transparent) 0%, transparent 62%),
+    radial-gradient(closest-side, color-mix(in oklab, var(--accent) 5%, transparent) 55%, color-mix(in oklab, var(--accent) 20%, transparent) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .42),
+    inset 0 -7px 10px -5px rgba(255, 255, 255, .55),
+    inset 0 5px 9px -4px color-mix(in oklab, var(--accent) 30%, transparent),
+    inset 0 0 7px color-mix(in oklab, var(--accent) 22%, transparent),
+    0 7px 14px -8px color-mix(in oklab, var(--accent) 70%, #000),
+    0 1px 2px rgba(0, 0, 0, .08);
+  -webkit-backdrop-filter: saturate(175%) brightness(1.07) contrast(1.06); backdrop-filter: saturate(175%) brightness(1.07) contrast(1.06); }
+.tab-ind::before { content: ""; position: absolute; left: 17%; top: 9%; width: 36%; height: 26%; border-radius: 50%; transform: rotate(-16deg);
+  background: radial-gradient(closest-side, rgba(255, 255, 255, .95), rgba(255, 255, 255, .5) 45%, rgba(255, 255, 255, 0)); }
+.tab-ind::after { content: ""; position: absolute; right: 19%; bottom: 14%; width: 11%; height: 9%; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, .8), rgba(255, 255, 255, 0)); }
+:root[data-theme="dark"] .tab-ind { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .26), inset 0 -7px 10px -5px rgba(255, 255, 255, .3), inset 0 5px 9px -4px color-mix(in oklab, var(--accent) 40%, transparent),
+    inset 0 0 8px color-mix(in oklab, var(--accent) 30%, transparent), 0 7px 16px -8px rgba(0, 0, 0, .7), 0 0 14px -4px color-mix(in oklab, var(--accent) 40%, transparent); }
+:root[data-theme="dark"] .tab-ind::before { opacity: .75; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .tab-ind { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .26), inset 0 -7px 10px -5px rgba(255, 255, 255, .3), inset 0 5px 9px -4px color-mix(in oklab, var(--accent) 40%, transparent),
+    inset 0 0 8px color-mix(in oklab, var(--accent) 30%, transparent), 0 7px 16px -8px rgba(0, 0, 0, .7), 0 0 14px -4px color-mix(in oklab, var(--accent) 40%, transparent); }
+  :root:not([data-theme="light"]) .tab-ind::before { opacity: .75; }
+}
