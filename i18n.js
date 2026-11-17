@@ -36,7 +36,7 @@
   document.documentElement.lang = "en";
 
   // Bagian yang tidak diterjemahkan: teks Alkitab, isi AI, isian pengguna.
-  var SKIP = "#text .v:not(.vom), #text h3, .go span, .vt, .rtx, .vc, .pr-title, .pr-story p, .pr-sec > p, .pr-dtitle, .pr-end, .jr-body, [data-noi18n], script, style, code";
+  var SKIP = "#text .v:not(.vom), #text h3, .go span, .vt, .rtx, .vc, .pr-title, .pr-story p, .pr-sec > p, .pr-dtitle, .pr-end, .jr-body, .hyj, .hyrow .hj, .hyb p, [data-noi18n], script, style, code";
   var ATTRS = ["aria-label", "placeholder", "title", "alt"];
 
   var EX = {};
