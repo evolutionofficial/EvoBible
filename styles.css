@@ -1379,3 +1379,10 @@ body.tabdrag .tab-c.hov { color: var(--accent); }
 .tabbar .inner { --tbs: 1; --tbz: 1; transform: scale(calc(var(--tbs) * var(--tbz))); transition: transform .16s linear; }
 .tabbar .inner.press { --tbz: 1.045; transform: scale(calc(var(--tbs) * var(--tbz))); transition: transform .22s cubic-bezier(.3, 1.4, .5, 1); }
 @media (prefers-reduced-motion: reduce) { .tabbar .inner, .tabbar .inner.press { transform: none; } }
+
+/* ---- panel menu bawah: melar seperti karet saat ditarik ke ujung ---- */
+.tabbar .inner { --tbx: 1; --tby: 1; --tbt: 0px; transform: translateX(var(--tbt)) scale(calc(var(--tbs) * var(--tbz) * var(--tbx)), calc(var(--tbs) * var(--tbz) * var(--tby))); }
+.tabbar .inner.press { transform: translateX(var(--tbt)) scale(calc(var(--tbs) * var(--tbz) * var(--tbx)), calc(var(--tbs) * var(--tbz) * var(--tby))); }
+.tabbar .inner.pull { transition: none; }
+.tabbar .inner.snapback { transition: transform .6s cubic-bezier(.22, 1.8, .45, 1); }
+@media (prefers-reduced-motion: reduce) { .tabbar .inner, .tabbar .inner.press { transform: none; } }
