@@ -30,6 +30,7 @@
     [/^Buka ((?:\d )?[A-Z][\w -]+ \d+(?::\d+)?)$/, "Open $1"],
     [/^Segera hadir\. Menunggu izin dari (.+)\.$/, "Coming soon. Awaiting permission from $1."],
     [/^(Madah Bakti|Puji Syukur|Kidung Jemaat|Pelengkap Kidung Jemaat|Nyanyikanlah Kidung Baru) (\d+)$/, "$1 $2"],
+    [/^Himne Klasik (\d+)$/, "Classic Hymns $1"],
     [/^Keterangan teknis: (.+?) · suara Indonesia di HP ini: (\d+) · total suara: (.+)$/, "Technical details: $1 · Indonesian voices on this phone: $2 · total voices: $3"]
   ];
   window.I18N_EN = {
@@ -38,6 +39,12 @@
     days: {"Senin": "Monday", "Selasa": "Tuesday", "Rabu": "Wednesday", "Kamis": "Thursday", "Jumat": "Friday", "Sabtu": "Saturday", "Minggu": "Sunday"},
     pat: pat,
     exact: {
+      "Himne Klasik": "Classic Hymns",
+      "Himne berbahasa Inggris": "English hymns",
+      "Syair:": "Words:",
+      "Madah Bakti dan Puji Syukur, serta himne klasik berbahasa Inggris": "Madah Bakti and Puji Syukur, plus classic English hymns",
+      "Kidung Jemaat, Pelengkap Kidung Jemaat, dan Nyanyikanlah Kidung Baru, serta himne klasik berbahasa Inggris": "Kidung Jemaat, Pelengkap Kidung Jemaat, and Nyanyikanlah Kidung Baru, plus classic English hymns",
+      "Himne klasik berbahasa Inggris dari Open Hymnal Project (openhymnal.org), domain publik.": "Classic English hymns from the Open Hymnal Project (openhymnal.org), public domain.",
       "Reff": "Refrain",
       "Lainnya": "More",
       "Nyanyian": "Hymns",

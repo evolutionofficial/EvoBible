@@ -860,7 +860,7 @@ var ORN = {
   function renderMore() {
     var kat = settings.cal === "katolik";
     var rows = [
-      ["nyanyian", MUSIC_I, "Nyanyian", kat ? "Madah Bakti dan Puji Syukur" : "Kidung Jemaat, Pelengkap Kidung Jemaat, dan Nyanyikanlah Kidung Baru"],
+      ["nyanyian", MUSIC_I, "Nyanyian", (kat ? "Madah Bakti dan Puji Syukur" : "Kidung Jemaat, Pelengkap Kidung Jemaat, dan Nyanyikanlah Kidung Baru") + ", serta himne klasik berbahasa Inggris"],
       ["tersimpan", MARK_I, "Tersimpan", "Ayat tersimpan, sorotan, dan Jurnal Doa"],
       ["@set", GEAR_I, "Pengaturan", "Ukuran huruf, tema warna, kalender, dan tradisi gereja"]
     ];
@@ -882,7 +882,8 @@ var ORN = {
     { k: "ps", n: "Puji Syukur", t: "katolik", pub: "Komisi Liturgi KWI" },
     { k: "kj", n: "Kidung Jemaat", t: "protestan", pub: "Yayasan Musik Gereja di Indonesia (YAMUGER)" },
     { k: "pkj", n: "Pelengkap Kidung Jemaat", t: "protestan", pub: "Yayasan Musik Gereja di Indonesia (YAMUGER)" },
-    { k: "nkb", n: "Nyanyikanlah Kidung Baru", t: "protestan", pub: "" }
+    { k: "nkb", n: "Nyanyikanlah Kidung Baru", t: "protestan", pub: "" },
+    { k: "pd", n: "Himne Klasik", t: "umum", pub: "", en: true }
   ];
   var HY = { ready: null, data: {}, q: "" };
   function hyBook(k) { for (var i = 0; i < HY_BOOKS.length; i++) if (HY_BOOKS[i].k === k) return HY_BOOKS[i]; return null; }
@@ -911,7 +912,7 @@ var ORN = {
             return '<button class="hybook" type="button" data-hy="' + b.k + '"><b>' + esc(b.n) + "</b><small>" + (ok ? "Buka" : "Segera hadir") + "</small></button>";
           }).join("") + "</div>";
         }
-        body.innerHTML = grp(mine, mine === "katolik" ? "Katolik" : "Protestan") + grp(other, other === "katolik" ? "Katolik" : "Protestan");
+        body.innerHTML = grp("umum", "Himne berbahasa Inggris") + grp(mine, mine === "katolik" ? "Katolik" : "Protestan") + grp(other, other === "katolik" ? "Katolik" : "Protestan");
       });
       window.scrollTo(0, 0); return;
     }
@@ -945,10 +946,10 @@ var ORN = {
   }
   function hySong(bk, list, i) {
     var s = list[i], prev = list[i - 1], next = list[i + 1];
-    var h = '<article class="hysong"><div class="hyno">' + esc(bk.n) + " " + esc(String(s.n)) + '</div><h2 class="hyj">' + esc(s.j) + "</h2>";
+    var h = '<article class="hysong"' + (bk.en ? ' lang="en"' : "") + '><div class="hyno">' + esc(bk.n) + " " + esc(String(s.n)) + '</div><h2 class="hyj">' + esc(s.j) + "</h2>" + (s.p ? '<div class="hyp">Syair: <span data-noi18n>' + esc(s.p) + "</span></div>" : "");
     (s.b || []).forEach(function (bt) {
       var reff = /^ref/i.test(bt.k || "");
-      h += '<div class="hyb' + (reff ? " reff" : "") + '"><span class="hyk">' + esc(bt.k || "") + '</span><p data-noi18n>' + (bt.l || []).map(esc).join("<br>") + "</p></div>";
+      h += '<div class="hyb' + (reff ? " reff" : "") + '"><span class="hyk">' + esc(bt.k || "") + '</span><p data-noi18n>' + (bt.l || []).map(function (x) { return '<span class="hl">' + esc(x) + "</span>"; }).join("") + "</p></div>";
     });
     h += '</article><nav class="pn hypn">' + (prev ? '<button type="button" data-hyn="' + esc(String(prev.n)) + '"><small>Sebelumnya</small><b>' + esc(bk.n) + " " + esc(String(prev.n)) + "</b></button>" : "<span></span>")
       + (next ? '<button type="button" data-hyn="' + esc(String(next.n)) + '"><small>Berikutnya</small><b>' + esc(bk.n) + " " + esc(String(next.n)) + "</b></button>" : "<span></span>") + "</nav>";
