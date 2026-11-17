@@ -562,8 +562,8 @@ var ORN = {
   $("btnSet").onclick = $("btnSet2").onclick = function () { show("shSet"); };
 
   /* ---------- routing ---------- */
-  var VIEWS = { home: "vHome", search: "vSearch", read: "vRead", saved: "vSaved", church: "vChurch" };
-  var NAMES = { home: "beranda", search: "cari", kata: "kata", read: "baca", saved: "tersimpan", church: "gereja" };
+  var VIEWS = { home: "vHome", search: "vSearch", read: "vRead", saved: "vSaved", church: "vChurch", more: "vMore", hymn: "vHymn" };
+  var NAMES = { home: "beranda", search: "cari", kata: "kata", read: "baca", saved: "tersimpan", church: "gereja", more: "lainnya", hymn: "nyanyian" };
   function go(v) { var h = NAMES[v]; if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
   function openRef(b, c, v, v2) { var h = BOOKS[b].a + "-" + c + (v ? "-" + v + (v2 && v2 >= v ? "-" + v2 : "") : ""); if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
   function showView(v, tabV) {
@@ -584,7 +584,9 @@ var ORN = {
     if (h === "cari") { setSearchTab("tema"); showView("search"); renderSearch(); window.scrollTo(0, 0); return; }
     if (h === "kata") { setSearchTab("kata"); showView("search", "kata"); renderSearch(); window.scrollTo(0, 0); return; }
     if (h === "gereja" && FEATURE_CHURCH) { showView("church"); renderChurch(); window.scrollTo(0, 0); return; }
-    if (h === "tersimpan" || h === "sorotan") { showView("saved"); renderSaved(); window.scrollTo(0, 0); return; }
+    if (h === "tersimpan" || h === "sorotan") { showView("saved", "more"); renderSaved(); window.scrollTo(0, 0); return; }
+    if (h === "lainnya") { showView("more"); renderMore(); window.scrollTo(0, 0); return; }
+    if (h === "nyanyian" || h.indexOf("nyanyian/") === 0) { var hp = h.split("/"); showView("hymn", "more"); renderHymn(hp[1] || "", hp[2] || ""); return; }
     if (h === "baca") { var last = lsGet("evo.last", { b: 0, c: 1 }); if (!BOOKS[last.b] || !BOOKS[last.b].ch[last.c - 1]) last = { b: 0, c: 1 }; showView("read"); renderChapter(last.b, last.c, 0); return; }
     showView("home"); renderHome(); window.scrollTo(0, 0);
   }
@@ -807,7 +809,7 @@ var ORN = {
       var p0 = S.pr && S.pr.state === "done" ? S.pr.data : null; if (!p0) return;
       if (t.dataset.act === "prcopy") copyText(prayerOnly(p0), "Doa disalin");
       else if (t.dataset.act === "prshare") { if (navigator.share) navigator.share({ title: p0.judul, text: prayerText(p0) }).catch(function () {}); else copyText(prayerText(p0), "Renungan dan doa disalin"); }
-      else if (!journalHas(p0)) { var J = journal(); var je0 = { id: uuid(), t: Date.now(), q: S.q.trim(), p: p0 }; J.unshift(je0); lsSet("evo.jurnal", J.slice(0, 500)); cloudJr(je0); t.textContent = "Tersimpan di Jurnal Doa"; toast("Disimpan ke Jurnal Doa (tab Tersimpan)"); }
+      else if (!journalHas(p0)) { var J = journal(); var je0 = { id: uuid(), t: Date.now(), q: S.q.trim(), p: p0 }; J.unshift(je0); lsSet("evo.jurnal", J.slice(0, 500)); cloudJr(je0); t.textContent = "Tersimpan di Jurnal Doa"; toast("Disimpan ke Jurnal Doa (Lainnya › Tersimpan)"); }
       return;
     }
     if (t && t.dataset.act === "img") { var ce = t.closest(".rcard"); if (ce) imgVerse(+ce.dataset.id); return; }
@@ -849,6 +851,115 @@ var ORN = {
       '<div class="empty"><p style="margin:0 0 6px;font-weight:700;color:var(--fg)">Belum ada ayat yang disorot</p>Saat membaca, ketuk sebuah ayat lalu pilih Soroti. Sorotan menandai ayat yang penting atau sudah Anda baca, dan selalu terlihat saat pasal itu dibuka.</div>');
     $("svBody").dataset.ids = ids.join(",");
   }
+  /* ---------- Lainnya ---------- */
+  function navHash(h) { if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
+  var MUSIC_I = '<svg class="ico" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>';
+  var MARK_I = '<svg class="ico" viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>';
+  var GEAR_I = '<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+  var CHEV_R = '<svg class="ico chev" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg>';
+  function renderMore() {
+    var kat = settings.cal === "katolik";
+    var rows = [
+      ["nyanyian", MUSIC_I, "Nyanyian", kat ? "Madah Bakti dan Puji Syukur" : "Kidung Jemaat, Pelengkap Kidung Jemaat, dan Nyanyikanlah Kidung Baru"],
+      ["tersimpan", MARK_I, "Tersimpan", "Ayat tersimpan, sorotan, dan Jurnal Doa"],
+      ["@set", GEAR_I, "Pengaturan", "Ukuran huruf, tema warna, kalender, dan tradisi gereja"]
+    ];
+    $("moreBody").innerHTML = '<div class="morelist">' + rows.map(function (r) {
+      return '<button class="morerow" type="button" data-more="' + r[0] + '"><span class="mi">' + r[1] + "</span><span class=\"mt\"><b>" + r[2] + "</b><small>" + r[3] + "</small></span>" + CHEV_R + "</button>";
+    }).join("") + "</div>";
+  }
+  $("moreBody").addEventListener("click", function (e) {
+    var t = e.target.closest("[data-more]"); if (!t) return;
+    var k = t.dataset.more; if (k === "@set") show("shSet"); else navHash(k);
+  });
+
+  /* ---------- Nyanyian: buku nyanyian gereja ----------
+     Isi lagu: kidung/index.json berisi daftar kode buku yang sudah tersedia, misalnya ["kj","pkj"].
+     Tiap buku: kidung/<kode>.json = { "lagu": [ { "n": "1", "j": "Judul", "b": [ { "k": "1", "l": ["baris", ...] }, { "k": "Reff", "l": [...] } ] } ] }
+     Lirik hanya dimasukkan setelah ada izin tertulis dari pemegang hak cipta. */
+  var HY_BOOKS = [
+    { k: "mb", n: "Madah Bakti", t: "katolik", pub: "Pusat Musik Liturgi Yogyakarta" },
+    { k: "ps", n: "Puji Syukur", t: "katolik", pub: "Komisi Liturgi KWI" },
+    { k: "kj", n: "Kidung Jemaat", t: "protestan", pub: "Yayasan Musik Gereja di Indonesia (YAMUGER)" },
+    { k: "pkj", n: "Pelengkap Kidung Jemaat", t: "protestan", pub: "Yayasan Musik Gereja di Indonesia (YAMUGER)" },
+    { k: "nkb", n: "Nyanyikanlah Kidung Baru", t: "protestan", pub: "" }
+  ];
+  var HY = { ready: null, data: {}, q: "" };
+  function hyBook(k) { for (var i = 0; i < HY_BOOKS.length; i++) if (HY_BOOKS[i].k === k) return HY_BOOKS[i]; return null; }
+  function hyReady() {
+    if (HY.ready) return Promise.resolve(HY.ready);
+    return fetch("kidung/index.json").then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
+      .then(function (a) { HY.ready = Array.isArray(a) ? a : []; return HY.ready; });
+  }
+  function hyLoad(k) {
+    if (HY.data[k]) return Promise.resolve(HY.data[k]);
+    return fetch("kidung/" + k + ".json").then(function (r) { if (!r.ok) throw 0; return r.json(); })
+      .then(function (d) { HY.data[k] = d && d.lagu ? d.lagu : []; return HY.data[k]; }).catch(function () { return null; });
+  }
+  function hyNorm(s) { return String(s).toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim(); }
+  function renderHymn(k, n) {
+    var body = $("hyBody"), bk = hyBook(k);
+    S.hyK = bk ? k : ""; S.hyN = bk ? n : "";
+    if (!bk) {
+      $("hyTitle").textContent = "Nyanyian";
+      var mine = settings.cal === "katolik" ? "katolik" : "protestan", other = mine === "katolik" ? "protestan" : "katolik";
+      hyReady().then(function (ready) {
+        if (S.view !== "hymn" || S.hyK) return;
+        function grp(t, lab) {
+          return '<div class="flabel">' + lab + '</div><div class="hybooks">' + HY_BOOKS.filter(function (b) { return b.t === t; }).map(function (b) {
+            var ok = ready.indexOf(b.k) >= 0;
+            return '<button class="hybook" type="button" data-hy="' + b.k + '"><b>' + esc(b.n) + "</b><small>" + (ok ? "Buka" : "Segera hadir") + "</small></button>";
+          }).join("") + "</div>";
+        }
+        body.innerHTML = grp(mine, mine === "katolik" ? "Katolik" : "Protestan") + grp(other, other === "katolik" ? "Katolik" : "Protestan");
+      });
+      window.scrollTo(0, 0); return;
+    }
+    $("hyTitle").textContent = bk.n;
+    hyReady().then(function (ready) {
+      if (ready.indexOf(k) < 0) { body.innerHTML = hySoon(bk); return null; }
+      return hyLoad(k);
+    }).then(function (list) {
+      if (!list || S.hyK !== k) { if (list === null && S.hyK === k && !body.querySelector(".hysoon")) body.innerHTML = hySoon(bk); return; }
+      if (!n) { hyList(bk, list); return; }
+      var i = -1; for (var j = 0; j < list.length; j++) if (String(list[j].n) === String(n)) { i = j; break; }
+      if (i < 0) { hyList(bk, list); return; }
+      hySong(bk, list, i);
+    });
+  }
+  function hySoon(bk) {
+    return '<div class="hysoon"><span class="mi">' + MUSIC_I + "</span><b>" + esc(bk.n) + "</b><p>Segera hadir" + (bk.pub ? ". Menunggu izin dari " + esc(bk.pub) + "." : ".") + "</p></div>";
+  }
+  function hyList(bk, list) {
+    var q = HY.q || "";
+    $("hyBody").innerHTML = '<div class="hysearch"><input id="hyQ" type="search" inputmode="search" autocomplete="off" placeholder="Nomor atau judul lagu" aria-label="Cari nomor atau judul lagu" value="' + esc(q) + '"></div><div class="hylist" id="hyList"></div>';
+    hyFill(bk, list);
+    $("hyQ").oninput = function () { HY.q = this.value; hyFill(bk, list); };
+    window.scrollTo(0, 0);
+  }
+  function hyFill(bk, list) {
+    var q = hyNorm(HY.q || ""), out = list.filter(function (s) { return !q || String(s.n) === q || String(s.n).indexOf(q) === 0 || hyNorm(s.j).indexOf(q) >= 0; });
+    $("hyList").innerHTML = out.length ? out.slice(0, 400).map(function (s) {
+      return '<button class="hyrow" type="button" data-hyn="' + esc(String(s.n)) + '"><span class="hn">' + esc(String(s.n)) + "</span><span class=\"hj\">" + esc(s.j) + "</span></button>";
+    }).join("") : '<div class="empty">Tidak ada lagu dengan nomor atau judul itu.</div>';
+  }
+  function hySong(bk, list, i) {
+    var s = list[i], prev = list[i - 1], next = list[i + 1];
+    var h = '<article class="hysong"><div class="hyno">' + esc(bk.n) + " " + esc(String(s.n)) + '</div><h2 class="hyj">' + esc(s.j) + "</h2>";
+    (s.b || []).forEach(function (bt) {
+      var reff = /^ref/i.test(bt.k || "");
+      h += '<div class="hyb' + (reff ? " reff" : "") + '"><span class="hyk">' + esc(bt.k || "") + '</span><p data-noi18n>' + (bt.l || []).map(esc).join("<br>") + "</p></div>";
+    });
+    h += '</article><nav class="pn hypn">' + (prev ? '<button type="button" data-hyn="' + esc(String(prev.n)) + '"><small>Sebelumnya</small><b>' + esc(bk.n) + " " + esc(String(prev.n)) + "</b></button>" : "<span></span>")
+      + (next ? '<button type="button" data-hyn="' + esc(String(next.n)) + '"><small>Berikutnya</small><b>' + esc(bk.n) + " " + esc(String(next.n)) + "</b></button>" : "<span></span>") + "</nav>";
+    $("hyBody").innerHTML = h; window.scrollTo(0, 0);
+  }
+  $("hyBody").addEventListener("click", function (e) {
+    var t = e.target.closest("[data-hy]"); if (t) { HY.q = ""; navHash("nyanyian/" + t.dataset.hy); return; }
+    t = e.target.closest("[data-hyn]"); if (t && S.hyK) navHash("nyanyian/" + S.hyK + "/" + t.dataset.hyn);
+  });
+  $("hyBack").onclick = function () { if (S.hyN) navHash("nyanyian/" + S.hyK); else if (S.hyK) navHash("nyanyian"); else navHash("lainnya"); };
+
   function renderSaved() {
     var seg = svSegHtml(keyIds(hls).length, keyIds(sors).length);
     if (svTab === "sorot") { renderSorot(seg); return; }

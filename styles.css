@@ -1258,3 +1258,39 @@ body.autoscroll main.inner { padding-bottom: 96px; }
 .text .vc { display: block; margin: .35em 0 0; padding: .55em .8em; border-radius: 12px; font-size: .86em; line-height: 1.6; color: var(--fg);
   background: color-mix(in srgb, var(--accent-soft) 70%, transparent); box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 55%, transparent); }
 .text .vc i { font-family: var(--ui); font-style: normal; font-size: .62em; font-weight: 800; letter-spacing: .06em; color: var(--accent); margin-right: .6em; vertical-align: .15em; }
+
+/* ---- Lainnya ---- */
+.morelist { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
+.morerow { display: flex; align-items: center; gap: 14px; width: 100%; padding: 16px; border-radius: 20px; text-align: left; color: var(--fg);
+  background-color: var(--glass); background-image: var(--glass-sheen); border: 1px solid var(--glass-br, transparent); box-shadow: var(--glass-sh); position: relative; }
+.morerow .mi, .hysoon .mi { flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 15px; color: #fff; background: var(--jewel); box-shadow: var(--emb), 0 2px 0 var(--pb-edge); }
+.morerow .mi .ico, .hysoon .mi .ico { width: 24px; height: 24px; stroke: #fff; }
+.morerow .mt { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.morerow .mt b { font-size: 17px; font-weight: 800; }
+.morerow .mt small { font-size: 14px; color: var(--muted); line-height: 1.35; }
+.morerow .chev { width: 20px; height: 20px; stroke: var(--muted); flex: none; }
+.morerow:active { transform: translateY(1px); }
+/* ---- Nyanyian ---- */
+.hy-head { display: flex; align-items: center; gap: 6px; }
+.hy-head h1 { margin: 0; }
+.hybooks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 6px 0 18px; }
+.hybook { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-height: 88px; padding: 14px; border-radius: 18px; text-align: left; color: var(--fg); background: var(--soft-bg); box-shadow: var(--soft-emb); }
+.hybook b { font-size: 16px; font-weight: 800; line-height: 1.25; }
+.hybook small { margin-top: auto; font-size: 13px; color: var(--muted); }
+.hysoon { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 12vh; text-align: center; }
+.hysoon b { font-size: 20px; font-weight: 800; }
+.hysoon p { margin: 0; max-width: 22rem; color: var(--muted); }
+.hysearch input { width: 100%; height: 52px; padding: 0 18px; border: 0; border-radius: 16px; font: inherit; font-size: 17px; color: var(--fg); outline: 0;
+  background-color: var(--glass-hi); background-image: var(--glass-sheen); box-shadow: var(--glass-sh); }
+.hylist { display: flex; flex-direction: column; margin-top: 12px; }
+.hyrow { display: flex; align-items: baseline; gap: 14px; padding: 13px 4px; text-align: left; color: var(--fg); border-bottom: 1px solid var(--line); }
+.hyrow .hn { flex: none; min-width: 2.6em; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.hyrow .hj { font-family: var(--read); font-size: 17px; }
+.hysong { margin-top: 4px; }
+.hyno { font-size: 14px; font-weight: 700; color: var(--accent); }
+.hyj { margin: 4px 0 18px; font-family: var(--read); font-weight: 600; font-size: 1.6rem; line-height: 1.25; }
+.hyb { display: flex; gap: 12px; margin: 0 0 1.1em; font-family: var(--read); font-size: var(--fs-read); line-height: 1.7; }
+.hyb .hyk { flex: none; min-width: 1.6em; font-family: var(--ui); font-size: .62em; font-weight: 800; color: var(--muted); padding-top: .55em; }
+.hyb p { margin: 0; }
+.hyb.reff p { font-style: italic; }
+.hypn { margin-top: 24px; }
