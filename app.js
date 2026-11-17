@@ -555,7 +555,7 @@ var ORN = {
 
   /* ---------- sheets ---------- */
   function show(id) { hide(); if (id === "shSeason") drCancelClose(); $(id).hidden = false; open = id; }
-  function hide() { ["shBooks", "shSet", "shVoice", "shCat", "shSeason", "shTrad", "shExit", "shTts"].forEach(function (i) { if (i === "shSeason" && drClose()) return; $(i).hidden = true; }); open = null; }
+  function hide() { ["shBooks", "shVer", "shSet", "shVoice", "shCat", "shSeason", "shTrad", "shExit", "shTts"].forEach(function (i) { if (i === "shSeason" && drClose()) return; $(i).hidden = true; }); open = null; }
   document.addEventListener("click", function (e) {
     if (e.target.closest("[data-close]")) hide(); else if (e.target.classList && e.target.classList.contains("scrim")) hide();
   });
@@ -878,19 +878,96 @@ var ORN = {
   $("svCopy").onclick = function () { var ids = $("svBody").dataset.ids.split(",").filter(Boolean).map(Number); copyText(ids.map(function (id) { return clean(texts[id]) + "\n" + refOf(id) + " (AYT)"; }).join("\n\n"), "Semua ayat tersimpan disalin"); };
 
   /* ---------- baca ---------- */
+  /* ---------- versi Alkitab ----------
+     Data versi lain: ver/<kode>.json, susunan sama dengan AYT (kitab → pasal → ayat).
+     null = belum ada di versi itu, "=" = digabung ke ayat sebelumnya, "" = tidak dicantumkan (naskah tertua). */
+  var VERS = {
+    ayt: { n: "AYT", full: "Alkitab Yang Terbuka", lang: "id", sub: "Indonesia" },
+    tsi: { n: "TSI", full: "Terjemahan Sederhana Indonesia", lang: "id", sub: "Indonesia · bahasa sederhana · PL baru sebagian" },
+    kjv: { n: "KJV", full: "King James Version", lang: "en", sub: "Inggris · 1769" },
+    web: { n: "WEB", full: "World English Bible", lang: "en", sub: "Inggris · modern" },
+    bsb: { n: "BSB", full: "Berean Standard Bible", lang: "en", sub: "Inggris · modern" }
+  };
+  var VER_ORDER = ["ayt", "tsi", "kjv", "web", "bsb"];
+  var VS = lsGet("evo.ver", { main: "ayt", cmp: "" }); if (!VERS[VS.main]) VS.main = "ayt"; if (VS.cmp && !VERS[VS.cmp]) VS.cmp = "";
+  var VD = {}, VL = {};
+  function loadVer(k) {
+    if (!k || k === "ayt" || VD[k]) return Promise.resolve(true);
+    if (VL[k]) return VL[k];
+    toast("Mengunduh " + VERS[k].n + "…");
+    VL[k] = fetch("ver/" + k + ".json").then(function (r) { if (!r.ok) throw 0; return r.json(); })
+      .then(function (d) { VD[k] = d; VL[k] = null; return true; })
+      .catch(function () { VL[k] = null; toast("Gagal mengunduh " + VERS[k].n + ". Periksa internet."); return false; });
+    return VL[k];
+  }
+  function verCh(k, b, c) { return k && k !== "ayt" && VD[k] ? VD[k][b][c - 1] : null; }
+  function verNA(k, b, c) { var d = verCh(k, b, c); return !!d && d.every(function (x) { return x === null; }); }
+  function verUsed(b, c) { var k = VS.main; return k !== "ayt" && VD[k] && !verNA(k, b, c) ? k : "ayt"; }
+  /* teks polos satu ayat menurut versi yang sedang dibaca (untuk salin, gambar, suara) */
+  function verPlain(b, c, n) {
+    var k = verUsed(b, c), raw = BOOKS[b].ch[c - 1].v[n - 1];
+    if (k === "ayt") return clean(raw);
+    var x = VD[k][b][c - 1][n - 1];
+    if (x === null) return clean(raw);
+    return x === "=" ? "" : x;
+  }
+  function verSync() {
+    $("verMain").innerHTML = "<b>" + VERS[VS.main].n + "</b>" + '<svg class="ico" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>';
+    $("verCmp").innerHTML = '<svg class="ico" viewBox="0 0 24 24"><path d="M7 4 3 8l4 4"/><path d="M3 8h13a4 4 0 0 1 4 4"/><path d="m17 20 4-4-4-4"/><path d="M21 16H8a4 4 0 0 1-4-4"/></svg>' + (VS.cmp ? "<b>" + VERS[VS.cmp].n + "</b>" : "Bandingkan");
+    $("verCmp").classList.toggle("on", !!VS.cmp);
+  }
+  function verList() {
+    function row(k, cur, attr) { var v = VERS[k]; return '<button class="verrow" type="button" ' + attr + '="' + k + '" aria-pressed="' + (cur === k) + '"><b>' + v.n + "</b><span>" + v.full + "<small>" + v.sub + "</small></span></button>"; }
+    $("verListM").innerHTML = VER_ORDER.map(function (k) { return row(k, VS.main, "data-vm"); }).join("");
+    $("verListC").innerHTML = '<button class="verrow" type="button" data-vc="" aria-pressed="' + !VS.cmp + '"><b>—</b><span>Tidak membandingkan</span></button>' + VER_ORDER.filter(function (k) { return k !== VS.main; }).map(function (k) { return row(k, VS.cmp, "data-vc"); }).join("");
+  }
+  function verApply() {
+    lsSet("evo.ver", VS); verSync(); var y = window.scrollY;
+    Promise.all([loadVer(VS.main), loadVer(VS.cmp)]).then(function () { if (S.view === "read" && S.b != null) { renderChapter(S.b, S.c); window.scrollTo(0, y); } });
+  }
+  $("verMain").onclick = $("verCmp").onclick = function () { verList(); show("shVer"); };
+  $("shVer").addEventListener("click", function (e) {
+    var t = e.target.closest(".verrow"); if (!t) return;
+    if (t.hasAttribute("data-vm")) { VS.main = t.getAttribute("data-vm"); if (VS.cmp === VS.main) VS.cmp = ""; }
+    else VS.cmp = t.getAttribute("data-vc");
+    hide(); verApply();
+  });
   function renderChapter(b, c, vFocus, vEnd) {
     var bk = BOOKS[b], ch = bk.ch[c - 1];
     S.b = b; S.c = c; clearSel(true);
     if (FIND.b !== b) { FIND.b = b; syncFinders(); }
     $("locText").textContent = bk.n + " " + c; $("chBook").textContent = bk.n; $("chNum").textContent = "Pasal " + c;
     var h = ch.h || {}, html = "", op = false;
+    /* versi: muat bila belum ada, sementara tampilkan AYT */
+    if ((VS.main !== "ayt" && !VD[VS.main]) || (VS.cmp && VS.cmp !== "ayt" && !VD[VS.cmp])) Promise.all([loadVer(VS.main), loadVer(VS.cmp)]).then(function (ok) { if (ok[0] && ok[1] && S.view === "read" && S.b === b && S.c === c && (VD[VS.main] || VS.main === "ayt")) { var y = window.scrollY; renderChapter(b, c, vFocus, vEnd); if (!vFocus) window.scrollTo(0, y); } });
+    var M = verUsed(b, c), md = verCh(M, b, c), C = VS.cmp && VS.cmp !== VS.main ? VS.cmp : "", cd = verCh(C, b, c), showH = M === "ayt";
+    if (VS.main !== "ayt" && VD[VS.main] && M === "ayt") html += '<p class="verbanner">' + VERS[VS.main].n + " belum memuat kitab ini. Ditampilkan AYT.</p>";
     ch.v.forEach(function (raw, i) {
-      var n = i + 1, brk = i === 0 || raw.charAt(0) === "¶" || h[i] !== undefined;
-      if (brk) { if (op) html += "</p>"; if (h[i] !== undefined) html += "<h3>" + esc(h[i]) + "</h3>"; html += "<p>"; op = true; }
-      html += '<span class="v' + (hls[b + ":" + c + ":" + n] ? " hl" : "") + (sors[b + ":" + c + ":" + n] ? " sr sr-" + sors[b + ":" + c + ":" + n] : "") + '" data-v="' + n + '" id="v' + n + '"><b class="vn">' + n + "</b>" + esc(plain(raw)) + " </span>";
+      var n = i + 1, brk = i === 0 || raw.charAt(0) === "¶" || (showH && h[i] !== undefined), t = plain(raw), lab = String(n), cls = "", tag = "";
+      if (md) {
+        var x = md[i];
+        if (x === "=") { html += '<span class="v vm" data-v="' + n + '" id="v' + n + '"></span>'; return; }
+        if (x === null) { tag = '<i class="vtag">AYT</i>'; cls = " vfb"; }
+        else if (x === "") { t = "(tidak dicantumkan dalam naskah tertua)"; cls = " vom"; }
+        else t = x;
+        var j = i + 1; while (j < md.length && md[j] === "=") j++;
+        if (j > i + 1) lab = n + "–" + j;
+      }
+      if (brk) { if (op) html += "</p>"; if (showH && h[i] !== undefined) html += "<h3>" + esc(h[i]) + "</h3>"; html += "<p>"; op = true; }
+      var cmpH = "";
+      if (C) {
+        var ct;
+        if (C === "ayt") ct = plain(raw);
+        else if (!cd) ct = null;
+        else if (verNA(C, b, c)) ct = null;
+        else { var y2 = cd[i]; ct = y2 === null ? "(belum tersedia dalam " + VERS[C].n + ")" : y2 === "=" ? "↑" : y2 === "" ? "(tidak dicantumkan dalam naskah tertua)" : y2; }
+        if (ct !== null) cmpH = '<span class="vc" lang="' + VERS[C].lang + '"><i>' + VERS[C].n + "</i>" + esc(ct) + "</span>";
+      }
+      html += '<span class="v' + cls + (hls[b + ":" + c + ":" + n] ? " hl" : "") + (sors[b + ":" + c + ":" + n] ? " sr sr-" + sors[b + ":" + c + ":" + n] : "") + '" data-v="' + n + '" id="v' + n + '"><b class="vn">' + lab + "</b>" + tag + esc(t) + " " + cmpH + "</span>";
     });
     if (op) html += "</p>";
-    $("text").innerHTML = html;
+    if (C && cd && verNA(C, b, c)) html = '<p class="verbanner">' + VERS[C].n + " belum memuat kitab ini.</p>" + html;
+    $("text").innerHTML = html; $("text").lang = VERS[M].lang; $("text").classList.toggle("cmp", !!C); verSync();
     setNav($("prev"), prevOf(b, c)); setNav($("next"), nextOf(b, c));
     lsSet("evo.last", { b: b, c: c });
     if (T.on) markVerse();
@@ -1135,12 +1212,12 @@ var ORN = {
   };
   function selText() {
     var s = S.sel.slice().sort(function (a, b) { return a - b; }), bk = BOOKS[S.b], ch = bk.ch[S.c - 1];
-    var body = s.map(function (n) { var t = clean(ch.v[n - 1]); return s.length > 1 ? n + " " + t : t; }).join("\n");
-    return body + "\n\n" + bk.n + " " + S.c + ":" + rangeStr(s) + " (AYT)";
+    var body = s.map(function (n) { var t = verPlain(S.b, S.c, n); return !t ? "" : s.length > 1 ? n + " " + t : t; }).filter(Boolean).join("\n");
+    return body + "\n\n" + bk.n + " " + S.c + ":" + rangeStr(s) + " (" + VERS[verUsed(S.b, S.c)].n + ")";
   }
   $("selCopy").onclick = function () { copyText(selText()); clearSel(); };
   $("selShare").onclick = function () { var t = selText(); if (navigator.share) navigator.share({ text: t }).catch(function () {}); else copyText(t); clearSel(); };
-  $("selImg").onclick = function () { var s = S.sel.slice().sort(function (a, b) { return a - b; }), bk = BOOKS[S.b], ch = bk.ch[S.c - 1]; if (!s.length || !window.EvoGambar) return; var tx = s.map(function (n) { return clean(ch.v[n - 1]); }).join(" "); EvoGambar.open({ text: tx, ref: bk.n + " " + S.c + ":" + rangeStr(s), toast: toast }); clearSel(); };
+  $("selImg").onclick = function () { var s = S.sel.slice().sort(function (a, b) { return a - b; }), bk = BOOKS[S.b], ch = bk.ch[S.c - 1]; if (!s.length || !window.EvoGambar) return; var tx = s.map(function (n) { return verPlain(S.b, S.c, n); }).filter(Boolean).join(" "); var vu = verUsed(S.b, S.c); EvoGambar.open({ text: tx, ref: bk.n + " " + S.c + ":" + rangeStr(s) + (vu !== "ayt" ? " (" + VERS[vu].n + ")" : ""), toast: toast }); clearSel(); };
   (function () {
     // geser panel ke bawah untuk menyembunyikan
     var sh = $("selbar"), y0 = null, dy = 0, pid = null;
@@ -1265,14 +1342,17 @@ var ORN = {
     if (x) return x;
     l.sort(function (a, b) { return vscore(b) - vscore(a); }); return l[0] || null;
   }
+  function ttsEn() { return T.on && VERS[verUsed(T.b, T.c)].lang === "en"; }
+  function enVoice() { var l = voices.filter(function (v) { return /^en([-_]|$)/i.test(v.lang); }); l.sort(function (a, b) { return vscore(b) - vscore(a); }); return l[0] || null; }
   function vtext(raw) { return raw.replace(/^¶/, "").replace(/^\(\d+-\d+\)\s*/, ""); }
   // Cara bicara dicoba bertahap: 0 = suara Indonesia terpilih, 1 = hanya bahasa id-ID, 2 = suara bawaan HP.
   // Cara yang berhasil diingat untuk HP ini (tts.mode).
   function say(text, done, mode) {
     if (mode === undefined) mode = tts.mode || 0;
-    var u = new SpeechSynthesisUtterance(text), v = mode === 0 ? pickVoice() : null;
-    if (mode < 2) u.lang = "id-ID";
-    if (v) { u.voice = v; u.lang = String(v.lang || "id-ID").replace("_", "-"); }
+    if (!text) { setTimeout(done, 0); return; }
+    var en = ttsEn(), u = new SpeechSynthesisUtterance(text), v = en ? enVoice() : mode === 0 ? pickVoice() : null;
+    if (en) u.lang = "en-US"; else if (mode < 2) u.lang = "id-ID";
+    if (v) { u.voice = v; u.lang = String(v.lang || (en ? "en-US" : "id-ID")).replace("_", "-"); }
     u.rate = tts.rate; u.pitch = 1;
     u.onend = function () { T.errs = 0; if ((tts.mode || 0) !== mode) { tts.mode = mode; saveTTS(); } done(); };
     u.onerror = function (e) {
@@ -1307,12 +1387,12 @@ var ORN = {
   function step(tok, intro) {
     if (tok !== T.tok || !T.on || T.paused) return;
     var ch = BOOKS[T.b].ch[T.c - 1];
-    if (intro) { markVerse(); say(BOOKS[T.b].n + " pasal " + T.c, function () { step(tok, false); }); return; }
+    if (intro) { markVerse(); say(ttsEn() ? "" : BOOKS[T.b].n + " pasal " + T.c, function () { step(tok, false); }); return; }
     if (T.list) {
       if (T.k >= T.list.length) { stopTTS(); return; }
       T.i = T.list[T.k] - 1;
       updatePlayer(); markVerse();
-      say(vtext(ch.v[T.i]), function () { T.k++; step(tok, false); });
+      say(verPlain(T.b, T.c, T.i + 1), function () { T.k++; step(tok, false); });
       return;
     }
     if (T.i >= ch.v.length) {
@@ -1326,7 +1406,7 @@ var ORN = {
       return;
     }
     updatePlayer(); markVerse();
-    say(vtext(ch.v[T.i]), function () { T.i++; step(tok, false); });
+    say(verPlain(T.b, T.c, T.i + 1), function () { T.i++; step(tok, false); });
   }
   function restartTTS() { if (synth.speaking || synth.pending) synth.cancel(); T.tok++; T.paused = false; T.errs = 0; updatePlayer(); var tok = T.tok; setTimeout(function () { step(tok, false); }, 60); }
   function startTTS(b, c, i, intro, list) {

@@ -79,6 +79,7 @@
   <main class="inner rmain">
     <div class="finder-wrap fread" id="finderRead"></div>
     <div class="ch-head"><div class="ch-t"><div class="bk" id="chBook"></div><h1 id="chNum"></h1></div><button class="autobtn" id="btnAuto" type="button" aria-pressed="false"><svg class="ico" viewBox="0 0 24 24"><path d="m6 5 6 6 6-6"/><path d="m6 13 6 6 6-6"/></svg><span>Gulir otomatis</span></button></div>
+    <div class="verbar"><button class="verpill" id="verMain" type="button" aria-label="Pilih versi Alkitab"></button><button class="verpill cmp" id="verCmp" type="button" aria-label="Bandingkan dengan versi lain"></button></div>
     <article class="text" id="text"></article>
     <nav class="pn" aria-label="Pasal">
       <button id="prev"><small>Sebelumnya</small><b></b></button>
@@ -184,6 +185,10 @@
     <label class="vauto"><input type="checkbox" id="vAuto"> Lanjut ke pasal berikutnya otomatis</label>
   </div>
 </div></div>
+<div class="scrim" id="shVer" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hVer">
+  <div class="sh-head"><h2 id="hVer">Versi Alkitab</h2><button class="ib" data-close aria-label="Tutup"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sh-body"><div class="flabel">Dibaca</div><div class="verlist" id="verListM"></div><div class="flabel">Bandingkan dengan</div><div class="verlist" id="verListC"></div></div>
+</div></div>
 <div class="scrim" id="shSet" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hSet">
   <div class="sh-head"><h2 id="hSet">Tampilan</h2><button class="ib" data-close aria-label="Tutup"><svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="sh-body">
@@ -205,6 +210,7 @@
       <p>Setelah dibuka sekali dengan internet, seluruh Alkitab tersimpan di HP dan bisa dibaca kapan saja. Tombol Renungan memakai internet. Jika internet putus atau penuh, aplikasi tetap menampilkan ayat yang dipilih dari HP Anda.</p>
       <p>Saat Anda menekan Renungan, cerita Anda dikirim ke server kami dan ke layanan Google Gemini untuk dipilihkan ayat serta disusunkan renungan dan doa. Kami tidak menyimpan cerita itu. Jangan menulis nama atau data pribadi. Jurnal Doa hanya tersimpan di HP ini.</p>
       <p>Teks Alkitab Yang Terbuka (AYT) © Yayasan Lembaga SABDA 2011, 2024. Boleh dipakai dan dibagikan gratis untuk tujuan non-komersial. <a href="https://ayt.co" target="_blank" rel="noopener">ayt.co</a></p>
+      <p>Terjemahan Sederhana Indonesia (TSI) © 2021 Yayasan Alkitab BahasaKita (Albata) dan Pioneer Bible Translators, dengan lisensi <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.id" target="_blank" rel="noopener">CC BY-SA 4.0</a>, teks tidak diubah. King James Version (1769), World English Bible (edisi Britania), dan Berean Standard Bible: domain publik.</p>
       <p>Ayat tersimpan dan pengaturan ada di HP ini.</p>
     </div>
   </div>
