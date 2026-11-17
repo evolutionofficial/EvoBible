@@ -1385,7 +1385,7 @@ var ORN = {
      Posisi disimpan sebagai pecahan piksel dan dimajukan tiap frame menurut waktu nyata,
      jadi geraknya halus (bukan loncat 1 piksel). Berhenti sejenak saat layar disentuh,
      dan di akhir pasal otomatis menggulung ke pasal berikutnya. */
-  var AS_SP = [10, 16, 24, 34, 48], AS_N = ["Sangat pelan", "Pelan", "Sedang", "Cepat", "Sangat cepat"];
+  var AS_SP = [5, 7, 10, 14, 20], AS_N = ["Sangat pelan", "Pelan", "Sedang", "Cepat", "Sangat cepat"];
   var AS = { on: false, run: false, sp: Math.min(4, Math.max(0, +lsGet("evo.as", 2) || 0)), y: 0, last: 0, hold: 0, endT: 0 };
   var AS_PAUSE = '<svg class="ico" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg>', AS_PLAY = '<svg class="ico" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg>';
   function asUi() {
@@ -1394,21 +1394,29 @@ var ORN = {
     $("asSpd").textContent = AS_N[AS.sp]; $("asSlow").disabled = AS.sp === 0; $("asFast").disabled = AS.sp === AS_SP.length - 1;
     $("asPlay").innerHTML = AS.run ? AS_PAUSE : AS_PLAY; $("asPlay").setAttribute("aria-label", AS.run ? "Jeda" : "Lanjutkan");
   }
+  function asFrac(f) {
+    var m = document.querySelector("#vRead .rmain"); if (!m) return;
+    if (f > 0.001) { m.style.transform = "translate3d(0," + (-f).toFixed(3) + "px,0)"; m.style.willChange = "transform"; }
+    else if (m.style.transform) { m.style.transform = ""; m.style.willChange = ""; }
+  }
   function asLoop(ts) {
-    if (!AS || !AS.on) return; requestAnimationFrame(asLoop);
+    if (!AS || !AS.on) { asFrac(0); return; } requestAnimationFrame(asLoop);
     var dt = AS.last ? Math.min(64, ts - AS.last) : 0; AS.last = ts;
-    if (!AS.run || TURN || AS.hold > ts || S.view !== "read" || S.sel.length || document.hidden || T.on) { AS.y = scrollY; AS.endT = 0; return; }
+    if (!AS.run || TURN || AS.hold > ts || S.view !== "read" || S.sel.length || document.hidden || T.on) { asFrac(0); AS.y = scrollY; AS.endT = 0; return; }
     var max = document.documentElement.scrollHeight - innerHeight;
-    if (Math.abs(scrollY - AS.y) > 3) AS.y = scrollY;
+    if (Math.abs(scrollY - Math.floor(AS.y)) > 2) { AS.y = scrollY; asFrac(0); }
     if (AS.y >= max - 1) {
+      asFrac(0);
       if (!AS.endT) AS.endT = ts + 1800;
       else if (ts > AS.endT) { AS.endT = 0; var nt = nextOf(S.b, S.c); if (nt) turnTo(nt, 1, function () { AS.y = 0; AS.hold = performance.now() + 1500; }); else { AS.run = false; asUi(); toast("Sudah sampai akhir Alkitab"); } }
       return;
     }
-    AS.y = Math.min(max, AS.y + AS_SP[AS.sp] * dt / 1000); window.scrollTo(0, AS.y);
+    AS.y = Math.min(max, AS.y + AS_SP[AS.sp] * dt / 1000);
+    var iy = Math.floor(AS.y); if (iy !== scrollY) window.scrollTo(0, iy);
+    asFrac(AS.y - iy);
   }
   function asStart() { AS.on = true; AS.run = true; AS.y = scrollY; AS.last = 0; AS.hold = 0; asUi(); requestAnimationFrame(asLoop); }
-  function asStop() { if (!AS || !AS.on) return; AS.on = false; AS.run = false; asUi(); }
+  function asStop() { if (!AS || !AS.on) return; AS.on = false; AS.run = false; asFrac(0); asUi(); }
   $("btnAuto").onclick = function () { if (AS.on) asStop(); else { if (T.on) stopTTS(); asStart(); } };
   $("asStop").onclick = asStop;
   $("asPlay").onclick = function () { AS.run = !AS.run; AS.hold = 0; AS.last = 0; asUi(); };
