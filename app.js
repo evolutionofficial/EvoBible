@@ -1939,6 +1939,21 @@ var ORN = {
     topStop(); go(t.dataset.v);
   }
   $("tabs").addEventListener("pointerup", tdEnd);
+
+  /* ---------- panel menu bawah mengecil saat halaman digulir turun ----------
+     Turun: cepat mengecil sedikit lalu tertahan. Naik: pelan-pelan kembali normal. Di puncak halaman selalu normal. */
+  var TB = { k: 0, y: scrollY, raf: 0 };
+  addEventListener("scroll", function () {
+    if (TB.raf) return;
+    TB.raf = requestAnimationFrame(function () {
+      TB.raf = 0;
+      var y = scrollY, dy = y - TB.y; TB.y = y;
+      if (y < 12) TB.k = 0;
+      else if (dy > 0) TB.k = Math.min(1, TB.k + dy / 70);
+      else if (dy < 0) TB.k = Math.max(0, TB.k + dy / 180);
+      $("tabs").style.setProperty("--tbs", (1 - .08 * TB.k).toFixed(4));
+    });
+  }, { passive: true });
   $("tabs").addEventListener("pointercancel", function (e) { if (TD.p && TD.p.on) tdEnd(e); else { TD.p = null; $("tabs").classList.remove("press"); } });
 
   if ("serviceWorker" in navigator && location.protocol !== "file:") { window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); }); }

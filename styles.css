@@ -1374,3 +1374,8 @@ body.tabdrag .tab-c.hov { color: var(--accent); }
 .tabbar .inner { transform-origin: 50% 100%; transition: transform .38s cubic-bezier(.3, 1.5, .5, 1); }
 .tabbar .inner.press { transform: scale(1.045); transition: transform .22s cubic-bezier(.3, 1.4, .5, 1); }
 @media (prefers-reduced-motion: reduce) { .tabbar .inner, .tabbar .inner.press { transition: none; transform: none; } }
+
+/* ---- panel menu bawah: skala gulir (--tbs) x skala sentuh (--tbz) ---- */
+.tabbar .inner { --tbs: 1; --tbz: 1; transform: scale(calc(var(--tbs) * var(--tbz))); transition: transform .16s linear; }
+.tabbar .inner.press { --tbz: 1.045; transform: scale(calc(var(--tbs) * var(--tbz))); transition: transform .22s cubic-bezier(.3, 1.4, .5, 1); }
+@media (prefers-reduced-motion: reduce) { .tabbar .inner, .tabbar .inner.press { transform: none; } }
