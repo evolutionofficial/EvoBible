@@ -1363,3 +1363,9 @@ body.autoscroll main.inner { padding-bottom: 96px; }
     inset 0 0 8px color-mix(in oklab, var(--accent) 30%, transparent), 0 7px 16px -8px rgba(0, 0, 0, .7), 0 0 14px -4px color-mix(in oklab, var(--accent) 40%, transparent); }
   :root:not([data-theme="light"]) .tab-ind::before { opacity: .75; }
 }
+
+/* ---- geser tetesan di menu bawah ---- */
+.tabbar .inner { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.tab.hov { color: var(--accent); }
+body.tabdrag .tab[aria-current="page"]:not(.hov) { color: var(--muted); }
+body.tabdrag .tab-c.hov { color: var(--accent); }

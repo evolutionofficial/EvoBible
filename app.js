@@ -611,9 +611,11 @@ var ORN = {
     });
   }
   ["touchstart", "wheel"].forEach(function (ev) { addEventListener(ev, function (e) { if (TOP.raf && !(e.target.closest && e.target.closest("#tabs"))) topStop(); }, { passive: true }); });
+  var TD = { eat: 0, p: null };
   var TAB_ROOT = { home: "home", read: "read", search: "search", kata: "search", more: "more", church: "church" };
   $("tabs").onclick = function (e) {
     var t = e.target.closest(".tab"); if (!t) return;
+    if (TD.eat > performance.now()) return;
     var root = TAB_ROOT[t.dataset.v];
     if (t.getAttribute("aria-current") === "page" && S.view === root && !(root === "search" && S.theme) && scrollY > 2) { smoothTop(); return; }
     topStop(); go(t.dataset.v);
@@ -1896,6 +1898,45 @@ var ORN = {
     ], { duration: dur, easing: "cubic-bezier(.3, .7, .3, 1)" });
   }
   window.addEventListener("resize", function () { placeInd(false); });
+
+  /* ---------- geser tetesan air di menu bawah ----------
+     Jari menahan & menggeser: tetesan mengikuti jari (memanjang sesuai laju), dilepas -> meluncur ke tab terdekat dan membukanya. */
+  function tdTabs() { return Array.prototype.filter.call($("tabs").querySelectorAll(".tab"), function (t) { return !t.hidden && t.offsetWidth; }); }
+  function tdNear(cx) { var best = null, bd = 1e9; tdTabs().forEach(function (t) { var d = Math.abs(t.offsetLeft + t.offsetWidth / 2 - cx); if (d < bd) { bd = d; best = t; } }); return best; }
+  $("tabs").addEventListener("pointerdown", function (e) {
+    if (e.button > 0 || !e.target.closest(".tab")) return;
+    var r = $("tabs").getBoundingClientRect();
+    TD.p = { id: e.pointerId, x0: e.clientX, y0: e.clientY, ox: r.left, on: false, lx: e.clientX, lt: e.timeStamp, v: 0, hov: null };
+  });
+  $("tabs").addEventListener("pointermove", function (e) {
+    var p = TD.p; if (!p || p.id !== e.pointerId) return;
+    if (!p.on) {
+      if (Math.abs(e.clientX - p.x0) < 10 || Math.abs(e.clientX - p.x0) < Math.abs(e.clientY - p.y0)) return;
+      p.on = true; try { $("tabs").setPointerCapture(e.pointerId); } catch (x) {}
+      if (indAnim) try { indAnim.cancel(); } catch (x) {}
+      var cur = $("tabs").querySelector('.tab[aria-current="page"]:not(.tab-c)') || tdNear(p.x0 - p.ox);
+      p.w = cur.offsetWidth; var ts = tdTabs(); p.min = ts[0].offsetLeft; p.max = ts[ts.length - 1].offsetLeft + ts[ts.length - 1].offsetWidth - p.w;
+      tabInd.style.opacity = "1"; tabInd.style.width = p.w + "px";
+      document.body.classList.add("tabdrag");
+    }
+    var dt = Math.max(8, e.timeStamp - p.lt); p.v = p.v * .6 + ((e.clientX - p.lx) / dt) * .4; p.lx = e.clientX; p.lt = e.timeStamp;
+    var cx = e.clientX - p.ox, x = Math.max(p.min, Math.min(p.max, cx - p.w / 2)), s = Math.min(.28, Math.abs(p.v) * .22);
+    p.x = x; tabInd.style.transform = "translateX(" + x + "px) scale(" + (1 + s).toFixed(3) + "," + (1 - s * .6).toFixed(3) + ")";
+    var h = tdNear(x + p.w / 2);
+    if (h !== p.hov) { if (p.hov) p.hov.classList.remove("hov"); h.classList.add("hov"); if (p.hov && navigator.vibrate) try { navigator.vibrate(6); } catch (x) {} p.hov = h; }
+  });
+  function tdEnd(e) {
+    var p = TD.p; if (!p || p.id !== e.pointerId) return; TD.p = null;
+    if (!p.on) return;
+    TD.eat = performance.now() + 400; document.body.classList.remove("tabdrag");
+    if (p.hov) p.hov.classList.remove("hov");
+    var t = tdNear(p.x + p.w / 2);
+    indPos = { x: p.x, w: p.w }; tabInd.style.transform = "translateX(" + p.x + "px)";
+    if (t.getAttribute("aria-current") === "page") { placeInd(true); return; }
+    topStop(); go(t.dataset.v);
+  }
+  $("tabs").addEventListener("pointerup", tdEnd);
+  $("tabs").addEventListener("pointercancel", function (e) { if (TD.p && TD.p.on) tdEnd(e); else TD.p = null; });
 
   if ("serviceWorker" in navigator && location.protocol !== "file:") { window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); }); }
 
