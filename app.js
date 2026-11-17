@@ -1918,11 +1918,21 @@ var ORN = {
       var cur = $("tabs").querySelector('.tab[aria-current="page"]:not(.tab-c)') || tdNear(p.x0 - p.ox);
       p.w = cur.offsetWidth; var ts = tdTabs(); p.min = ts[0].offsetLeft; p.max = ts[ts.length - 1].offsetLeft + ts[ts.length - 1].offsetWidth - p.w;
       tabInd.style.opacity = "1"; tabInd.style.width = p.w + "px";
+      p.r0 = $("tabs").getBoundingClientRect(); p.k0 = p.r0.width / ($("tabs").offsetWidth || p.r0.width);
       document.body.classList.add("tabdrag");
     }
     var dt = Math.max(8, e.timeStamp - p.lt); p.v = p.v * .6 + ((e.clientX - p.lx) / dt) * .4; p.lx = e.clientX; p.lt = e.timeStamp;
-    var rr = $("tabs").getBoundingClientRect(), k = rr.width / ($("tabs").offsetWidth || rr.width);
-    var cx = (e.clientX - rr.left) / k, x = Math.max(p.min, Math.min(p.max, cx - p.w / 2)), s = Math.min(.28, Math.abs(p.v) * .22);
+    // posisi jari diukur terhadap ukuran panel saat geser dimulai (tidak ikut melar)
+    var cx = (e.clientX - p.r0.left) / p.k0, raw = cx - p.w / 2, x = Math.max(p.min, Math.min(p.max, raw)), s = Math.min(.28, Math.abs(p.v) * .22);
+    // ditarik melewati tab paling ujung: panel melar ke arah tarikan, sisi seberangnya menahan (karet)
+    var over = raw > p.max ? raw - p.max : raw < p.min ? raw - p.min : 0, el = $("tabs");
+    if (over) {
+      var dir = over > 0 ? 1 : -1, st = .07 * (1 - Math.exp(-Math.abs(over) / 110)), W = el.offsetWidth;
+      el.classList.add("pull");
+      el.style.setProperty("--tbx", (1 + st).toFixed(4)); el.style.setProperty("--tby", (1 - st * .4).toFixed(4));
+      el.style.setProperty("--tbt", (dir * st * W / 2).toFixed(2) + "px");
+      x += dir * Math.min(8, Math.abs(over) * .15);
+    } else if (el.classList.contains("pull")) { el.style.setProperty("--tbx", "1"); el.style.setProperty("--tby", "1"); el.style.setProperty("--tbt", "0px"); }
     p.x = x; tabInd.style.transform = "translateX(" + x + "px) scale(" + (1 + s).toFixed(3) + "," + (1 - s * .6).toFixed(3) + ")";
     var h = tdNear(x + p.w / 2);
     if (h !== p.hov) { if (p.hov) p.hov.classList.remove("hov"); h.classList.add("hov"); if (p.hov && navigator.vibrate) try { navigator.vibrate(6); } catch (x) {} p.hov = h; }
@@ -1930,6 +1940,12 @@ var ORN = {
   function tdEnd(e) {
     var p = TD.p; if (!p || p.id !== e.pointerId) return; TD.p = null;
     $("tabs").classList.remove("press");
+    var el = $("tabs");
+    if (el.classList.contains("pull")) {
+      el.classList.remove("pull"); el.classList.add("snapback");
+      el.style.setProperty("--tbx", "1"); el.style.setProperty("--tby", "1"); el.style.setProperty("--tbt", "0px");
+      clearTimeout(TD.sb); TD.sb = setTimeout(function () { el.classList.remove("snapback"); }, 650);
+    }
     if (!p.on) return;
     TD.eat = performance.now() + 400; document.body.classList.remove("tabdrag");
     if (p.hov) p.hov.classList.remove("hov");
