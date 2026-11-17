@@ -1,10 +1,6 @@
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
-  /* Konten digulir di dalam #scr (bukan halaman), supaya sentuhan di menu bawah tidak "ditelan" iOS
-     untuk menghentikan luncuran gulir. Semua posisi gulir lewat SCR. */
-  var SCR = $("scr") || document.scrollingElement;
-  function scrTo(a, b) { if (a && typeof a === "object") SCR.scrollTo(a); else SCR.scrollTop = b; }
   var mem = {};
   function lsGet(k, d) { try { var v = localStorage.getItem(k); return v === null ? (k in mem ? mem[k] : d) : JSON.parse(v); } catch (e) { return k in mem ? mem[k] : d; } }
   function lsSet(k, v) { mem[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -538,7 +534,7 @@ var ORN = {
   }
   $("calSeg").onclick = function (e) { var k = e.target.dataset && e.target.dataset.k; if (!k) return; settings.cal = k; lsSet("evo.set", settings); cloudTradisi(k); syncSeasonUI(); refreshSeason(); };
   $("seaSeg").onclick = function (e) { var k = e.target.dataset && e.target.dataset.k; if (!k) return; settings.sea = k; lsSet("evo.set", settings); syncSeasonUI(); refreshSeason(); };
-  $("pvGrid").onclick = function (e) { var b = e.target.closest("[data-pv]"); if (!b) return; PV = b.dataset.pv; hide(); refreshSeason(); go("home"); scrTo(0, 0); };
+  $("pvGrid").onclick = function (e) { var b = e.target.closest("[data-pv]"); if (!b) return; PV = b.dataset.pv; hide(); refreshSeason(); go("home"); window.scrollTo(0, 0); };
   function pvStep(d) { var i = ORDER.indexOf(PV); PV = ORDER[(i + d + ORDER.length) % ORDER.length]; refreshSeason(); }
   $("pvPrev").onclick = function () { pvStep(-1); };
   $("pvNext").onclick = function () { pvStep(1); };
@@ -586,15 +582,15 @@ var ORN = {
         showView("read"); renderChapter(i, c, v, m[4] ? Math.min(+m[4], BOOKS[i].ch[c - 1].v.length) : 0); return;
       }
     }
-    if (h === "cari") { setSearchTab("tema"); showView("search"); renderSearch(); scrTo(0, 0); return; }
-    if (h === "kata") { setSearchTab("kata"); showView("search", "kata"); renderSearch(); scrTo(0, 0); return; }
-    if (h === "gereja" && FEATURE_CHURCH) { showView("church"); renderChurch(); scrTo(0, 0); return; }
-    if (h === "tersimpan" || h === "sorotan") { showView("saved", "more"); renderSaved(); scrTo(0, 0); return; }
+    if (h === "cari") { setSearchTab("tema"); showView("search"); renderSearch(); window.scrollTo(0, 0); return; }
+    if (h === "kata") { setSearchTab("kata"); showView("search", "kata"); renderSearch(); window.scrollTo(0, 0); return; }
+    if (h === "gereja" && FEATURE_CHURCH) { showView("church"); renderChurch(); window.scrollTo(0, 0); return; }
+    if (h === "tersimpan" || h === "sorotan") { showView("saved", "more"); renderSaved(); window.scrollTo(0, 0); return; }
     if (h === "kisah" || h.indexOf("kisah/") === 0) { var kp = h.split("/"); showView("kisah", "more"); renderKisah(kp[1] || "", kp[2] || ""); return; }
-    if (h === "lainnya") { showView("more"); renderMore(); scrTo(0, 0); return; }
+    if (h === "lainnya") { showView("more"); renderMore(); window.scrollTo(0, 0); return; }
     if (h === "nyanyian" || h.indexOf("nyanyian/") === 0) { var hp = h.split("/"); showView("hymn", "more"); renderHymn(hp[1] || "", hp[2] || ""); return; }
     if (h === "baca") { var last = lsGet("evo.last", { b: 0, c: 1 }); if (!BOOKS[last.b] || !BOOKS[last.b].ch[last.c - 1]) last = { b: 0, c: 1 }; showView("read"); renderChapter(last.b, last.c, 0); return; }
-    showView("home"); renderHome(); scrTo(0, 0);
+    showView("home"); renderHome(); window.scrollTo(0, 0);
   }
   window.addEventListener("hashchange", function () { if (NAV_REPLACE) return; if (SKIP_H && location.hash === SKIP_H) { SKIP_H = null; return; } SKIP_H = null; route(); });
   /* Ketuk tab yang sedang aktif saat halaman sudah digulir → meluncur cepat ke atas (bukan lompat). */
@@ -602,15 +598,15 @@ var ORN = {
   function topStop() { if (TOP.raf) { cancelAnimationFrame(TOP.raf); TOP.raf = 0; } }
   function smoothTop() {
     topStop();
-    var y0 = SCR.scrollTop; if (y0 <= 0) return;
+    var y0 = scrollY; if (y0 <= 0) return;
     var rm = false; try { rm = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
-    if (rm) { scrTo(0, 0); return; }
+    if (rm) { window.scrollTo(0, 0); return; }
     var dur = Math.max(320, Math.min(700, 260 + y0 * 0.12)), t0 = 0;
     if (AS && AS.on) AS.hold = performance.now() + dur + 1500;
     TOP.raf = requestAnimationFrame(function step(ts) {
       if (!t0) t0 = ts;
       var k = Math.min(1, (ts - t0) / dur), e = 1 - Math.pow(1 - k, 3);
-      scrTo(0, Math.round(y0 * (1 - e)));
+      window.scrollTo(0, Math.round(y0 * (1 - e)));
       TOP.raf = k < 1 ? requestAnimationFrame(step) : 0;
     });
   }
@@ -624,7 +620,7 @@ var ORN = {
   };
   function tabTap(t) {
     var root = TAB_ROOT[t.dataset.v];
-    if (t.getAttribute("aria-current") === "page" && S.view === root && !(root === "search" && S.theme) && SCR.scrollTop > 2) { smoothTop(); return; }
+    if (t.getAttribute("aria-current") === "page" && S.view === root && !(root === "search" && S.theme) && scrollY > 2) { smoothTop(); return; }
     topStop(); go(t.dataset.v);
   }
 
@@ -725,7 +721,7 @@ var ORN = {
   }
   $("sChips").onclick = function (e) {
     var t = e.target.closest("[data-q]"); if (!t) return;
-    S.q = t.dataset.q; $("q").value = S.q; S.sub = true; S.theme = null; S.ai = null; S.pr = null; S.pendingAI = S.mode === "tema"; renderSearch(); scrTo(0, 0);
+    S.q = t.dataset.q; $("q").value = S.q; S.sub = true; S.theme = null; S.ai = null; S.pr = null; S.pendingAI = S.mode === "tema"; renderSearch(); window.scrollTo(0, 0);
   };
   $("q").addEventListener("keydown", function (e) {
     if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); if ($("sForm").requestSubmit) $("sForm").requestSubmit(); else $("sForm").dispatchEvent(new Event("submit", { cancelable: true })); }
@@ -734,7 +730,7 @@ var ORN = {
   $("mode").onclick = function (e) { var m = e.target.dataset && e.target.dataset.m; if (!m) return; S.mode = m; S.theme = null; S.pendingAI = false; syncMode(); renderSearch(); };
   var qT;
   $("q").addEventListener("input", function () { S.q = $("q").value; S.ai = null; S.pendingAI = false; syncMode(); if (!S.q.trim() && S.sub) { S.sub = false; S.theme = null; renderSearch(); } });
-  $("sForm").onsubmit = function (e) { e.preventDefault(); S.q = $("q").value; if (!S.q.trim()) return; $("q").blur(); S.sub = true; S.theme = null; scrTo(0, 0); S.ai = null; S.pr = null; S.pendingAI = S.mode === "tema"; renderSearch(); };
+  $("sForm").onsubmit = function (e) { e.preventDefault(); S.q = $("q").value; if (!S.q.trim()) return; $("q").blur(); S.sub = true; S.theme = null; window.scrollTo(0, 0); S.ai = null; S.pr = null; S.pendingAI = S.mode === "tema"; renderSearch(); };
   $("qclr").onclick = function () { $("q").value = ""; S.q = ""; S.sub = false; S.theme = null; syncMode(); renderSearch(); };
 
   function parseRef(q) {
@@ -837,7 +833,7 @@ var ORN = {
     if ((t = e.target.closest("[data-act]")) && t.dataset.act === "back") { S.theme = null; go("home"); return; }
     if (t && t.dataset.act === "more") { S.moreOpen = true; renderSearch(); return; }
     if (t && t.dataset.act === "hist") { S.histOpen = !S.histOpen; var hb = $("histBox"); if (hb) hb.hidden = !S.histOpen; return; }
-    if (t && t.dataset.act === "sesopen") { var su = sesUsed(); if (su) { S.q = su.q; $("q").value = su.q; S.theme = null; S.mode = "tema"; S.ai = null; S.pr = null; S.pendingAI = true; syncMode(); renderSearch(); scrTo(0, 0); } return; }
+    if (t && t.dataset.act === "sesopen") { var su = sesUsed(); if (su) { S.q = su.q; $("q").value = su.q; S.theme = null; S.mode = "tema"; S.ai = null; S.pr = null; S.pendingAI = true; syncMode(); renderSearch(); window.scrollTo(0, 0); } return; }
     if (t && t.dataset.act === "prretry") { S.pr = null; S.pendingAI = true; renderSearch(); return; }
     if (t && t.dataset.act === "prread") { var pid = +t.dataset.id; openRef(bOf[pid], cOf[pid], vOf[pid]); return; }
     if (t && t.dataset.act === "primg") { imgVerse(+t.dataset.id); return; }
@@ -855,7 +851,7 @@ var ORN = {
       return;
     }
     if ((t = e.target.closest("[data-q]"))) { S.q = t.dataset.q; $("q").value = S.q; S.sub = true; S.theme = null; S.ai = null; S.pr = null; S.pendingAI = S.mode === "tema"; pushRecent(S.q); renderSearch(); return; }
-    if ((t = e.target.closest("[data-tema]"))) { S.theme = t.dataset.tema; S.moreOpen = false; renderSearch(); scrTo(0, 0); return; }
+    if ((t = e.target.closest("[data-tema]"))) { S.theme = t.dataset.tema; S.moreOpen = false; renderSearch(); window.scrollTo(0, 0); return; }
     if ((t = e.target.closest(".go"))) { openRef(+t.dataset.b, +t.dataset.c, +t.dataset.v); return; }
     if ((t = e.target.closest(".rcard"))) { var i2 = +t.dataset.id; if (S.q) pushRecent(S.q); openRef(bOf[i2], cOf[i2], vOf[i2]); }
   });
@@ -951,7 +947,7 @@ var ORN = {
         }
         body.innerHTML = grp("umum", "Himne berbahasa Inggris") + grp(mine, mine === "katolik" ? "Katolik" : "Protestan") + grp(other, other === "katolik" ? "Katolik" : "Protestan");
       });
-      scrTo(0, 0); return;
+      window.scrollTo(0, 0); return;
     }
     $("hyTitle").textContent = bk.n;
     hyReady().then(function (ready) {
@@ -973,7 +969,7 @@ var ORN = {
     $("hyBody").innerHTML = '<div class="hysearch"><input id="hyQ" type="search" inputmode="search" autocomplete="off" placeholder="Nomor atau judul lagu" aria-label="Cari nomor atau judul lagu" value="' + esc(q) + '"></div><div class="hylist" id="hyList"></div>';
     hyFill(bk, list);
     $("hyQ").oninput = function () { HY.q = this.value; hyFill(bk, list); };
-    scrTo(0, 0);
+    window.scrollTo(0, 0);
   }
   function hyFill(bk, list) {
     var q = hyNorm(HY.q || ""), out = list.filter(function (s) { return !q || String(s.n) === q || String(s.n).indexOf(q) === 0 || hyNorm(s.j).indexOf(q) >= 0; });
@@ -990,7 +986,7 @@ var ORN = {
     });
     h += '</article><nav class="pn hypn">' + (prev ? '<button type="button" data-hyn="' + esc(String(prev.n)) + '"><small>Sebelumnya</small><b>' + esc(bk.n) + " " + esc(String(prev.n)) + "</b></button>" : "<span></span>")
       + (next ? '<button type="button" data-hyn="' + esc(String(next.n)) + '"><small>Berikutnya</small><b>' + esc(bk.n) + " " + esc(String(next.n)) + "</b></button>" : "<span></span>") + "</nav>";
-    $("hyBody").innerHTML = h; scrTo(0, 0);
+    $("hyBody").innerHTML = h; window.scrollTo(0, 0);
   }
   $("hyBody").addEventListener("click", function (e) {
     var t = e.target.closest("[data-hy]"); if (t) { HY.q = ""; navHash("nyanyian/" + t.dataset.hy); return; }
@@ -1064,7 +1060,7 @@ var ORN = {
     }).join("") + '</div><div class="hysearch"><input id="ksQ" type="search" autocomplete="off" placeholder="Cari kisah" aria-label="Cari kisah" value="' + esc(KS.q) + '"></div><div class="kslist" id="ksList"></div>';
     $("ksQ").oninput = function () { KS.q = this.value; ksFill(j); };
     ksLoad(j).then(function () { if (S.view === "kisah" && !S.ksId && KS.tab === j) ksFill(j); });
-    scrTo(0, 0);
+    window.scrollTo(0, 0);
   }
   function ksFill(j) {
     var a = KS.d[j] || [], q = ksNorm(KS.q), h = "", last = "";
@@ -1097,7 +1093,7 @@ var ORN = {
     if (refs.length > 1) h += '<h3 class="ksh3">Bacaan</h3><div class="ksrefs">' + refs.map(function (r) { return '<button type="button" class="kspill" data-ksref="' + esc(r) + '">' + esc(r) + "</button>"; }).join("") + "</div>";
     h += '</article><nav class="pn hypn">' + (prev ? '<button type="button" data-ksid="' + esc(prev.id) + '"><small>Sebelumnya</small><b data-noi18n>' + esc(ksName(j, prev)) + "</b></button>" : "<span></span>")
       + (next ? '<button type="button" data-ksid="' + esc(next.id) + '"><small>Berikutnya</small><b data-noi18n>' + esc(ksName(j, next)) + "</b></button>" : "<span></span>") + "</nav>";
-    $("ksBody").innerHTML = h; KS.parts = parts; scrTo(0, 0);
+    $("ksBody").innerHTML = h; KS.parts = parts; window.scrollTo(0, 0);
   }
   function ksStop() {
     if (!KS) return;
@@ -1204,8 +1200,8 @@ var ORN = {
     $("verListC").innerHTML = '<button class="verrow" type="button" data-vc="" aria-pressed="' + !VS.cmp + '"><b>—</b><span>Tidak membandingkan</span></button>' + VER_ORDER.filter(function (k) { return k !== VS.main; }).map(function (k) { return row(k, VS.cmp, "data-vc"); }).join("");
   }
   function verApply() {
-    lsSet("evo.ver", VS); verSync(); var y = SCR.scrollTop;
-    Promise.all([loadVer(VS.main), loadVer(VS.cmp)]).then(function () { if (S.view === "read" && S.b != null) { renderChapter(S.b, S.c); scrTo(0, y); } });
+    lsSet("evo.ver", VS); verSync(); var y = window.scrollY;
+    Promise.all([loadVer(VS.main), loadVer(VS.cmp)]).then(function () { if (S.view === "read" && S.b != null) { renderChapter(S.b, S.c); window.scrollTo(0, y); } });
   }
   $("verMain").onclick = $("verCmp").onclick = function () { verList(); show("shVer"); };
   $("shVer").addEventListener("click", function (e) {
@@ -1221,7 +1217,7 @@ var ORN = {
     $("locText").textContent = bk.n + " " + c; $("chBook").textContent = bk.n; $("chNum").textContent = "Pasal " + c;
     var h = ch.h || {}, html = "", op = false;
     /* versi: muat bila belum ada, sementara tampilkan AYT */
-    if ((VS.main !== "ayt" && !VD[VS.main]) || (VS.cmp && VS.cmp !== "ayt" && !VD[VS.cmp])) Promise.all([loadVer(VS.main), loadVer(VS.cmp)]).then(function (ok) { if (ok[0] && ok[1] && S.view === "read" && S.b === b && S.c === c && (VD[VS.main] || VS.main === "ayt")) { var y = SCR.scrollTop; renderChapter(b, c, vFocus, vEnd); if (!vFocus) scrTo(0, y); } });
+    if ((VS.main !== "ayt" && !VD[VS.main]) || (VS.cmp && VS.cmp !== "ayt" && !VD[VS.cmp])) Promise.all([loadVer(VS.main), loadVer(VS.cmp)]).then(function (ok) { if (ok[0] && ok[1] && S.view === "read" && S.b === b && S.c === c && (VD[VS.main] || VS.main === "ayt")) { var y = window.scrollY; renderChapter(b, c, vFocus, vEnd); if (!vFocus) window.scrollTo(0, y); } });
     var M = verUsed(b, c), md = verCh(M, b, c), C = VS.cmp && VS.cmp !== VS.main ? VS.cmp : "", cd = verCh(C, b, c), showH = M === "ayt";
     if (VS.main !== "ayt" && VD[VS.main] && M === "ayt") html += '<p class="verbanner">' + VERS[VS.main].n + " belum memuat kitab ini. Ditampilkan AYT.</p>";
     ch.v.forEach(function (raw, i) {
@@ -1253,7 +1249,7 @@ var ORN = {
     setNav($("prev"), prevOf(b, c)); setNav($("next"), nextOf(b, c));
     lsSet("evo.last", { b: b, c: c });
     if (T.on) markVerse();
-    if (vFocus && $("v" + vFocus)) { var el = $("v" + vFocus); el.scrollIntoView({ block: "center" }); el.classList.add("flash"); } else scrTo(0, 0);
+    if (vFocus && $("v" + vFocus)) { var el = $("v" + vFocus); el.scrollIntoView({ block: "center" }); el.classList.add("flash"); } else window.scrollTo(0, 0);
     if (vFocus && vEnd >= vFocus) { for (var n = vFocus; n <= vEnd; n++) { var e2 = $("v" + n); if (e2) { S.sel.push(n); e2.classList.add("sel"); } } S.quiet = true; updateSel(); }
   }
   function setNav(btn, t) { btn.hidden = !t; if (t) btn.querySelector("b").textContent = BOOKS[t[0]].n + " " + t[1]; btn._t = t; }
@@ -1357,7 +1353,7 @@ var ORN = {
     return t * (1 - .55 * Math.min(1, s / sw.E));
   }
   function swBegin(sw, dir, t) {
-    TURN = true; sw.on = true; sw.dir = dir; sw.old = [S.b, S.c, SCR.scrollTop]; sw.base = null;
+    TURN = true; sw.on = true; sw.dir = dir; sw.old = [S.b, S.c, scrollY]; sw.base = null;
     if (dir > 0) { sw.o = curlLayer(curMain(), true); goNow(t[0], t[1]); }
     else { sw.base = curlLayer(curMain(), false); goNow(t[0], t[1]); sw.o = curlLayer(curMain(), true); }
     sw.E = curlGeo(sw.o, 0).end; sw.tb = (sw.y0 / sw.o.H - .5) * .8; sw.s = dir > 0 ? 0 : sw.E;
@@ -1376,7 +1372,7 @@ var ORN = {
     var tb = swTilt(sw, 0), to = (sw.dir > 0) === go ? sw.E : 0, dist = Math.abs(to - sw.s);
     var dur = Math.max(280, Math.min(750, dist / Math.max(.7, Math.abs(vx))));
     curlRun(sw.o, function (s) { return tb * (1 - .55 * Math.min(1, s / sw.E)); }, sw.s, to, dur, EO, function () {
-      if (!go) { goNow(sw.old[0], sw.old[1]); scrTo(0, sw.old[2]); }
+      if (!go) { goNow(sw.old[0], sw.old[1]); window.scrollTo(0, sw.old[2]); }
       curlClean(sw.o, sw.base);
     });
   }
@@ -1435,9 +1431,9 @@ var ORN = {
   function asLoop(ts) {
     if (!AS || !AS.on) { asFrac(0); return; } requestAnimationFrame(asLoop);
     var dt = AS.last ? Math.min(64, ts - AS.last) : 0; AS.last = ts;
-    if (!AS.run || TURN || AS.hold > ts || S.view !== "read" || S.sel.length || document.hidden || T.on) { asFrac(0); AS.y = SCR.scrollTop; AS.endT = 0; return; }
-    var max = SCR.scrollHeight - SCR.clientHeight;
-    if (Math.abs(SCR.scrollTop - Math.floor(AS.y)) > 2) { AS.y = SCR.scrollTop; asFrac(0); }
+    if (!AS.run || TURN || AS.hold > ts || S.view !== "read" || S.sel.length || document.hidden || T.on) { asFrac(0); AS.y = scrollY; AS.endT = 0; return; }
+    var max = document.documentElement.scrollHeight - innerHeight;
+    if (Math.abs(scrollY - Math.floor(AS.y)) > 2) { AS.y = scrollY; asFrac(0); }
     if (AS.y >= max - 1) {
       asFrac(0);
       if (!AS.endT) AS.endT = ts + 1800;
@@ -1445,10 +1441,10 @@ var ORN = {
       return;
     }
     AS.y = Math.min(max, AS.y + AS_SP[AS.sp] * dt / 1000);
-    var iy = Math.floor(AS.y); if (iy !== SCR.scrollTop) scrTo(0, iy);
+    var iy = Math.floor(AS.y); if (iy !== scrollY) window.scrollTo(0, iy);
     asFrac(AS.y - iy);
   }
-  function asStart() { AS.on = true; AS.run = true; AS.y = SCR.scrollTop; AS.last = 0; AS.hold = 0; asUi(); requestAnimationFrame(asLoop); }
+  function asStart() { AS.on = true; AS.run = true; AS.y = scrollY; AS.last = 0; AS.hold = 0; asUi(); requestAnimationFrame(asLoop); }
   function asStop() { if (!AS || !AS.on) return; AS.on = false; AS.run = false; asFrac(0); asUi(); }
   $("btnAuto").onclick = function () { if (AS.on) asStop(); else { if (T.on) stopTTS(); asStart(); } };
   $("asStop").onclick = asStop;
@@ -1592,7 +1588,7 @@ var ORN = {
   syncFinders();
 
   /* ---------- scroll shadow ---------- */
-  SCR.addEventListener("scroll", function () { Array.prototype.forEach.call(document.querySelectorAll("#vHome .bar"), function (b) { b.classList.toggle("line", SCR.scrollTop > 8); }); }, { passive: true });
+  window.addEventListener("scroll", function () { Array.prototype.forEach.call(document.querySelectorAll("#vHome .bar"), function (b) { b.classList.toggle("line", window.scrollY > 8); }); }, { passive: true });
 
   /* ---------- pasang ke layar utama ---------- */
   var deferred = null;
@@ -1859,7 +1855,7 @@ var ORN = {
       if (window.EvoGambar && EvoGambar.isOpen()) { EvoGambar.close(); return; }
       if (open) { hide(); return; }
       if (S.view === "read" && S.sel.length) { clearSel(); return; }
-      if (S.view === "search" && S.theme) { S.theme = null; renderSearch(); scrTo(0, 0); return; }
+      if (S.view === "search" && S.theme) { S.theme = null; renderSearch(); window.scrollTo(0, 0); return; }
       if (S.view !== "home") { go("home"); return; }
       show("shExit");
     }
@@ -1980,12 +1976,12 @@ var ORN = {
 
   /* ---------- panel menu bawah mengecil saat halaman digulir turun ----------
      Turun: cepat mengecil sedikit lalu tertahan. Naik: pelan-pelan kembali normal. Di puncak halaman selalu normal. */
-  var TB = { k: 0, y: SCR.scrollTop, raf: 0 };
-  SCR.addEventListener("scroll", function () {
+  var TB = { k: 0, y: scrollY, raf: 0 };
+  addEventListener("scroll", function () {
     if (TB.raf) return;
     TB.raf = requestAnimationFrame(function () {
       TB.raf = 0;
-      var y = SCR.scrollTop, dy = y - TB.y; TB.y = y;
+      var y = scrollY, dy = y - TB.y; TB.y = y;
       if (y < 12) TB.k = 0;
       else if (dy > 0) TB.k = Math.min(1, TB.k + dy / 70);
       else if (dy < 0) TB.k = Math.max(0, TB.k + dy / 180);
