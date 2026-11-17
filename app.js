@@ -593,7 +593,31 @@ var ORN = {
     showView("home"); renderHome(); window.scrollTo(0, 0);
   }
   window.addEventListener("hashchange", function () { if (NAV_REPLACE) return; if (SKIP_H && location.hash === SKIP_H) { SKIP_H = null; return; } SKIP_H = null; route(); });
-  $("tabs").onclick = function (e) { var t = e.target.closest(".tab"); if (t) go(t.dataset.v); };
+  /* Ketuk tab yang sedang aktif saat halaman sudah digulir → meluncur cepat ke atas (bukan lompat). */
+  var TOP = { raf: 0 };
+  function topStop() { if (TOP.raf) { cancelAnimationFrame(TOP.raf); TOP.raf = 0; } }
+  function smoothTop() {
+    topStop();
+    var y0 = scrollY; if (y0 <= 0) return;
+    var rm = false; try { rm = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+    if (rm) { window.scrollTo(0, 0); return; }
+    var dur = Math.max(320, Math.min(700, 260 + y0 * 0.12)), t0 = 0;
+    if (AS && AS.on) AS.hold = performance.now() + dur + 1500;
+    TOP.raf = requestAnimationFrame(function step(ts) {
+      if (!t0) t0 = ts;
+      var k = Math.min(1, (ts - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      window.scrollTo(0, Math.round(y0 * (1 - e)));
+      TOP.raf = k < 1 ? requestAnimationFrame(step) : 0;
+    });
+  }
+  ["touchstart", "wheel"].forEach(function (ev) { addEventListener(ev, function (e) { if (TOP.raf && !(e.target.closest && e.target.closest("#tabs"))) topStop(); }, { passive: true }); });
+  var TAB_ROOT = { home: "home", read: "read", search: "search", kata: "search", more: "more", church: "church" };
+  $("tabs").onclick = function (e) {
+    var t = e.target.closest(".tab"); if (!t) return;
+    var root = TAB_ROOT[t.dataset.v];
+    if (t.getAttribute("aria-current") === "page" && S.view === root && !(root === "search" && S.theme) && scrollY > 2) { smoothTop(); return; }
+    topStop(); go(t.dataset.v);
+  };
 
   /* ---------- beranda ---------- */
   function greeting() { var h = new Date().getHours(); return h < 4 ? "Selamat malam" : h < 11 ? "Selamat pagi" : h < 15 ? "Selamat siang" : h < 18 ? "Selamat sore" : "Selamat malam"; }
