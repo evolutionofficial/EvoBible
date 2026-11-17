@@ -1231,3 +1231,30 @@ body.autoscroll main.inner { padding-bottom: 96px; }
 #vSearch.has .sta .clr { top: 15px; right: 64px; }
 #vSearch.has .sgo { position: absolute; top: 7px; right: 7px; width: 52px; height: 52px; margin: 0; box-shadow: inset 0 2px 0 rgba(255, 255, 255, .5), inset 0 -4px 8px rgba(0, 0, 0, .25), 0 3px 0 var(--pb-edge), 0 8px 16px -8px color-mix(in oklab, var(--pb) 80%, #000); }
 #vSearch.has .sgo .ico { width: 24px; height: 24px; }
+
+/* ---- versi Alkitab ---- */
+.verbar { display: flex; gap: 8px; margin: 2px 0 14px; flex-wrap: wrap; }
+.verpill { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--fg);
+  background-color: var(--glass); background-image: var(--glass-sheen); border: 1px solid var(--glass-br, transparent); box-shadow: var(--rim-glow), 0 2px 0 rgba(0, 0, 0, .06); }
+.verpill b { font-weight: 800; letter-spacing: .02em; }
+.verpill .ico { width: 16px; height: 16px; stroke: currentColor; opacity: .8; }
+.verpill.cmp { color: var(--muted); }
+.verpill.cmp.on { color: #fff; background: var(--jewel); border-color: transparent; box-shadow: var(--emb), 0 2px 0 var(--pb-edge); }
+.verpill.cmp.on .ico { opacity: 1; }
+.verpill:active { transform: translateY(1px); }
+.verlist { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 18px; }
+.verrow { display: flex; align-items: center; gap: 14px; width: 100%; padding: 12px 14px; border-radius: 16px; text-align: left; color: var(--fg); background: var(--soft-bg); box-shadow: var(--soft-emb); }
+.verrow > b { flex: none; min-width: 42px; font-size: 15px; font-weight: 800; color: var(--accent); }
+.verrow span { display: flex; flex-direction: column; font-size: 15.5px; font-weight: 600; line-height: 1.3; }
+.verrow small { font-size: 13px; font-weight: 500; color: var(--muted); }
+.verrow[aria-pressed="true"] { background: var(--jewel); color: #fff; box-shadow: var(--emb), var(--emb-drop); }
+.verrow[aria-pressed="true"] > b, .verrow[aria-pressed="true"] small { color: rgba(255, 255, 255, .85); }
+.verbanner { margin: 0 0 14px; padding: 10px 14px; border-radius: 12px; font-family: var(--ui); font-size: 14px; color: var(--muted); background: var(--soft-bg); box-shadow: var(--panel-emb); }
+.text .v.vm { display: none; }
+.text .vtag { font-family: var(--ui); font-style: normal; font-size: .55em; font-weight: 800; letter-spacing: .04em; color: var(--muted); margin-right: .35em; vertical-align: .3em; }
+.text .v.vom { color: var(--muted); font-style: italic; }
+.text.cmp p { margin: 0; }
+.text.cmp .v { display: block; margin: 0 0 1.05em; }
+.text .vc { display: block; margin: .35em 0 0; padding: .55em .8em; border-radius: 12px; font-size: .86em; line-height: 1.6; color: var(--fg);
+  background: color-mix(in srgb, var(--accent-soft) 70%, transparent); box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 55%, transparent); }
+.text .vc i { font-family: var(--ui); font-style: normal; font-size: .62em; font-weight: 800; letter-spacing: .06em; color: var(--accent); margin-right: .6em; vertical-align: .15em; }

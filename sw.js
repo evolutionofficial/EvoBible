@@ -11,7 +11,8 @@
 // Bump VERSION whenever the site files change so that devices download
 // a fresh cache and drop the old one.
 
-const VERSION = "v49";
+const VERSION = "v50";
+const VER_CACHE = "evobible-versi-1";
 const CACHE = "evobible-" + VERSION;
 
 const PRECACHE = [
@@ -65,7 +66,7 @@ self.addEventListener("activate", (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key.startsWith("evobible-") && key !== CACHE)
+            .filter((key) => key.startsWith("evobible-") && key !== CACHE && key !== VER_CACHE)
             .map((key) => caches.delete(key))
         )
       )
@@ -86,6 +87,10 @@ self.addEventListener("fetch", (event) => {
   }
 
   var p = new URL(request.url).pathname;
+  if (/\/ver\/[a-z]+\.json$/.test(p)) {
+    event.respondWith(caches.open(VER_CACHE).then((c) => c.match(request).then((hit) => hit || fetch(request).then((r) => { if (r.ok) c.put(request, r.clone()); return r; }))));
+    return;
+  }
   if (/\/(data|engine)\.js$|\/fonts\/|\/icons\//.test(p)) {
     event.respondWith(caches.open(CACHE).then((c) => c.match(request).then((hit) => hit || fetch(request).then((r) => { if (r.ok) c.put(request, r.clone()); return r; }))));
     return;
