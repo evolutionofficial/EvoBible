@@ -11,7 +11,7 @@
 // Bump VERSION whenever the site files change so that devices download
 // a fresh cache and drop the old one.
 
-const VERSION = "v50";
+const VERSION = "v51";
 const VER_CACHE = "evobible-versi-1";
 const CACHE = "evobible-" + VERSION;
 
@@ -24,6 +24,8 @@ const PRECACHE = [
   "vendor/supabase.js",
   "engine-core.js",
   "engine.js",
+  "i18n-en.js",
+  "i18n.js",
   "data.js",
   "manifest.webmanifest",
   "fonts/plus-jakarta-sans-latin-wght-normal.woff2",

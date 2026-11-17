@@ -47,3 +47,13 @@ Ubah `VERSION` di `sw.js` setiap kali berkas situs berubah, agar cache di HP iku
 
 - Teks Alkitab Yang Terbuka (AYT) © Yayasan Lembaga SABDA 2011, 2024. Boleh dipakai dan dibagikan gratis untuk tujuan non-komersial dengan mencantumkan atribusi. Info: ayt.co. Izin komersial: ylsa@sabda.org.
 - Font Plus Jakarta Sans dan Source Serif 4 berlisensi SIL OFL 1.1 (melalui Fontsource).
+
+## Bahasa (i18n)
+
+Aplikasi saat ini hanya berbahasa Indonesia. Terjemahan bahasa Inggris sudah disiapkan, tapi pilihan bahasanya belum ditampilkan.
+
+- `i18n.js`: penerjemah tampilan. Kode tetap menulis teks Indonesia. Saat bahasa Inggris aktif, teks di layar diterjemahkan otomatis. Teks Alkitab, isi AI, dan isian pengguna tidak disentuh.
+- `i18n-en.js`: kamus (`exact`), pola teks dinamis (`pat`), serta nama kitab, bulan, dan hari.
+- Pratinjau bahasa Inggris: buka aplikasi dengan `?lang=en`.
+- Setiap menambah atau mengubah fitur: jelajahi layarnya di `?lang=en`, jalankan `EvoI18n.missing()` di konsol, lalu tambahkan terjemahan yang kurang ke `i18n-en.js`.
+- Saat merilis: ubah `ENABLED` di `i18n.js` menjadi `true` dan tambahkan pilihan bahasa di Tampilan (menyimpan `localStorage["evo.lang"]`). Renungan AI dan pencarian tema berbahasa Inggris dikerjakan di tahap itu.
