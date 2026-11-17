@@ -1294,3 +1294,6 @@ body.autoscroll main.inner { padding-bottom: 96px; }
 .hyb p { margin: 0; }
 .hyb.reff p { font-style: italic; }
 .hypn { margin-top: 24px; }
+
+.hyp { margin: -10px 0 18px; font-size: 14px; color: var(--muted); }
+.hyb .hl { display: block; padding-left: 1.2em; text-indent: -1.2em; }
