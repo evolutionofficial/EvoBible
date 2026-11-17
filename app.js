@@ -562,8 +562,8 @@ var ORN = {
   $("btnSet").onclick = $("btnSet2").onclick = function () { show("shSet"); };
 
   /* ---------- routing ---------- */
-  var VIEWS = { home: "vHome", search: "vSearch", read: "vRead", saved: "vSaved", church: "vChurch", more: "vMore", hymn: "vHymn" };
-  var NAMES = { home: "beranda", search: "cari", kata: "kata", read: "baca", saved: "tersimpan", church: "gereja", more: "lainnya", hymn: "nyanyian" };
+  var VIEWS = { home: "vHome", search: "vSearch", read: "vRead", saved: "vSaved", church: "vChurch", more: "vMore", hymn: "vHymn", kisah: "vKisah" };
+  var NAMES = { home: "beranda", search: "cari", kata: "kata", read: "baca", saved: "tersimpan", church: "gereja", more: "lainnya", hymn: "nyanyian", kisah: "kisah" };
   function go(v) { var h = NAMES[v]; if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
   function openRef(b, c, v, v2) { var h = BOOKS[b].a + "-" + c + (v ? "-" + v + (v2 && v2 >= v ? "-" + v2 : "") : ""); if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
   function showView(v, tabV) {
@@ -571,6 +571,7 @@ var ORN = {
     Object.keys(VIEWS).forEach(function (k) { $(VIEWS[k]).hidden = k !== v; });
     Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (t) { if (t.dataset.v === tabV) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current"); }); placeInd(true);
     if (v !== "read") { clearSel(true); asStop(); }
+    if (v !== "kisah") ksStop();
   }
   function route() {
     if (open !== "shVoice") hide();
@@ -585,6 +586,7 @@ var ORN = {
     if (h === "kata") { setSearchTab("kata"); showView("search", "kata"); renderSearch(); window.scrollTo(0, 0); return; }
     if (h === "gereja" && FEATURE_CHURCH) { showView("church"); renderChurch(); window.scrollTo(0, 0); return; }
     if (h === "tersimpan" || h === "sorotan") { showView("saved", "more"); renderSaved(); window.scrollTo(0, 0); return; }
+    if (h === "kisah" || h.indexOf("kisah/") === 0) { var kp = h.split("/"); showView("kisah", "more"); renderKisah(kp[1] || "", kp[2] || ""); return; }
     if (h === "lainnya") { showView("more"); renderMore(); window.scrollTo(0, 0); return; }
     if (h === "nyanyian" || h.indexOf("nyanyian/") === 0) { var hp = h.split("/"); showView("hymn", "more"); renderHymn(hp[1] || "", hp[2] || ""); return; }
     if (h === "baca") { var last = lsGet("evo.last", { b: 0, c: 1 }); if (!BOOKS[last.b] || !BOOKS[last.b].ch[last.c - 1]) last = { b: 0, c: 1 }; showView("read"); renderChapter(last.b, last.c, 0); return; }
@@ -628,6 +630,7 @@ var ORN = {
     var ok = last && BOOKS[last.b] && BOOKS[last.b].ch[last.c - 1];
     if (!ok) last = { b: 0, c: 1 };
     cont.dataset.b = last.b; cont.dataset.c = last.c;
+    kisahHome();
     cont.innerHTML = '<svg class="ico" viewBox="0 0 24 24" style="color:var(--accent)"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg><span class="t"><small>' + (ok ? "Lanjutkan membaca" : "Mulai membaca") + '</small><b>' + esc(BOOKS[last.b].n) + " " + last.c + "</b></span>";
     renderFeel(); renderCats(); renderBanner();
     renderInstall();
@@ -861,6 +864,7 @@ var ORN = {
     var kat = settings.cal === "katolik";
     var rows = [
       ["nyanyian", MUSIC_I, "Nyanyian", (kat ? "Madah Bakti dan Puji Syukur" : "Kidung Jemaat, Pelengkap Kidung Jemaat, dan Nyanyikanlah Kidung Baru") + ", serta himne klasik berbahasa Inggris"],
+      ["kisah", KS_I, "Kisah", kat ? "Orang kudus sepanjang tahun, perumpamaan Yesus, dan tokoh Alkitab" : "Perumpamaan Yesus dan tokoh Alkitab"],
       ["tersimpan", MARK_I, "Tersimpan", "Ayat tersimpan, sorotan, dan Jurnal Doa"],
       ["@set", GEAR_I, "Pengaturan", "Ukuran huruf, tema warna, kalender, dan tradisi gereja"]
     ];
@@ -960,6 +964,139 @@ var ORN = {
     t = e.target.closest("[data-hyn]"); if (t && S.hyK) navHash("nyanyian/" + S.hyK + "/" + t.dataset.hyn);
   });
   $("hyBack").onclick = function () { if (S.hyN) navHash("nyanyian/" + S.hyK); else if (S.hyK) navHash("nyanyian"); else navHash("lainnya"); };
+
+  /* ---------- Kisah: orang kudus, perumpamaan Yesus, tokoh Alkitab ----------
+     Data: kisah/santo.json, kisah/perumpamaan.json, kisah/tokoh.json (skema di kisah/PANDUAN.md).
+     KS_DRAF = true selama isi belum ditinjau romo/katekis. */
+  var KS_DRAF = true;
+  var KS_I = '<svg class="ico" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 8h7M9 11.5h5"/></svg>';
+  var SPK_I = '<svg class="ico" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+  var KS = { d: {}, tab: "", q: "", sp: false };
+  var KS_JENIS = { santo: "Orang Kudus", perumpamaan: "Perumpamaan", tokoh: "Tokoh Alkitab" };
+  var KS_BULAN = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+  var KS_RANK = { "Hari Raya": 0, "Pesta": 1, "Peringatan wajib": 2, "Peringatan fakultatif": 3 };
+  function ksLoad(j) {
+    if (KS.d[j]) return Promise.resolve(KS.d[j]);
+    return fetch("kisah/" + j + ".json").then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
+      .then(function (a) { KS.d[j] = Array.isArray(a) ? a : []; return KS.d[j]; });
+  }
+  function ksKat() { return settings.cal === "katolik"; }
+  function ksName(j, x) { return j === "perumpamaan" ? x.judul : x.nama; }
+  function ksMMDD() { var d = new Date(); return ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function ksTgl(t) { var p = t.split("-"); return (+p[1]) + " " + KS_BULAN[+p[0] - 1]; }
+  function ksToday() {
+    var rot = function () {
+      return Promise.all([ksLoad("perumpamaan"), ksLoad("tokoh")]).then(function (r) {
+        var all = r[0].map(function (x) { return ["perumpamaan", x]; }).concat(r[1].map(function (x) { return ["tokoh", x]; }));
+        if (!all.length) return null;
+        var now = new Date(), day = Math.floor((now - new Date(now.getFullYear(), 0, 1)) / 864e5), p = all[day % all.length];
+        return { j: p[0], x: p[1], lab: "Kisah hari ini" };
+      });
+    };
+    if (!ksKat()) return rot();
+    return ksLoad("santo").then(function (a) {
+      var t = ksMMDD(), hit = a.filter(function (x) { return x.tgl === t; });
+      hit.sort(function (p, q) { return (KS_RANK[p.tingkat] || 9) - (KS_RANK[q.tingkat] || 9); });
+      if (!hit.length) return rot();
+      var x = hit[0];
+      return { j: "santo", x: x, lab: /^(Santo|Santa) (?!Perawan)/.test(x.nama) ? "Orang kudus hari ini" : "Peringatan hari ini" };
+    });
+  }
+  function kisahHome() {
+    var el = $("kisahToday"); if (!el) return;
+    ksToday().then(function (t) {
+      if (!t) { el.hidden = true; return; }
+      el.hidden = false; el.dataset.j = t.j; el.dataset.id = t.x.id;
+      el.innerHTML = '<span class="kl"><span class="mi">' + KS_I + "</span>" + t.lab + '</span><b data-noi18n>' + esc(ksName(t.j, t.x)) + '</b><span class="kr" data-noi18n>' + esc(t.x.ringkas || "") + '</span><span class="kgo">Baca kisahnya' + CHEV_R + "</span>";
+    });
+  }
+  $("kisahToday").onclick = function () { navHash("kisah/" + this.dataset.j + "/" + this.dataset.id); };
+  function ksNorm(s) { return String(s || "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim(); }
+  function renderKisah(j, id) {
+    ksStop();
+    var tabs = ksKat() ? ["santo", "perumpamaan", "tokoh"] : ["perumpamaan", "tokoh"];
+    if (id && KS_JENIS[j]) {
+      S.ksJ = j; S.ksId = id; $("ksTitle").textContent = KS_JENIS[j];
+      ksLoad(j).then(function (a) {
+        if (S.view !== "kisah" || S.ksId !== id) return;
+        for (var i = 0; i < a.length; i++) if (a[i].id === id) { ksRead(j, a, i); return; }
+        navHash("kisah/" + j);
+      });
+      return;
+    }
+    if (tabs.indexOf(j) < 0) j = tabs.indexOf(KS.tab) >= 0 ? KS.tab : tabs[0];
+    KS.tab = j; S.ksJ = j; S.ksId = ""; $("ksTitle").textContent = "Kisah";
+    $("ksBody").innerHTML = '<div class="kstabs" role="tablist">' + tabs.map(function (t) {
+      return '<button type="button" role="tab" data-kst="' + t + '" aria-selected="' + (t === j) + '">' + KS_JENIS[t] + "</button>";
+    }).join("") + '</div><div class="hysearch"><input id="ksQ" type="search" autocomplete="off" placeholder="Cari kisah" aria-label="Cari kisah" value="' + esc(KS.q) + '"></div><div class="kslist" id="ksList"></div>';
+    $("ksQ").oninput = function () { KS.q = this.value; ksFill(j); };
+    ksLoad(j).then(function () { if (S.view === "kisah" && !S.ksId && KS.tab === j) ksFill(j); });
+    window.scrollTo(0, 0);
+  }
+  function ksFill(j) {
+    var a = KS.d[j] || [], q = ksNorm(KS.q), h = "", last = "";
+    if (!a.length) { $("ksList").innerHTML = '<div class="empty">Kisah sedang disiapkan.</div>'; return; }
+    var list = a.filter(function (x) { return !q || ksNorm(ksName(j, x) + " " + (x.ringkas || "") + " " + (x.julukan || "") + " " + (x.gelar || "")).indexOf(q) >= 0; });
+    list.forEach(function (x) {
+      var grp = j === "santo" ? KS_BULAN[+x.tgl.slice(0, 2) - 1] : j === "tokoh" ? (x.pl ? "Perjanjian Lama" : "Perjanjian Baru") : "";
+      if (grp && grp !== last) { h += '<div class="flabel">' + grp + "</div>"; last = grp; }
+      var side = j === "santo" ? '<span class="kd">' + (+x.tgl.slice(3)) + "</span>" : "";
+      var sub = j === "santo" ? (x.gelar || x.tingkat) : j === "perumpamaan" ? x.ref : x.julukan;
+      h += '<button class="ksrow" type="button" data-ksid="' + esc(x.id) + '">' + side + '<span class="kt"><b data-noi18n>' + esc(ksName(j, x)) + '</b><small data-noi18n>' + esc(sub || "") + "</small></span>" + CHEV_R + "</button>";
+    });
+    $("ksList").innerHTML = h || '<div class="empty">Tidak ada kisah yang cocok.</div>';
+  }
+  function ksRead(j, a, i) {
+    var x = a[i], prev = a[i - 1], next = a[i + 1], refs = [], parts = [];
+    var meta = j === "santo" ? '<span>' + ksTgl(x.tgl) + "</span><span>" + esc(x.tingkat) + "</span>" : j === "perumpamaan" ? '<span>Perumpamaan Yesus</span><span>' + esc(x.ref) + "</span>" : '<span>' + (x.pl ? "Perjanjian Lama" : "Perjanjian Baru") + "</span>";
+    if (j === "santo") refs = [x.ayat]; else if (j === "perumpamaan") refs = [x.ref].concat(x.ref2 || []); else refs = x.ref || [];
+    var sub = j === "santo" ? [x.gelar, x.masa].filter(Boolean).join(" · ") : j === "tokoh" ? x.julukan : "";
+    var h = '<article class="ksread"><div class="ksmeta">' + meta + (KS_DRAF ? '<span class="ksdraf">Draf</span>' : "") + "</div>"
+      + '<h2 class="ksh" data-noi18n>' + esc(ksName(j, x)) + "</h2>" + (sub ? '<div class="ksg" data-noi18n>' + esc(sub) + "</div>" : "")
+      + '<div class="ksacts"><button type="button" class="kspill" id="ksSpeak">' + SPK_I + '<span>Dengarkan</span></button>'
+      + (refs[0] ? '<button type="button" class="kspill" data-ksref="' + esc(refs[0]) + '">' + KS_I + "<span>Baca di Alkitab</span></button>" : "") + "</div>"
+      + '<div class="ksbody"><p class="kslead">' + esc(x.ringkas || "") + "</p>" + (x.kisah || []).map(function (p) { return "<p>" + esc(p) + "</p>"; }).join("") + "</div>";
+    parts.push(ksName(j, x)); if (x.ringkas) parts.push(x.ringkas); parts = parts.concat(x.kisah || []);
+    var tl = j === "perumpamaan" ? "Makna" : "Teladan", tx = j === "perumpamaan" ? x.makna : x.teladan;
+    if (tx) { h += '<h3 class="ksh3">' + tl + '</h3><div class="ksbody"><p>' + esc(tx) + "</p></div>"; parts.push(tl + ". " + tx); }
+    if (x.renungan && x.renungan.length) { h += '<h3 class="ksh3">Renungkan</h3><ul class="ksbody ksq">' + x.renungan.map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ul>"; }
+    if (x.doa) { h += '<div class="ksdoa"><h3 class="ksh3">Doa</h3><div class="ksbody"><p>' + esc(x.doa) + "</p></div></div>"; parts.push("Marilah berdoa. " + x.doa); }
+    if (refs.length > 1) h += '<h3 class="ksh3">Bacaan</h3><div class="ksrefs">' + refs.map(function (r) { return '<button type="button" class="kspill" data-ksref="' + esc(r) + '">' + esc(r) + "</button>"; }).join("") + "</div>";
+    h += '</article><nav class="pn hypn">' + (prev ? '<button type="button" data-ksid="' + esc(prev.id) + '"><small>Sebelumnya</small><b data-noi18n>' + esc(ksName(j, prev)) + "</b></button>" : "<span></span>")
+      + (next ? '<button type="button" data-ksid="' + esc(next.id) + '"><small>Berikutnya</small><b data-noi18n>' + esc(ksName(j, next)) + "</b></button>" : "<span></span>") + "</nav>";
+    $("ksBody").innerHTML = h; KS.parts = parts; window.scrollTo(0, 0);
+  }
+  function ksStop() {
+    if (!KS) return;
+    if (KS.sp) { KS.sp = false; try { speechSynthesis.cancel(); } catch (e) {} }
+    var b = document.getElementById("ksSpeak"); if (b) { b.classList.remove("on"); b.querySelector("span").textContent = "Dengarkan"; }
+  }
+  function ksSpeak(parts) {
+    if (!("speechSynthesis" in window)) { toast("Suara belum bisa diputar"); return; }
+    if (T.on) stopTTS();
+    try { speechSynthesis.cancel(); } catch (e) {}
+    KS.sp = true; var i = 0, b = $("ksSpeak"); b.classList.add("on"); b.querySelector("span").textContent = "Berhenti";
+    (function nx() {
+      if (!KS.sp) return;
+      if (i >= parts.length) { ksStop(); return; }
+      var u = new SpeechSynthesisUtterance(parts[i++]), v = pickVoice();
+      u.lang = "id-ID"; if (v) { u.voice = v; u.lang = String(v.lang || "id-ID").replace("_", "-"); }
+      u.rate = tts.rate || 0.9; u.onend = nx; u.onerror = function () { ksStop(); };
+      speechSynthesis.speak(u);
+    })();
+  }
+  $("ksBody").addEventListener("click", function (e) {
+    var t = e.target.closest("[data-kst]"); if (t) { KS.q = ""; navHash("kisah/" + t.dataset.kst); return; }
+    t = e.target.closest("[data-ksid]"); if (t) { navHash("kisah/" + S.ksJ + "/" + t.dataset.ksid); return; }
+    t = e.target.closest("[data-ksref]");
+    if (t) {
+      var m = /^(.*?)(?:-(\d+))?$/.exec(t.dataset.ksref), r = parseRef(m[1]);
+      if (r) { ksStop(); openRef(r.b, r.c, r.v || 0, m[2] && r.v ? +m[2] : 0); } else toast("Ayat tidak ditemukan");
+      return;
+    }
+    if (e.target.closest("#ksSpeak")) { if (KS.sp) ksStop(); else ksSpeak(KS.parts || []); }
+  });
+  $("ksBack").onclick = function () { if (S.ksId) navHash("kisah/" + S.ksJ); else navHash("lainnya"); };
 
   function renderSaved() {
     var seg = svSegHtml(keyIds(hls).length, keyIds(sors).length);
