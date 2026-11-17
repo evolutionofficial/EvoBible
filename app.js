@@ -1062,16 +1062,27 @@ tongkatgembala:'<path d="M13 22V8a4 4 0 1 0-8 0"/><path d="M5 8c0 1.2.6 2 1.5 2.
 kandil:'<path d="M12 21.5V9M8 21.5h8M12 9c-1.3 0-2.2-1-2.2-2.3C9.8 5 12 2.5 12 2.5s2.2 2.5 2.2 4.2C14.2 8 13.3 9 12 9zM8.5 12.5h7"/>',
 };
   function ksThumb(x, cls, day) {
+    if (KS.img && KS.img[x.id]) return '<span class="kth ph ' + (cls || "") + '" aria-hidden="true"><img src="kisah/img/' + x.id + '-k.webp" alt="" loading="lazy" decoding="async">' + (day ? "<i>" + day + "</i>" : "") + "</span>";
     var s = KS_SYM[x.lambang] || KS_SYM.salib;
     return '<span class="kth ' + (cls || "") + ' w-' + (x.warna || "putih") + '" aria-hidden="true"><svg viewBox="0 0 24 24">' + s + "</svg>" + (day ? '<i>' + day + "</i>" : "") + "</span>";
+  }
+  function ksHero(x) {
+    if (KS.img && KS.img[x.id]) return '<div class="kshero ph"><img src="kisah/img/' + x.id + '.webp" alt="" decoding="async"></div>';
+    var s = KS_SYM[x.lambang] || KS_SYM.salib;
+    return '<div class="kshero w-' + (x.warna || "putih") + '" aria-hidden="true"><svg class="wm" viewBox="0 0 24 24">' + s + '</svg><svg viewBox="0 0 24 24">' + s + "</svg></div>";
   }
   var KS_JENIS = { santo: "Orang Kudus", perumpamaan: "Perumpamaan", tokoh: "Tokoh Alkitab" };
   var KS_BULAN = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
   var KS_RANK = { "Hari Raya": 0, "Pesta": 1, "Peringatan wajib": 2, "Peringatan fakultatif": 3 };
+  function ksImgs() {
+    if (!KS.imgP) KS.imgP = fetch("kisah/gambar.json").then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
+      .then(function (a) { KS.img = {}; (a || []).forEach(function (k) { KS.img[k] = 1; }); });
+    return KS.imgP;
+  }
   function ksLoad(j) {
-    if (KS.d[j]) return Promise.resolve(KS.d[j]);
+    if (KS.d[j]) return ksImgs().then(function () { return KS.d[j]; });
     return fetch("kisah/" + j + ".json").then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
-      .then(function (a) { KS.d[j] = Array.isArray(a) ? a : []; return KS.d[j]; });
+      .then(function (a) { KS.d[j] = Array.isArray(a) ? a : []; return ksImgs(); }).then(function () { return KS.d[j]; });
   }
   function ksKat() { return settings.cal === "katolik"; }
   function ksName(j, x) { return j === "perumpamaan" ? x.judul : x.nama; }
@@ -1144,7 +1155,7 @@ kandil:'<path d="M12 21.5V9M8 21.5h8M12 9c-1.3 0-2.2-1-2.2-2.3C9.8 5 12 2.5 12 2
     var meta = j === "santo" ? '<span>' + ksTgl(x.tgl) + "</span><span>" + esc(x.tingkat) + "</span>" : j === "perumpamaan" ? '<span>Perumpamaan Yesus</span><span>' + esc(x.ref) + "</span>" : '<span>' + (x.pl ? "Perjanjian Lama" : "Perjanjian Baru") + "</span>";
     if (j === "santo") refs = [x.ayat]; else if (j === "perumpamaan") refs = [x.ref].concat(x.ref2 || []); else refs = x.ref || [];
     var sub = j === "santo" ? [x.gelar, x.masa].filter(Boolean).join(" · ") : j === "tokoh" ? x.julukan : "";
-    var h = '<article class="ksread">' + '<div class="kshero w-' + (x.warna || "putih") + '" aria-hidden="true"><svg class="wm" viewBox="0 0 24 24">' + (KS_SYM[x.lambang] || KS_SYM.salib) + '</svg><svg viewBox="0 0 24 24">' + (KS_SYM[x.lambang] || KS_SYM.salib) + '</svg></div><div class="ksmeta">' + meta + (KS_DRAF ? '<span class="ksdraf">Draf</span>' : "") + "</div>"
+    var h = '<article class="ksread">' + ksHero(x) + '<div class="ksmeta">' + meta + (KS_DRAF ? '<span class="ksdraf">Draf</span>' : "") + "</div>"
       + '<h2 class="ksh" data-noi18n>' + esc(ksName(j, x)) + "</h2>" + (sub ? '<div class="ksg" data-noi18n>' + esc(sub) + "</div>" : "")
       + '<div class="ksacts"><button type="button" class="kspill" id="ksSpeak">' + SPK_I + '<span>Dengarkan</span></button>'
       + (refs[0] ? '<button type="button" class="kspill" data-ksref="' + esc(refs[0]) + '">' + KS_I + "<span>Baca di Alkitab</span></button>" : "") + "</div>"
