@@ -17,6 +17,10 @@
  * Merilis pilihan bahasa
  *   Ubah ENABLED menjadi true, lalu tambahkan pilihan bahasa di pengaturan yang menyimpan
  *   localStorage "evo.lang" ("id" atau "en") dan memuat ulang halaman.
+ *
+ * Aturan tetap: lapisan ini HANYA untuk bahasa tampilan (evo.lang). Bahasa isi (evo.clang: renungan,
+ * doa AI, kata kunci pencarian) dan versi Alkitab (evo.ver: teks ayat di mana pun) adalah preferensi
+ * terpisah dan tidak boleh diturunkan dari bahasa tampilan. Lihat README, bagian "Bahasa (i18n)".
  */
 (function () {
   var ENABLED = false;
