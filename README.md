@@ -56,4 +56,19 @@ Aplikasi saat ini hanya berbahasa Indonesia. Terjemahan bahasa Inggris sudah dis
 - `i18n-en.js`: kamus (`exact`), pola teks dinamis (`pat`), serta nama kitab, bulan, dan hari.
 - Pratinjau bahasa Inggris: buka aplikasi dengan `?lang=en`.
 - Setiap menambah atau mengubah fitur: jelajahi layarnya di `?lang=en`, jalankan `EvoI18n.missing()` di konsol, lalu tambahkan terjemahan yang kurang ke `i18n-en.js`.
-- Saat merilis: ubah `ENABLED` di `i18n.js` menjadi `true` dan tambahkan pilihan bahasa di Tampilan (menyimpan `localStorage["evo.lang"]`). Renungan AI dan pencarian tema berbahasa Inggris dikerjakan di tahap itu.
+- Saat merilis: ubah `ENABLED` di `i18n.js` menjadi `true` dan tambahkan pilihan bahasa di Tampilan.
+
+### Tiga preferensi bahasa yang terpisah (aturan tetap)
+
+Bahasa tampilan **tidak boleh** mengubah bahasa isi. Pengguna bisa memakai tampilan bahasa Inggris tapi tetap membaca ayat dan menerima renungan dalam bahasa Indonesia, atau sebaliknya.
+
+| Preferensi | Kunci penyimpanan | Mengatur | Tidak mengatur |
+|---|---|---|---|
+| Bahasa tampilan | `evo.lang` (`id`/`en`) | menu, tombol, pengaturan, judul fitur, nama tema, nama kitab di label | teks ayat, isi AI |
+| Bahasa isi | `evo.clang` (`id`/`en`) | bahasa renungan dan doa dari AI, bahasa kata kunci pencarian tema, bahasa salam yang dibacakan suara | tampilan |
+| Versi Alkitab | `evo.ver` (`main`, `cmp`) | teks ayat di halaman baca, Ayat hari ini, bacaan harian, ayat di hasil Renungan dan pencarian | tampilan |
+
+- Bawaan ketiganya Indonesia/AYT, dan masing-masing diubah sendiri-sendiri di Tampilan.
+- Ayat di mana pun selalu memakai versi Alkitab pilihan (dengan cadangan AYT bila versi itu belum memuat kitabnya), tidak pernah mengikuti bahasa tampilan.
+- Penerjemah tampilan (`i18n.js`) tidak menyentuh teks ayat, isi AI, atau isian pengguna. Bagian baru yang berisi ayat atau isi AI harus ditambahkan ke daftar `SKIP` di `i18n.js`, atau diberi atribut `data-noi18n`.
+- Fungsi AI di server menerima bahasa isi sebagai parameter terpisah (`lang`) dan versi Alkitab sebagai parameter lain, bukan diturunkan dari bahasa tampilan.
