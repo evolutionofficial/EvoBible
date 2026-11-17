@@ -616,10 +616,13 @@ var ORN = {
   $("tabs").onclick = function (e) {
     var t = e.target.closest(".tab"); if (!t) return;
     if (TD.eat > performance.now()) return;
+    tabTap(t);
+  };
+  function tabTap(t) {
     var root = TAB_ROOT[t.dataset.v];
     if (t.getAttribute("aria-current") === "page" && S.view === root && !(root === "search" && S.theme) && scrollY > 2) { smoothTop(); return; }
     topStop(); go(t.dataset.v);
-  };
+  }
 
   /* ---------- beranda ---------- */
   function greeting() { var h = new Date().getHours(); return h < 4 ? "Selamat malam" : h < 11 ? "Selamat pagi" : h < 15 ? "Selamat siang" : h < 18 ? "Selamat sore" : "Selamat malam"; }
@@ -1903,17 +1906,18 @@ var ORN = {
      Jari menahan & menggeser: tetesan mengikuti jari (memanjang sesuai laju), dilepas -> meluncur ke tab terdekat dan membukanya. */
   function tdTabs() { return Array.prototype.filter.call($("tabs").querySelectorAll(".tab"), function (t) { return !t.hidden && t.offsetWidth; }); }
   function tdNear(cx) { var best = null, bd = 1e9; tdTabs().forEach(function (t) { var d = Math.abs(t.offsetLeft + t.offsetWidth / 2 - cx); if (d < bd) { bd = d; best = t; } }); return best; }
-  $("tabs").addEventListener("pointerdown", function (e) {
-    if (e.button > 0 || !e.target.closest(".tab")) return;
+  /* Panel selalu "di depan": sentuhan ditangani langsung lewat touch events (passive:false), jadi tetap
+     merespons walau halaman masih meluncur setelah dilempar (iOS menelan klik pertama saat momentum). */
+  function tdDown(e) {
     var r = $("tabs").getBoundingClientRect();
     $("tabs").classList.add("press");
-    TD.p = { id: e.pointerId, x0: e.clientX, y0: e.clientY, ox: r.left, on: false, lx: e.clientX, lt: e.timeStamp, v: 0, hov: null };
-  });
-  $("tabs").addEventListener("pointermove", function (e) {
+    TD.p = { id: e.pointerId, x0: e.clientX, y0: e.clientY, ox: r.left, on: false, lx: e.clientX, lt: e.timeStamp, v: 0, hov: null, tab: e.target.closest(".tab") };
+  }
+  function tdMove(e) {
     var p = TD.p; if (!p || p.id !== e.pointerId) return;
     if (!p.on) {
       if (Math.abs(e.clientX - p.x0) < 10 || Math.abs(e.clientX - p.x0) < Math.abs(e.clientY - p.y0)) return;
-      p.on = true; try { $("tabs").setPointerCapture(e.pointerId); } catch (x) {}
+      p.on = true; if (typeof e.pointerId === "number") try { $("tabs").setPointerCapture(e.pointerId); } catch (x) {}
       if (indAnim) try { indAnim.cancel(); } catch (x) {}
       var cur = $("tabs").querySelector('.tab[aria-current="page"]:not(.tab-c)') || tdNear(p.x0 - p.ox);
       p.w = cur.offsetWidth; var ts = tdTabs(); p.min = ts[0].offsetLeft; p.max = ts[ts.length - 1].offsetLeft + ts[ts.length - 1].offsetWidth - p.w;
@@ -1936,7 +1940,7 @@ var ORN = {
     p.x = x; tabInd.style.transform = "translateX(" + x + "px) scale(" + (1 + s).toFixed(3) + "," + (1 - s * .6).toFixed(3) + ")";
     var h = tdNear(x + p.w / 2);
     if (h !== p.hov) { if (p.hov) p.hov.classList.remove("hov"); h.classList.add("hov"); if (p.hov && navigator.vibrate) try { navigator.vibrate(6); } catch (x) {} p.hov = h; }
-  });
+  }
   function tdEnd(e) {
     var p = TD.p; if (!p || p.id !== e.pointerId) return; TD.p = null;
     $("tabs").classList.remove("press");
@@ -1946,7 +1950,7 @@ var ORN = {
       el.style.setProperty("--tbx", "1"); el.style.setProperty("--tby", "1"); el.style.setProperty("--tbt", "0px");
       clearTimeout(TD.sb); TD.sb = setTimeout(function () { el.classList.remove("snapback"); }, 650);
     }
-    if (!p.on) return;
+    if (!p.on) { if (e.tap && p.tab) { TD.eat = performance.now() + 700; tabTap(p.tab); } return; }
     TD.eat = performance.now() + 400; document.body.classList.remove("tabdrag");
     if (p.hov) p.hov.classList.remove("hov");
     var t = tdNear(p.x + p.w / 2);
@@ -1954,7 +1958,21 @@ var ORN = {
     if (t.getAttribute("aria-current") === "page") { placeInd(true); return; }
     topStop(); go(t.dataset.v);
   }
-  $("tabs").addEventListener("pointerup", tdEnd);
+  // mouse / pena: pointer events
+  $("tabs").addEventListener("pointerdown", function (e) { if (e.pointerType === "touch" || e.button > 0 || !e.target.closest(".tab")) return; tdDown(e); });
+  $("tabs").addEventListener("pointermove", function (e) { if (e.pointerType !== "touch") tdMove(e); });
+  $("tabs").addEventListener("pointerup", function (e) { if (e.pointerType !== "touch") tdEnd(e); });
+  // jari: touch events langsung, tidak menunggu halaman berhenti meluncur
+  function tdT(e, t) { return { pointerId: "t" + t.identifier, clientX: t.clientX, clientY: t.clientY, timeStamp: e.timeStamp, target: e.target }; }
+  function tdFind(e) { if (!TD.p) return null; for (var i = 0; i < e.changedTouches.length; i++) if ("t" + e.changedTouches[i].identifier === TD.p.id) return e.changedTouches[i]; return null; }
+  $("tabs").addEventListener("touchstart", function (e) {
+    if (!e.target.closest(".tab") || TD.p) return;
+    if (e.cancelable) e.preventDefault();
+    tdDown(tdT(e, e.changedTouches[0]));
+  }, { passive: false });
+  $("tabs").addEventListener("touchmove", function (e) { var t = tdFind(e); if (!t) return; if (e.cancelable) e.preventDefault(); tdMove(tdT(e, t)); }, { passive: false });
+  $("tabs").addEventListener("touchend", function (e) { var t = tdFind(e); if (!t) return; if (e.cancelable) e.preventDefault(); var o = tdT(e, t); o.tap = true; tdEnd(o); }, { passive: false });
+  $("tabs").addEventListener("touchcancel", function (e) { var t = tdFind(e); if (!t) return; if (TD.p.on) tdEnd(tdT(e, t)); else { TD.p = null; $("tabs").classList.remove("press"); } });
 
   /* ---------- panel menu bawah mengecil saat halaman digulir turun ----------
      Turun: cepat mengecil sedikit lalu tertahan. Naik: pelan-pelan kembali normal. Di puncak halaman selalu normal. */
@@ -1970,7 +1988,7 @@ var ORN = {
       $("tabs").style.setProperty("--tbs", (1 - .08 * TB.k).toFixed(4));
     });
   }, { passive: true });
-  $("tabs").addEventListener("pointercancel", function (e) { if (TD.p && TD.p.on) tdEnd(e); else { TD.p = null; $("tabs").classList.remove("press"); } });
+  $("tabs").addEventListener("pointercancel", function (e) { if (e.pointerType === "touch" || !TD.p || TD.p.id !== e.pointerId) return; if (TD.p.on) tdEnd(e); else { TD.p = null; $("tabs").classList.remove("press"); } });
 
   if ("serviceWorker" in navigator && location.protocol !== "file:") { window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); }); }
 
