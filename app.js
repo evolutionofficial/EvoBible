@@ -1906,6 +1906,7 @@ var ORN = {
   $("tabs").addEventListener("pointerdown", function (e) {
     if (e.button > 0 || !e.target.closest(".tab")) return;
     var r = $("tabs").getBoundingClientRect();
+    $("tabs").classList.add("press");
     TD.p = { id: e.pointerId, x0: e.clientX, y0: e.clientY, ox: r.left, on: false, lx: e.clientX, lt: e.timeStamp, v: 0, hov: null };
   });
   $("tabs").addEventListener("pointermove", function (e) {
@@ -1920,13 +1921,15 @@ var ORN = {
       document.body.classList.add("tabdrag");
     }
     var dt = Math.max(8, e.timeStamp - p.lt); p.v = p.v * .6 + ((e.clientX - p.lx) / dt) * .4; p.lx = e.clientX; p.lt = e.timeStamp;
-    var cx = e.clientX - p.ox, x = Math.max(p.min, Math.min(p.max, cx - p.w / 2)), s = Math.min(.28, Math.abs(p.v) * .22);
+    var rr = $("tabs").getBoundingClientRect(), k = rr.width / ($("tabs").offsetWidth || rr.width);
+    var cx = (e.clientX - rr.left) / k, x = Math.max(p.min, Math.min(p.max, cx - p.w / 2)), s = Math.min(.28, Math.abs(p.v) * .22);
     p.x = x; tabInd.style.transform = "translateX(" + x + "px) scale(" + (1 + s).toFixed(3) + "," + (1 - s * .6).toFixed(3) + ")";
     var h = tdNear(x + p.w / 2);
     if (h !== p.hov) { if (p.hov) p.hov.classList.remove("hov"); h.classList.add("hov"); if (p.hov && navigator.vibrate) try { navigator.vibrate(6); } catch (x) {} p.hov = h; }
   });
   function tdEnd(e) {
     var p = TD.p; if (!p || p.id !== e.pointerId) return; TD.p = null;
+    $("tabs").classList.remove("press");
     if (!p.on) return;
     TD.eat = performance.now() + 400; document.body.classList.remove("tabdrag");
     if (p.hov) p.hov.classList.remove("hov");
@@ -1936,7 +1939,7 @@ var ORN = {
     topStop(); go(t.dataset.v);
   }
   $("tabs").addEventListener("pointerup", tdEnd);
-  $("tabs").addEventListener("pointercancel", function (e) { if (TD.p && TD.p.on) tdEnd(e); else TD.p = null; });
+  $("tabs").addEventListener("pointercancel", function (e) { if (TD.p && TD.p.on) tdEnd(e); else { TD.p = null; $("tabs").classList.remove("press"); } });
 
   if ("serviceWorker" in navigator && location.protocol !== "file:") { window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); }); }
 
