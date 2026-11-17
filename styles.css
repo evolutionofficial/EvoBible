@@ -1477,3 +1477,11 @@ body.tabdrag .tab-c.hov { color: var(--accent); }
 .kshero svg { width: 96px; height: 96px; grid-area: 1 / 1; }
 .kshero svg.wm { width: 260px; height: 260px; stroke-width: .6; opacity: .14; transform: translate(34%, 8%) rotate(-12deg); filter: none; }
 .kshero svg.wm { position: absolute; right: -46px; top: -38px; width: 230px; height: 230px; transform: rotate(-12deg); }
+
+/* ---- foto kisah ---- */
+.kth.ph { background: var(--soft-bg); overflow: hidden; }
+.kth.ph img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
+.kth.ph i { z-index: 2; }
+.kshero.ph { height: auto; aspect-ratio: 3 / 2; background: var(--soft-bg); }
+.kshero.ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.kshero.ph::after { background: radial-gradient(60% 40% at 20% 0%, rgba(255, 255, 255, .22), rgba(255, 255, 255, 0) 70%), linear-gradient(0deg, rgba(0, 0, 0, .18), rgba(0, 0, 0, 0) 35%); }
