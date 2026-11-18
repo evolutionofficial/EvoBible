@@ -1742,35 +1742,63 @@ kandil:'<path d="M12 21.5V9M8 21.5h8M12 9c-1.3 0-2.2-1-2.2-2.3C9.8 5 12 2.5 12 2
     return { b: b, c: c, v1: v1, v2: v2 };
   }
   window.EvoSpokenRef = function (t) { var r = spokenRef(t); return r && BOOKS[r.b].a + " " + r.c + (r.v1 ? ":" + r.v1 + (r.v2 ? "-" + r.v2 : "") : ""); };
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition, srOn = null;
-  function micStop() { if (srOn) { try { srOn.r.abort(); } catch (e) {} srOn.f.classList.remove("listening"); srOn = null; } }
-  if (SR) Array.prototype.forEach.call(document.querySelectorAll(".finder"), function (f) {
-    var btn = f.querySelector(".fmic"), heard = f.querySelector(".fheard"); btn.hidden = false;
-    btn.onclick = function () {
-      if (srOn) { micStop(); heard.hidden = true; return; }
-      if (T.on) stopTTS();
-      var r = new SR(); r.lang = "id-ID"; r.interimResults = true; r.maxAlternatives = 3; r.continuous = false;
-      srOn = { r: r, f: f }; f.classList.add("listening"); heard.hidden = false; heard.textContent = "Sedang mendengarkan\u2026";
-      var done = false;
-      r.onresult = function (e) {
-        var res = e.results[e.results.length - 1], t = res[0].transcript; heard.textContent = "\u201C" + t + "\u201D";
-        if (!res.isFinal) return;
-        done = true; var hit = null;
-        for (var k = 0; k < res.length && !hit; k++) hit = spokenRef(res[k].transcript);
-        micStop();
-        if (!hit) { heard.textContent = "Belum dikenali: \u201C" + t + "\u201D"; return; }
-        setTimeout(function () { heard.hidden = true; }, 1600);
-        FIND.b = hit.b; FIND.c = String(hit.c); FIND.v1 = hit.v1 ? String(hit.v1) : ""; FIND.v2 = hit.v2 ? String(hit.v2) : ""; syncFinders();
-        f.onsubmit({ preventDefault: function () {} });
-      };
-      r.onerror = function (e) {
-        micStop();
-        heard.textContent = e.error === "not-allowed" || e.error === "service-not-allowed" ? "Izinkan mikrofon untuk mencari dengan suara" : e.error === "no-speech" ? "Tidak terdengar suara" : "Suara belum bisa dikenali";
-      };
-      r.onend = function () { if (!done && srOn) { micStop(); if (heard.textContent === "Sedang mendengarkan\u2026") heard.hidden = true; } };
-      try { r.start(); } catch (e) { micStop(); }
+  /* Satu pengenal suara untuk semua kolom "Buka kitab". Status: idle → listening → stopping → idle.
+     - Hasil diproses saat final, ATAU saat sesi berakhir tanpa tanda final (iPhone sering begitu).
+     - Sesi ditutup dengan stop(), dan sesi baru baru boleh dimulai setelah onend (iPhone menolak dua sesi).
+     - Penjaga waktu: bila onend tidak pernah datang, status dipulihkan supaya tombol tidak macet. */
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var MIC = { st: "idle", r: null, f: null, last: "", alts: [], done: false, dog: 0, want: null };
+  function micUi(f, on) { Array.prototype.forEach.call(document.querySelectorAll(".finder"), function (x) { x.classList.toggle("listening", on && x === f); }); }
+  function micHeard(f, t, keep) { var h = f.querySelector(".fheard"); h.hidden = !t; h.textContent = t || ""; clearTimeout(h._t); if (t && !keep) h._t = setTimeout(function () { h.hidden = true; }, 2600); }
+  function micReset() { clearTimeout(MIC.dog); MIC.st = "idle"; MIC.r = null; if (MIC.f) micUi(MIC.f, false); var w = MIC.want; MIC.want = null; if (w) setTimeout(function () { micStart(w); }, 60); }
+  function micFinish() {          // proses teks terakhir (sekali saja)
+    if (MIC.done) return; MIC.done = true;
+    var f = MIC.f, t = MIC.last, hit = null;
+    for (var k = 0; k < MIC.alts.length && !hit; k++) hit = spokenRef(MIC.alts[k]);
+    if (!hit && t) hit = spokenRef(t);
+    micUi(f, false);
+    if (!t) { micHeard(f, "Tidak terdengar suara"); return; }
+    if (!hit) { micHeard(f, "Belum dikenali: “" + t + "”"); return; }
+    micHeard(f, "“" + t + "”");
+    FIND.b = hit.b; FIND.c = String(hit.c); FIND.v1 = hit.v1 ? String(hit.v1) : ""; FIND.v2 = hit.v2 ? String(hit.v2) : ""; syncFinders();
+    f.onsubmit({ preventDefault: function () {} });
+  }
+  function micStop() {             // berhenti mendengarkan; hasil tetap diproses lewat onend
+    if (MIC.st !== "listening") return;
+    MIC.st = "stopping"; try { MIC.r.stop(); } catch (e) { try { MIC.r.abort(); } catch (x) {} micFinish(); micReset(); }
+    clearTimeout(MIC.dog); MIC.dog = setTimeout(function () { try { MIC.r && MIC.r.abort(); } catch (e) {} micFinish(); micReset(); }, 2500);
+  }
+  function micStart(f) {
+    if (MIC.st === "listening") { micStop(); return; }
+    if (MIC.st === "stopping") { MIC.want = f; return; }
+    if (T.on) stopTTS();
+    var r; try { r = new SR(); } catch (e) { micHeard(f, "Suara belum bisa dikenali"); return; }
+    r.lang = "id-ID"; r.interimResults = true; r.maxAlternatives = 3; r.continuous = false;
+    MIC.r = r; MIC.f = f; MIC.last = ""; MIC.alts = []; MIC.done = false; MIC.st = "listening";
+    micUi(f, true); micHeard(f, "Sedang mendengarkan…", true);
+    r.onresult = function (e) {
+      if (MIC.r !== r) return;
+      var res = e.results[e.results.length - 1]; MIC.last = res[0].transcript; MIC.alts = [];
+      for (var k = 0; k < res.length; k++) MIC.alts.push(res[k].transcript);
+      micHeard(f, "“" + MIC.last + "”", true);
+      if (res.isFinal) { micFinish(); micStop(); }
     };
+    r.onerror = function (e) {
+      if (MIC.r !== r) return;
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") { MIC.done = true; micHeard(f, "Izinkan mikrofon untuk mencari dengan suara"); }
+      else if (e.error === "no-speech" && !MIC.last) { MIC.done = true; micHeard(f, "Tidak terdengar suara"); }
+      else if (e.error === "aborted") MIC.done = true;
+    };
+    r.onend = function () { if (MIC.r !== r) return; micFinish(); micReset(); };
+    clearTimeout(MIC.dog); MIC.dog = setTimeout(function () { if (MIC.r === r && MIC.st === "listening") micStop(); }, 12000);
+    try { r.start(); }
+    catch (e) { MIC.r = null; MIC.st = "idle"; micUi(f, false); setTimeout(function () { if (MIC.st === "idle") micStart(f); }, 350); }
+  }
+  if (SR) Array.prototype.forEach.call(document.querySelectorAll(".finder"), function (f) {
+    var btn = f.querySelector(".fmic"); btn.hidden = false;
+    btn.onclick = function () { micStart(f); };
   });
+  document.addEventListener("visibilitychange", function () { if (document.hidden && MIC.st === "listening") micStop(); });
   FIND.b = (function () { var l = lsGet("evo.last", null); return l && BOOKS[l.b] ? l.b : 0; })();
   syncFinders();
 
