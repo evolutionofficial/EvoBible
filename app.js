@@ -1179,7 +1179,7 @@ kandil:'<path d="M12 21.5V9M8 21.5h8M12 9c-1.3 0-2.2-1-2.2-2.3C9.8 5 12 2.5 12 2
     if (!("speechSynthesis" in window)) { toast("Suara belum bisa diputar"); return; }
     if (T.on) stopTTS();
     try { speechSynthesis.cancel(); } catch (e) {}
-    KS.sp = true; var i = 0, b = $("ksSpeak"); b.classList.add("on"); b.querySelector("span").textContent = "Berhenti";
+    KS.sp = true; var i = 0, b = $("ksSpeak"); b.classList.add("on"); b.querySelector("span").textContent = "Berhenti"; if (typeof wlSync === "function") wlSync();
     (function nx() {
       if (!KS.sp) return;
       if (i >= parts.length) { ksStop(); return; }
@@ -1770,14 +1770,28 @@ kandil:'<path d="M12 21.5V9M8 21.5h8M12 9c-1.3 0-2.2-1-2.2-2.3C9.8 5 12 2.5 12 2
     say(verPlain(T.b, T.c, T.i + 1), function () { T.i++; step(tok, false); });
   }
   function restartTTS() { if (synth.speaking || synth.pending) synth.cancel(); T.tok++; T.paused = false; T.errs = 0; updatePlayer(); var tok = T.tok; setTimeout(function () { step(tok, false); }, 60); }
+  /* Layar tetap menyala selama mode suara (Alkitab atau Kisah) berjalan, supaya bacaan tidak terhenti karena HP terkunci otomatis.
+     Screen Wake Lock dilepas otomatis oleh browser saat aplikasi disembunyikan, jadi diminta lagi saat kembali terlihat. */
+  var WL = { s: null, busy: false };
+  function wlWant() { return !document.hidden && ((T.on && !T.paused) || (KS && KS.sp)); }
+  function wlSync() {
+    if (!("wakeLock" in navigator) || WL.busy) return;
+    if (wlWant() && !WL.s) {
+      WL.busy = true;
+      navigator.wakeLock.request("screen").then(function (s) { WL.s = s; s.addEventListener("release", function () { if (WL.s === s) WL.s = null; }); })
+        .catch(function () {}).then(function () { WL.busy = false; });
+    } else if (!wlWant() && WL.s) { try { WL.s.release(); } catch (e) {} WL.s = null; }
+  }
+  setInterval(wlSync, 1500);
+  document.addEventListener("visibilitychange", wlSync);
   function startTTS(b, c, i, intro, list) {
     asStop(); if (synth.speaking || synth.pending) synth.cancel(); T.tok++; T.on = true; T.paused = false; T.b = b; T.c = c; T.i = i; T.errs = 0; T.list = list || null; T.k = 0;
     document.body.classList.add("speaking"); $("player").hidden = false; updatePlayer();
-    var tok = T.tok; setTimeout(function () { step(tok, !!intro); }, 60);
+    var tok = T.tok; setTimeout(function () { step(tok, !!intro); }, 60); wlSync();
   }
   function stopTTS() {
     T.tok++; T.on = false; T.paused = false; try { synth.cancel(); } catch (e) {}
-    document.body.classList.remove("speaking"); $("player").hidden = true; markVerse(); $("btnListen").classList.remove("on");
+    document.body.classList.remove("speaking"); $("player").hidden = true; markVerse(); $("btnListen").classList.remove("on"); wlSync();
   }
   $("btnListen").onclick = function () {
     if (T.on) { stopTTS(); return; }
