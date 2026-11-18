@@ -1515,3 +1515,12 @@ body.tbhide .player, body.tbhide .asbar, body.tbhide .selbar, body.tbhide .pvbar
 @keyframes micpulse { from { opacity: .8; transform: scale(.94); } to { opacity: 0; transform: scale(1.18); } }
 .fheard { margin: 2px 2px 10px; font-size: 15px; color: var(--muted); font-style: italic; }
 @media (prefers-reduced-motion: reduce) { .finder.listening .fmic::after { animation: none; } }
+
+/* ---- tombol mikrofon: bulat kecil berwarna ---- */
+.finder .fbtns { align-items: center; gap: 10px; }
+.fmic { width: 44px; height: 44px; border-radius: 50%; color: #fff;
+  background: radial-gradient(circle at 32% 28%, color-mix(in oklab, var(--pb, var(--accent)) 55%, #fff), var(--pb, var(--accent)) 62%, color-mix(in oklab, var(--pb, var(--accent)) 65%, #000));
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, .55), inset 0 -2px 4px rgba(0, 0, 0, .2), 0 4px 10px -4px color-mix(in oklab, var(--accent) 80%, #000); }
+.fmic .ico { width: 20px; height: 20px; stroke-width: 2; }
+.finder.listening .fmic { color: #fff; background: radial-gradient(circle at 32% 28%, #ff9a8a, #e5484d 62%, #a8262b); box-shadow: inset 0 1px 1px rgba(255, 255, 255, .55), 0 4px 12px -4px #a8262b; }
+.finder.listening .fmic::after { inset: -5px; border-radius: 50%; border-color: #e5484d; }
