@@ -1742,71 +1742,91 @@ kandil:'<path d="M12 21.5V9M8 21.5h8M12 9c-1.3 0-2.2-1-2.2-2.3C9.8 5 12 2.5 12 2
     return { b: b, c: c, v1: v1, v2: v2 };
   }
   window.EvoSpokenRef = function (t) { var r = spokenRef(t); return r && BOOKS[r.b].a + " " + r.c + (r.v1 ? ":" + r.v1 + (r.v2 ? "-" + r.v2 : "") : ""); };
-  /* Satu pengenal suara untuk semua kolom "Buka kitab". Status: idle → listening → stopping → idle.
-     - Hasil diproses saat final, ATAU saat sesi berakhir tanpa tanda final (iPhone sering begitu).
-     - Sesi ditutup dengan stop(), dan sesi baru baru boleh dimulai setelah onend (iPhone menolak dua sesi).
-     - Penjaga waktu: bila onend tidak pernah datang, status dipulihkan supaya tombol tidak macet. */
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var MIC = { st: "idle", r: null, f: null, last: "", alts: [], done: false, dog: 0, want: null };
+  /* Cari ayat dengan suara: rekam sendiri (WAV 16 kHz) lalu dikenali di server (Gemini lewat function `suara`).
+     Pengenal suara bawaan Safari tidak dipakai karena di iPhone tidak melepas mikrofon setelah sekali pakai.
+     Mikrofon dilepas begitu rekaman selesai, jadi indikator mikrofon iPhone ikut hilang. */
+  var API_SUARA = "https://ddydxagduxhzzsrlwgkd.supabase.co/functions/v1/suara";
+  var MIC = { st: "idle", f: null, stream: null, ctx: null, node: null, src: null, buf: [], rate: 48000, t0: 0, talk: 0, quiet: 0, timer: 0 };
+  var MIC_OK = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && (window.AudioContext || window.webkitAudioContext));
   function micUi(f, on) { Array.prototype.forEach.call(document.querySelectorAll(".finder"), function (x) { x.classList.toggle("listening", on && x === f); }); }
-  function micHeard(f, t, keep) { var h = f.querySelector(".fheard"); h.hidden = !t; h.textContent = t || ""; clearTimeout(h._t); if (t && !keep) h._t = setTimeout(function () { h.hidden = true; }, 2600); }
-  function micReset() { clearTimeout(MIC.dog); MIC.st = "idle"; MIC.r = null; if (MIC.f) micUi(MIC.f, false); var w = MIC.want; MIC.want = null; if (w) setTimeout(function () { micStart(w); }, 60); }
-  function micFinish() {          // proses teks terakhir (sekali saja)
-    if (MIC.done) return; MIC.done = true;
-    var f = MIC.f, t = MIC.last, hit = null;
-    for (var k = 0; k < MIC.alts.length && !hit; k++) hit = spokenRef(MIC.alts[k]);
-    if (!hit && t) hit = spokenRef(t);
-    micUi(f, false);
-    if (!t) { micHeard(f, "Tidak terdengar suara"); return; }
-    if (!hit) { micHeard(f, "Belum dikenali: “" + t + "”"); return; }
-    micHeard(f, "“" + t + "”");
-    FIND.b = hit.b; FIND.c = String(hit.c); FIND.v1 = hit.v1 ? String(hit.v1) : ""; FIND.v2 = hit.v2 ? String(hit.v2) : ""; syncFinders();
+  function micHeard(f, t, keep) { var h = f.querySelector(".fheard"); h.hidden = !t; h.textContent = t || ""; clearTimeout(h._t); if (t && !keep) h._t = setTimeout(function () { h.hidden = true; }, 3000); }
+  function micRelease() {
+    clearInterval(MIC.timer);
+    try { MIC.node && MIC.node.disconnect(); } catch (e) {}
+    try { MIC.src && MIC.src.disconnect(); } catch (e) {}
+    try { MIC.stream && MIC.stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+    try { MIC.ctx && MIC.ctx.close(); } catch (e) {}
+    MIC.node = MIC.src = MIC.stream = MIC.ctx = null;
+  }
+  function micWav(chunks, rate) {          // Float32 → WAV 16 kHz mono
+    var n = 0; chunks.forEach(function (c) { n += c.length; });
+    var all = new Float32Array(n), o = 0; chunks.forEach(function (c) { all.set(c, o); o += c.length; });
+    var ratio = rate / 16000, len = Math.floor(n / ratio), pcm = new Int16Array(len);
+    for (var i = 0; i < len; i++) { var s = all[Math.floor(i * ratio)]; s = Math.max(-1, Math.min(1, s)); pcm[i] = s < 0 ? s * 32768 : s * 32767; }
+    var b = new ArrayBuffer(44 + pcm.length * 2), v = new DataView(b);
+    function str(p, s) { for (var k = 0; k < s.length; k++) v.setUint8(p + k, s.charCodeAt(k)); }
+    str(0, "RIFF"); v.setUint32(4, 36 + pcm.length * 2, true); str(8, "WAVE"); str(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, 16000, true); v.setUint32(28, 32000, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); str(36, "data"); v.setUint32(40, pcm.length * 2, true);
+    new Int16Array(b, 44).set(pcm);
+    var bytes = new Uint8Array(b), bin = ""; for (var j = 0; j < bytes.length; j += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(j, j + 0x8000));
+    return btoa(bin);
+  }
+  function micOpen(r) {
+    var f = MIC.f; FIND.b = r.b; FIND.c = String(r.c); FIND.v1 = r.v1 ? String(r.v1) : ""; FIND.v2 = r.v2 ? String(r.v2) : ""; syncFinders();
     f.onsubmit({ preventDefault: function () {} });
   }
-  function micStop() {             // berhenti mendengarkan; hasil tetap diproses lewat onend
-    if (MIC.st !== "listening") return;
-    MIC.st = "stopping"; try { MIC.r.stop(); } catch (e) { try { MIC.r.abort(); } catch (x) {} micFinish(); micReset(); }
-    clearTimeout(MIC.dog); MIC.dog = setTimeout(function () { try { MIC.r && MIC.r.abort(); } catch (e) {} micFinish(); micReset(); }, 2500);
+  function micFinish(spoke) {
+    var f = MIC.f, chunks = MIC.buf, rate = MIC.rate; MIC.buf = [];
+    micRelease(); micUi(f, false);
+    if (!spoke) { MIC.st = "idle"; micHeard(f, "Tidak terdengar suara"); return; }
+    MIC.st = "sending"; micHeard(f, "Mengenali…", true);
+    var wav; try { wav = micWav(chunks, rate); } catch (e) { MIC.st = "idle"; micHeard(f, "Suara belum bisa dikenali"); return; }
+    fetch(API_SUARA, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ a: wav, m: "audio/wav", d: devId }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        MIC.st = "idle";
+        if (!j || !j.ok) { micHeard(f, j && j.sebab === "batas" ? "Batas pencarian suara hari ini sudah habis" : "Suara belum bisa dikenali"); return; }
+        var hit = (j.ref && spokenRef(j.ref)) || (j.teks && spokenRef(j.teks));
+        if (!hit) { micHeard(f, j.teks ? "Belum dikenali: “" + j.teks + "”" : "Tidak terdengar suara"); return; }
+        micHeard(f, "“" + (j.teks || j.ref) + "”"); micOpen(hit);
+      })
+      .catch(function () { MIC.st = "idle"; micHeard(f, "Perlu internet untuk mencari dengan suara"); });
   }
   function micStart(f) {
-    if (MIC.st === "listening") { micStop(); return; }
-    if (MIC.st === "stopping") { MIC.want = f; return; }
+    if (MIC.st === "rec") { micFinish(MIC.talk > 0); return; }
+    if (MIC.st !== "idle") return;
     if (T.on) stopTTS();
-    var r = MIC.inst;               // satu mesin dipakai ulang (iPhone sering gagal bila dibuat baru tiap kali)
-    if (!r) { try { r = MIC.inst = new SR(); } catch (e) { micHeard(f, "Suara belum bisa dikenali (" + (e && e.name || "?") + ")"); return; } }
-    r.lang = "id-ID"; r.interimResults = true; r.maxAlternatives = 3; r.continuous = false;
-    MIC.r = r; MIC.f = f; MIC.last = ""; MIC.alts = []; MIC.done = false; MIC.st = "listening";
-    micUi(f, true); micHeard(f, "Sedang mendengarkan…", true);
-    r.onresult = function (e) {
-      if (MIC.r !== r) return;
-      var res = e.results[e.results.length - 1]; MIC.last = res[0].transcript; MIC.alts = [];
-      for (var k = 0; k < res.length; k++) MIC.alts.push(res[k].transcript);
-      micHeard(f, "“" + MIC.last + "”", true);
-      if (res.isFinal) { micFinish(); micStop(); }
-    };
-    r.onerror = function (e) {
-      if (MIC.r !== r) return;
-      if (e.error === "not-allowed" || e.error === "service-not-allowed") { MIC.done = true; micHeard(f, "Izinkan mikrofon untuk mencari dengan suara"); }
-      else if (e.error === "no-speech" && !MIC.last) { MIC.done = true; micHeard(f, "Tidak terdengar suara"); }
-      else if (e.error === "aborted") MIC.done = true;
-      else { MIC.done = true; micHeard(f, "Suara belum bisa dikenali (" + e.error + ")"); }
-    };
-    r.onend = function () { if (MIC.r !== r) return; micFinish(); micReset(); };
-    clearTimeout(MIC.dog); MIC.dog = setTimeout(function () { if (MIC.r === r && MIC.st === "listening") micStop(); }, 12000);
-    try { r.start(); }
-    catch (e) {
-      // mesin masih sibuk: buang, ketukan berikutnya memakai mesin baru
-      try { r.abort(); } catch (x) {}
-      MIC.inst = null; MIC.r = null; MIC.st = "idle"; micUi(f, false);
-      micHeard(f, "Ketuk mikrofon sekali lagi (" + (e && e.name || "?") + ")");
-    }
+    MIC.st = "rec"; MIC.f = f; MIC.buf = []; MIC.talk = 0; MIC.quiet = 0; micUi(f, true); micHeard(f, "Sedang mendengarkan…", true);
+    var AC = window.AudioContext || window.webkitAudioContext, ctx = new AC(); MIC.ctx = ctx;
+    try { ctx.resume(); } catch (e) {}
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }).then(function (stream) {
+      if (MIC.st !== "rec" || MIC.ctx !== ctx) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+      MIC.stream = stream; MIC.rate = ctx.sampleRate; MIC.t0 = Date.now();
+      var src = ctx.createMediaStreamSource(stream), node = ctx.createScriptProcessor(4096, 1, 1); MIC.src = src; MIC.node = node;
+      node.onaudioprocess = function (e) {
+        if (MIC.st !== "rec") return;
+        var d = e.inputBuffer.getChannelData(0); MIC.buf.push(new Float32Array(d));
+        var sum = 0; for (var i = 0; i < d.length; i += 4) sum += d[i] * d[i]; var rms = Math.sqrt(sum / (d.length / 4));
+        if (rms > 0.025) { MIC.talk++; MIC.quiet = 0; } else if (MIC.talk) MIC.quiet += d.length / MIC.rate;
+      };
+      src.connect(node); node.connect(ctx.destination);
+      MIC.timer = setInterval(function () {
+        if (MIC.st !== "rec") return;
+        var el = (Date.now() - MIC.t0) / 1000;
+        if (MIC.talk >= 3 && MIC.quiet > 1.2) micFinish(true);        // selesai bicara
+        else if (el > 9) micFinish(MIC.talk > 0);                       // batas waktu
+        else if (!MIC.talk && el > 5) micFinish(false);                 // diam saja
+      }, 150);
+    }).catch(function (e) {
+      micRelease(); micUi(f, false); MIC.st = "idle";
+      micHeard(f, e && (e.name === "NotAllowedError" || e.name === "SecurityError") ? "Izinkan mikrofon untuk mencari dengan suara" : "Mikrofon tidak bisa dipakai");
+    });
   }
-  if (SR) Array.prototype.forEach.call(document.querySelectorAll(".finder"), function (f) {
+  if (MIC_OK) Array.prototype.forEach.call(document.querySelectorAll(".finder"), function (f) {
     var btn = f.querySelector(".fmic"); btn.hidden = false;
     btn.onclick = function () { micStart(f); };
   });
-  document.addEventListener("visibilitychange", function () { if (document.hidden && MIC.st === "listening") micStop(); });
-  FIND.b = (function () { var l = lsGet("evo.last", null); return l && BOOKS[l.b] ? l.b : 0; })();
+  document.addEventListener("visibilitychange", function () { if (document.hidden && MIC.st === "rec") { micRelease(); micUi(MIC.f, false); MIC.st = "idle"; } });  FIND.b = (function () { var l = lsGet("evo.last", null); return l && BOOKS[l.b] ? l.b : 0; })();
   syncFinders();
 
   /* ---------- scroll shadow ---------- */
