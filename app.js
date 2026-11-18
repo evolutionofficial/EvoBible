@@ -567,6 +567,7 @@ var ORN = {
   function go(v) { var h = NAMES[v]; if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
   function openRef(b, c, v, v2) { var h = BOOKS[b].a + "-" + c + (v ? "-" + v + (v2 && v2 >= v ? "-" + v2 : "") : ""); if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
   function showView(v, tabV) {
+    if (typeof tbHide === "function" && v !== "read") tbHide(false);
     S.view = v; tabV = tabV || v;
     Object.keys(VIEWS).forEach(function (k) { $(VIEWS[k]).hidden = k !== v; });
     Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (t) { if (t.dataset.v === tabV) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current"); }); placeInd(true);
@@ -2065,12 +2066,26 @@ kandil:'<path d="M12 21.5V9M8 21.5h8M12 9c-1.3 0-2.2-1-2.2-2.3C9.8 5 12 2.5 12 2
 
   /* ---------- panel menu bawah mengecil saat halaman digulir turun ----------
      Turun: cepat mengecil sedikit lalu tertahan. Naik: pelan-pelan kembali normal. Di puncak halaman selalu normal. */
-  var TB = { k: 0, y: scrollY, raf: 0 };
+  /* Tab Baca: menu bawah bersembunyi saat menggulir turun, muncul lagi bila digulir naik dengan cepat
+     (atau di puncak / ujung pasal). */
+  var TB = { k: 0, y: scrollY, raf: 0, t: 0, v: 0, hid: false };
+  function tbHide(on) {
+    if (TB.hid === on) return; TB.hid = on;
+    document.body.classList.toggle("tbhide", on);
+    if (on) { $("tabs").classList.remove("press"); if (TD.p) { TD.p = null; } }
+  }
   addEventListener("scroll", function () {
     if (TB.raf) return;
-    TB.raf = requestAnimationFrame(function () {
+    TB.raf = requestAnimationFrame(function (ts) {
       TB.raf = 0;
       var y = scrollY, dy = y - TB.y; TB.y = y;
+      var dt = Math.max(8, ts - (TB.t || ts - 16)); TB.t = ts; TB.v = TB.v * .5 + (dy / dt) * .5;
+      if (S.view === "read" && !S.sel.length) {
+        var max = document.documentElement.scrollHeight - innerHeight;
+        if (y < 60 || y > max - 24) tbHide(false);
+        else if (dy > 0 && y > 90) tbHide(true);
+        else if (dy < 0 && TB.v < -0.9) tbHide(false);
+      } else tbHide(false);
       if (y < 12) TB.k = 0;
       else if (dy > 0) TB.k = Math.min(1, TB.k + dy / 70);
       else if (dy < 0) TB.k = Math.max(0, TB.k + dy / 180);
