@@ -1646,7 +1646,7 @@ kandil:'<path d="M12 21.5V9M8 21.5h8M12 9c-1.3 0-2.2-1-2.2-2.3C9.8 5 12 2.5 12 2
       + '<input class="fn fv1" data-k="v1" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="Ayat" aria-label="Ayat" enterkeyhint="go">'
       + '<i class="dash">\u2013</i>'
       + '<input class="fn fv2" data-k="v2" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="s/d" aria-label="Sampai ayat" enterkeyhint="go">'
-      + '</div><button class="fgo" type="submit"><svg class="ico" viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg><span>Buka ayat</span></button></form>';
+      + '</div><div class="fheard" aria-live="polite" hidden></div><div class="fbtns"><button class="fmic" type="button" aria-label="Cari dengan suara" hidden><svg class="ico" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></button><button class="fgo" type="submit"><svg class="ico" viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg><span>Buka ayat</span></button></div></form>';
   }
   function visibleFinder() { var l = document.querySelectorAll(".finder"); for (var i = 0; i < l.length; i++) if (l[i].offsetParent !== null) return l[i]; return null; }
   function syncFinders() {
@@ -1672,6 +1672,103 @@ kandil:'<path d="M12 21.5V9M8 21.5h8M12 9c-1.3 0-2.2-1-2.2-2.3C9.8 5 12 2.5 12 2
       FIND.c = String(c); FIND.v1 = v1 ? String(v1) : ""; FIND.v2 = v1 ? String(v2) : ""; syncFinders();
       try { document.activeElement.blur(); } catch (x) {}
       openRef(FIND.b, c, v1, v2);
+    };
+  });
+  /* ---------- cari ayat dengan suara ----------
+     Contoh ucapan: "Roma pasal dua ayat satu sampai tujuh", "Yohanes tiga enam belas", "Korintus pertama tiga belas". */
+  var NUMW = { nol: 0, satu: 1, se: 1, dua: 2, tiga: 3, empat: 4, lima: 5, enam: 6, tujuh: 7, delapan: 8, sembilan: 9 };
+  var ORDW = { pertama: 1, kesatu: 1, kedua: 2, ketiga: 3 };
+  function spWords(t) {
+    t = t.toLowerCase().replace(/(\d)\s*[:.]\s*(\d)/g, "$1 ayat $2").replace(/(\d)\s*[-\u2013]\s*(\d)/g, "$1 sampai $2")
+      .replace(/s\/d|sampai dengan|hingga|sampai ke/g, " sampai ").replace(/[^a-z0-9 ]+/g, " ").replace(/\bse(puluh|belas|ratus)\b/g, "satu $1")
+      .replace(/\bsebelas\b/g, "satu belas").replace(/\bseratus\b/g, "satu ratus");
+    var w = t.split(/\s+/).filter(Boolean), out = [], i = 0;
+    while (i < w.length) {           // gabung angka kata: "dua puluh tiga" -> 23, "seratus lima puluh" -> 150
+      if (NUMW[w[i]] != null && w[i] !== "se" || /^\d+$/.test(w[i])) {
+        var tot = 0, cur = 0, used = false;
+        while (i < w.length) {
+          var x = w[i];
+          if (/^\d+$/.test(x)) { if (used) break; cur = +x; used = true; i++; if (!/^(belas|puluh|ratus)$/.test(w[i] || "")) break; continue; }
+          if (NUMW[x] != null && x !== "se") { if (used && cur) break; cur = NUMW[x]; used = true; i++; continue; }
+          if (x === "belas") { cur = (cur || 1) + 10; i++; continue; }
+          if (x === "puluh") { tot += (cur || 1) * 10; cur = 0; i++; continue; }
+          if (x === "ratus") { tot += (cur || 1) * 100; cur = 0; i++; continue; }
+          break;
+        }
+        out.push(String(tot + cur));
+      } else out.push(w[i++]);
+    }
+    return out;
+  }
+  var SP_ALIAS = { kisahrasul: "Kis", kisahpararasul: "Kis", kidung: "Kid", rajaraja: "Raj", raja: "Raj", hakim: "Hak", hakimhakim: "Hak", johanes: "Yoh", yohannes: "Yoh", mazmur: "Mzm", masmur: "Mzm", wahyu: "Why", pengkotbah: "Pkh", pengkhotbah: "Pkh" };
+  function spBook(words) {     // cari nama kitab terpanjang yang cocok; kembalikan {i (indeks kitab), s, e}
+    var best = null;
+    for (var s = 0; s < words.length; s++) for (var e = Math.min(words.length, s + 4); e > s; e--) {
+      var key = words.slice(s, e).join(""); if (/\d/.test(key) || key.length < 2) continue;
+      var hits = [];
+      BOOKS.forEach(function (bk, i) {
+        var n = bk.n.toLowerCase().replace(/^[1-3]\s*/, "").replace(/[^a-z]/g, ""), a = bk.a.toLowerCase().replace(/^[1-3]/, "");
+        if (n === key || (SP_ALIAS[key] && bk.a.replace(/^[1-3]/, "") === SP_ALIAS[key])) hits.push(i);
+      });
+      if (hits.length && (!best || e - s > best.e - best.s)) best = { hits: hits, s: s, e: e };
+    }
+    return best;
+  }
+  function spokenRef(text) {
+    var w = spWords(text).filter(function (x) { return !/^(kitab|injil|surat|buka|baca|cari|tolong|dari|di|kepada|jemaat|rasul|paulus|yang)$/.test(x) || x === "rasul"; });
+    var bk = spBook(w); if (!bk) return null;
+    var pre = w[bk.s - 1], post = w[bk.e], nth = 0, rest = w.slice(bk.e);
+    if (pre && /^[1-3]$/.test(pre)) nth = +pre;
+    else if (pre && ORDW[pre]) nth = ORDW[pre];
+    else if (post && ORDW[post]) { nth = ORDW[post]; rest = rest.slice(1); }
+    var b = -1;
+    bk.hits.forEach(function (i) { var m = /^([1-3])/.exec(BOOKS[i].a); if ((m ? +m[1] : 0) === nth) b = i; });
+    if (b < 0 && !nth) {        // kitab bernomor tanpa nomor disebut (mis. "Korintus 1 13"): angka pertama = nomor kitab
+      var numbered = bk.hits.filter(function (i) { return /^[1-3]/.test(BOOKS[i].a); });
+      if (numbered.length === bk.hits.length && /^[1-3]$/.test(rest[0] || "")) { nth = +rest[0]; rest = rest.slice(1); bk.hits.forEach(function (i) { if (+BOOKS[i].a[0] === nth) b = i; }); }
+      else if (numbered.length === bk.hits.length) b = numbered[0];
+    }
+    if (b < 0) b = bk.hits[0];
+    var nums = [], role = [], last = "";
+    rest.forEach(function (x) { if (/^(pasal|bab)$/.test(x)) last = "c"; else if (x === "ayat") last = "v"; else if (x === "sampai") last = "to"; else if (/^\d+$/.test(x)) { nums.push(+x); role.push(last); last = ""; } });
+    var c = 0, v1 = 0, v2 = 0;
+    nums.forEach(function (n, k) {
+      var r = role[k];
+      if (r === "c" || (!r && !c)) { if (!c) c = n; }
+      else if (r === "to") { if (v1) v2 = n; }
+      else if (!v1) v1 = n; else if (!v2) v2 = n;
+    });
+    if (!c) c = 1;
+    return { b: b, c: c, v1: v1, v2: v2 };
+  }
+  window.EvoSpokenRef = function (t) { var r = spokenRef(t); return r && BOOKS[r.b].a + " " + r.c + (r.v1 ? ":" + r.v1 + (r.v2 ? "-" + r.v2 : "") : ""); };
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition, srOn = null;
+  function micStop() { if (srOn) { try { srOn.r.abort(); } catch (e) {} srOn.f.classList.remove("listening"); srOn = null; } }
+  if (SR) Array.prototype.forEach.call(document.querySelectorAll(".finder"), function (f) {
+    var btn = f.querySelector(".fmic"), heard = f.querySelector(".fheard"); btn.hidden = false;
+    btn.onclick = function () {
+      if (srOn) { micStop(); heard.hidden = true; return; }
+      if (T.on) stopTTS();
+      var r = new SR(); r.lang = "id-ID"; r.interimResults = true; r.maxAlternatives = 3; r.continuous = false;
+      srOn = { r: r, f: f }; f.classList.add("listening"); heard.hidden = false; heard.textContent = "Sedang mendengarkan\u2026";
+      var done = false;
+      r.onresult = function (e) {
+        var res = e.results[e.results.length - 1], t = res[0].transcript; heard.textContent = "\u201C" + t + "\u201D";
+        if (!res.isFinal) return;
+        done = true; var hit = null;
+        for (var k = 0; k < res.length && !hit; k++) hit = spokenRef(res[k].transcript);
+        micStop();
+        if (!hit) { heard.textContent = "Belum dikenali: \u201C" + t + "\u201D"; return; }
+        setTimeout(function () { heard.hidden = true; }, 1600);
+        FIND.b = hit.b; FIND.c = String(hit.c); FIND.v1 = hit.v1 ? String(hit.v1) : ""; FIND.v2 = hit.v2 ? String(hit.v2) : ""; syncFinders();
+        f.onsubmit({ preventDefault: function () {} });
+      };
+      r.onerror = function (e) {
+        micStop();
+        heard.textContent = e.error === "not-allowed" || e.error === "service-not-allowed" ? "Izinkan mikrofon untuk mencari dengan suara" : e.error === "no-speech" ? "Tidak terdengar suara" : "Suara belum bisa dikenali";
+      };
+      r.onend = function () { if (!done && srOn) { micStop(); if (heard.textContent === "Sedang mendengarkan\u2026") heard.hidden = true; } };
+      try { r.start(); } catch (e) { micStop(); }
     };
   });
   FIND.b = (function () { var l = lsGet("evo.last", null); return l && BOOKS[l.b] ? l.b : 0; })();
