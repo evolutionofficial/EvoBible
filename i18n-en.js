@@ -39,6 +39,10 @@
     days: {"Senin": "Monday", "Selasa": "Tuesday", "Rabu": "Wednesday", "Kamis": "Thursday", "Jumat": "Friday", "Sabtu": "Saturday", "Minggu": "Sunday"},
     pat: pat,
     exact: {
+      "Mengenali…": "Recognizing…",
+      "Perlu internet untuk mencari dengan suara": "Voice search needs internet",
+      "Batas pencarian suara hari ini sudah habis": "Today's voice search limit has been reached",
+      "Mikrofon tidak bisa dipakai": "The microphone cannot be used",
       "Cari dengan suara": "Search by voice",
       "Sedang mendengarkan…": "Listening…",
       "Izinkan mikrofon untuk mencari dengan suara": "Allow the microphone to search by voice",
