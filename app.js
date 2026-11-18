@@ -1772,7 +1772,8 @@ kandil:'<path d="M12 21.5V9M8 21.5h8M12 9c-1.3 0-2.2-1-2.2-2.3C9.8 5 12 2.5 12 2
     if (MIC.st === "listening") { micStop(); return; }
     if (MIC.st === "stopping") { MIC.want = f; return; }
     if (T.on) stopTTS();
-    var r; try { r = new SR(); } catch (e) { micHeard(f, "Suara belum bisa dikenali"); return; }
+    var r = MIC.inst;               // satu mesin dipakai ulang (iPhone sering gagal bila dibuat baru tiap kali)
+    if (!r) { try { r = MIC.inst = new SR(); } catch (e) { micHeard(f, "Suara belum bisa dikenali (" + (e && e.name || "?") + ")"); return; } }
     r.lang = "id-ID"; r.interimResults = true; r.maxAlternatives = 3; r.continuous = false;
     MIC.r = r; MIC.f = f; MIC.last = ""; MIC.alts = []; MIC.done = false; MIC.st = "listening";
     micUi(f, true); micHeard(f, "Sedang mendengarkan…", true);
@@ -1788,11 +1789,17 @@ kandil:'<path d="M12 21.5V9M8 21.5h8M12 9c-1.3 0-2.2-1-2.2-2.3C9.8 5 12 2.5 12 2
       if (e.error === "not-allowed" || e.error === "service-not-allowed") { MIC.done = true; micHeard(f, "Izinkan mikrofon untuk mencari dengan suara"); }
       else if (e.error === "no-speech" && !MIC.last) { MIC.done = true; micHeard(f, "Tidak terdengar suara"); }
       else if (e.error === "aborted") MIC.done = true;
+      else { MIC.done = true; micHeard(f, "Suara belum bisa dikenali (" + e.error + ")"); }
     };
     r.onend = function () { if (MIC.r !== r) return; micFinish(); micReset(); };
     clearTimeout(MIC.dog); MIC.dog = setTimeout(function () { if (MIC.r === r && MIC.st === "listening") micStop(); }, 12000);
     try { r.start(); }
-    catch (e) { MIC.r = null; MIC.st = "idle"; micUi(f, false); setTimeout(function () { if (MIC.st === "idle") micStart(f); }, 350); }
+    catch (e) {
+      // mesin masih sibuk: buang, ketukan berikutnya memakai mesin baru
+      try { r.abort(); } catch (x) {}
+      MIC.inst = null; MIC.r = null; MIC.st = "idle"; micUi(f, false);
+      micHeard(f, "Ketuk mikrofon sekali lagi (" + (e && e.name || "?") + ")");
+    }
   }
   if (SR) Array.prototype.forEach.call(document.querySelectorAll(".finder"), function (f) {
     var btn = f.querySelector(".fmic"); btn.hidden = false;
