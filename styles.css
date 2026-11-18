@@ -1503,3 +1503,15 @@ body.tbhide .player, body.tbhide .asbar, body.tbhide .selbar, body.tbhide .pvbar
 .abpage h3 { margin: 22px 0 6px; font-size: 15px; font-weight: 800; color: var(--accent); }
 .abpage p { margin: 0 0 10px; color: var(--fg); font-size: 15px; line-height: 1.65; }
 .abpage a { color: var(--accent); }
+
+/* ---- cari ayat dengan suara ---- */
+.finder .fbtns { display: flex; gap: 8px; align-items: stretch; }
+.finder .fbtns .fgo { flex: 1; }
+.fmic { flex: none; display: grid; place-items: center; width: 52px; border-radius: 16px; color: var(--accent); background: var(--soft-bg); box-shadow: var(--soft-emb); position: relative; }
+.fmic[hidden] { display: none; }
+.fmic .ico { width: 24px; height: 24px; stroke: currentColor; }
+.finder.listening .fmic { color: #fff; background: var(--jewel); box-shadow: var(--emb), 0 2px 0 var(--pb-edge); }
+.finder.listening .fmic::after { content: ""; position: absolute; inset: -4px; border-radius: 19px; border: 2px solid var(--accent); animation: micpulse 1.2s ease-out infinite; }
+@keyframes micpulse { from { opacity: .8; transform: scale(.94); } to { opacity: 0; transform: scale(1.18); } }
+.fheard { margin: 2px 2px 10px; font-size: 15px; color: var(--muted); font-style: italic; }
+@media (prefers-reduced-motion: reduce) { .finder.listening .fmic::after { animation: none; } }

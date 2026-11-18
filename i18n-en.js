@@ -39,6 +39,11 @@
     days: {"Senin": "Monday", "Selasa": "Tuesday", "Rabu": "Wednesday", "Kamis": "Thursday", "Jumat": "Friday", "Sabtu": "Saturday", "Minggu": "Sunday"},
     pat: pat,
     exact: {
+      "Cari dengan suara": "Search by voice",
+      "Sedang mendengarkan…": "Listening…",
+      "Izinkan mikrofon untuk mencari dengan suara": "Allow the microphone to search by voice",
+      "Tidak terdengar suara": "No speech heard",
+      "Suara belum bisa dikenali": "Speech could not be recognized",
       "Ukuran huruf, tema warna, bahasa, dan kalender gereja": "Text size, color theme, language, and church calendar",
       "Bahasa aplikasi": "App language",
       "Tentang & Kredit": "About & Credits",
