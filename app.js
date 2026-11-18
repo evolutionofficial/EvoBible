@@ -43,7 +43,7 @@
   Object.keys(sors).forEach(function (k) { if (!SR_C[sors[k]]) sors[k] = "y"; });
   var settings = lsGet("evo.set", { fs: 21, theme: "auto" });
   if (!settings.cal) settings.cal = "protestan";
-  if (!settings.sea) settings.sea = "on";
+  settings.sea = "on"; // tema musiman selalu mengikuti kalender (pilihan di pengaturan dihapus)
   var recent = lsGet("evo.recent", []);
   var open = null, toastT;
   var API = "https://ddydxagduxhzzsrlwgkd.supabase.co/functions/v1/cari";
@@ -909,7 +909,7 @@ var ORN = {
       ["nyanyian", MUSIC_I, "Nyanyian", (kat ? "Madah Bakti dan Puji Syukur" : "Kidung Jemaat, Pelengkap Kidung Jemaat, dan Nyanyikanlah Kidung Baru") + ", serta himne klasik berbahasa Inggris"],
       ["kisah", KS_I, "Kisah", kat ? "Orang kudus sepanjang tahun, perumpamaan Yesus, dan tokoh Alkitab" : "Perumpamaan Yesus dan tokoh Alkitab"],
       ["tersimpan", MARK_I, "Tersimpan", "Ayat tersimpan, sorotan, dan Jurnal Doa"],
-      ["@set", GEAR_I, "Pengaturan", "Ukuran huruf, tema warna, bahasa, kalender, dan tradisi gereja"],
+      ["@set", GEAR_I, "Pengaturan", "Ukuran huruf, tema warna, bahasa, dan kalender gereja"],
       ["tentang", INFO_I, "Tentang & Kredit", "Lisensi Alkitab, layanan, dan sumber konten"]
     ];
     $("moreBody").innerHTML = '<div class="morelist">' + rows.map(function (r) {
