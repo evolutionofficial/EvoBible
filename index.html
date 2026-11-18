@@ -24,7 +24,6 @@
       <img src="icons/favicon.svg" alt="" width="30" height="30">
       EvoBible <span class="sbadge" id="sBadge" hidden></span>
     </div>
-    <button class="ib" id="btnSet" aria-label="Pengaturan tampilan"><svg class="ico" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
   </div></header>
   <main class="inner">
     <button class="sbanner" id="seasonBanner" type="button" aria-haspopup="dialog" hidden></button>
@@ -127,6 +126,26 @@
   <main class="inner sbody" id="moreBody"></main>
 </section>
 
+<!-- TENTANG -->
+<section id="vAbout" class="view" hidden>
+  <header class="bar"><div class="inner sv-head hy-head" style="padding-top:6px"><button class="ib" id="abBack" type="button" aria-label="Kembali"><svg class="ico" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button><h1>Tentang &amp; Kredit</h1></div></header>
+  <main class="inner sbody abpage">
+    <h3>Teks Alkitab</h3>
+    <div data-noi18n>
+      <p>Teks Alkitab Yang Terbuka (AYT) © Yayasan Lembaga SABDA 2011, 2024. Boleh dipakai dan dibagikan gratis untuk tujuan non-komersial. <a href="https://ayt.co" target="_blank" rel="noopener">ayt.co</a></p>
+      <p>Terjemahan Sederhana Indonesia (TSI) © 2021 Yayasan Alkitab BahasaKita (Albata) dan Pioneer Bible Translators, dengan lisensi <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.id" target="_blank" rel="noopener">CC BY-SA 4.0</a>, teks tidak diubah. King James Version (1769), World English Bible (edisi Britania), dan Berean Standard Bible: domain publik.</p>
+    </div>
+    <h3>Renungan</h3>
+    <div data-noi18n><p>Saat Anda menekan Renungan, cerita Anda dikirim ke server kami dan ke layanan Google Gemini untuk dipilihkan ayat serta disusunkan renungan dan doa. Kami tidak menyimpan cerita itu. Jangan menulis nama atau data pribadi. Jurnal Doa hanya tersimpan di HP ini.</p></div>
+    <h3>Tanpa internet</h3>
+    <div data-noi18n><p>Setelah dibuka sekali dengan internet, seluruh Alkitab tersimpan di HP dan bisa dibaca kapan saja. Tombol Renungan memakai internet. Jika internet putus atau penuh, aplikasi tetap menampilkan ayat yang dipilih dari HP Anda.</p><p>Ayat tersimpan, sorotan, Jurnal Doa, dan pengaturan hanya tersimpan di HP ini.</p></div>
+    <h3>Kisah</h3>
+    <div data-noi18n><p>Kisah orang kudus, perumpamaan Yesus, dan tokoh Alkitab ditulis khusus untuk EvoBible dan masih ditinjau oleh romo/katekis (bertanda Draf). Gambar ilustrasi dibuat dengan bantuan AI untuk EvoBible; lambang kisah digambar sendiri.</p></div>
+    <h3>Nyanyian</h3>
+    <div data-noi18n><p>Himne klasik berbahasa Inggris dari Open Hymnal Project (openhymnal.org), domain publik.</p></div>
+  </main>
+</section>
+
 <!-- KISAH -->
 <section id="vKisah" class="view" hidden>
   <header class="bar"><div class="inner sv-head hy-head" style="padding-top:6px"><button class="ib" id="ksBack" type="button" aria-label="Kembali"><svg class="ico" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button><h1 id="ksTitle">Kisah</h1></div></header>
@@ -216,23 +235,16 @@
       <div class="stepper"><button id="fsDown" aria-label="Perkecil huruf">A−</button><output id="fsOut">19</output><button id="fsUp" aria-label="Perbesar huruf">A+</button></div></div>
     <div class="row"><span class="lbl">Tema warna</span>
       <div class="seg" id="themeSeg"><button data-t="auto" aria-pressed="true">Otomatis</button><button data-t="light" aria-pressed="false">Terang</button><button data-t="dark" aria-pressed="false">Gelap</button></div></div>
+    <div class="row"><span class="lbl">Bahasa aplikasi</span>
+      <div class="seg" id="langSeg" data-noi18n><button data-l="id" aria-pressed="true">Indonesia</button><button data-l="en" aria-pressed="false">English</button></div></div>
     <div class="row"><span class="lbl">Kalender gerejawi</span>
       <div class="seg" id="calSeg"><button data-k="protestan" aria-pressed="true">Protestan</button><button data-k="katolik" aria-pressed="false">Katolik</button></div></div>
     <div class="row"><span class="lbl">Tema musiman</span>
       <div class="seg" id="seaSeg"><button data-k="on" aria-pressed="true">Ikuti kalender</button><button data-k="off" aria-pressed="false">Biru biasa</button></div></div>
     <div class="row"><span class="lbl">Tradisi gereja</span>
       <div class="seg" id="chSeg"><button data-k="katolik" aria-pressed="false">Katolik</button><button data-k="protestan" aria-pressed="false">Protestan</button><button data-k="semua" aria-pressed="false">Semua</button></div></div>
-    <div class="pvwrap"><span class="lbl">Lihat pratinjau tema</span><p class="vnote">Hanya untuk melihat tampilan. Tanggal dan kalender Anda tidak berubah.</p><div class="pvgrid" id="pvGrid"></div></div>
+    <div class="pvwrap"><span class="lbl">Lihat pratinjau tema</span><div class="pvgrid" id="pvGrid"></div></div>
     <div class="install" id="install" hidden></div>
-    <div class="about">
-      <p><span class="badge">Membaca Alkitab bisa tanpa internet</span></p>
-      <p>Setelah dibuka sekali dengan internet, seluruh Alkitab tersimpan di HP dan bisa dibaca kapan saja. Tombol Renungan memakai internet. Jika internet putus atau penuh, aplikasi tetap menampilkan ayat yang dipilih dari HP Anda.</p>
-      <p>Saat Anda menekan Renungan, cerita Anda dikirim ke server kami dan ke layanan Google Gemini untuk dipilihkan ayat serta disusunkan renungan dan doa. Kami tidak menyimpan cerita itu. Jangan menulis nama atau data pribadi. Jurnal Doa hanya tersimpan di HP ini.</p>
-      <p>Teks Alkitab Yang Terbuka (AYT) © Yayasan Lembaga SABDA 2011, 2024. Boleh dipakai dan dibagikan gratis untuk tujuan non-komersial. <a href="https://ayt.co" target="_blank" rel="noopener">ayt.co</a></p>
-      <p>Terjemahan Sederhana Indonesia (TSI) © 2021 Yayasan Alkitab BahasaKita (Albata) dan Pioneer Bible Translators, dengan lisensi <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.id" target="_blank" rel="noopener">CC BY-SA 4.0</a>, teks tidak diubah. King James Version (1769), World English Bible (edisi Britania), dan Berean Standard Bible: domain publik.</p>
-      <p>Himne klasik berbahasa Inggris dari Open Hymnal Project (openhymnal.org), domain publik.</p>
-      <p>Ayat tersimpan dan pengaturan ada di HP ini.</p>
-    </div>
   </div>
 </div></div>
 

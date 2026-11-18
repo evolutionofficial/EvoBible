@@ -23,7 +23,7 @@
  * terpisah dan tidak boleh diturunkan dari bahasa tampilan. Lihat README, bagian "Bahasa (i18n)".
  */
 (function () {
-  var ENABLED = false;
+  var ENABLED = true;
   var D = window.I18N_EN || { exact: {}, pat: [], books: {}, months: {}, days: {} };
   var lang = "id";
   try { if (ENABLED && localStorage.getItem("evo.lang") === "en") lang = "en"; } catch (e) {}
