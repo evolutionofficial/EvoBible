@@ -559,11 +559,11 @@ var ORN = {
   document.addEventListener("click", function (e) {
     if (e.target.closest("[data-close]")) hide(); else if (e.target.classList && e.target.classList.contains("scrim")) hide();
   });
-  $("btnSet").onclick = $("btnSet2").onclick = function () { show("shSet"); };
+  $("btnSet2").onclick = function () { show("shSet"); };
 
   /* ---------- routing ---------- */
-  var VIEWS = { home: "vHome", search: "vSearch", read: "vRead", saved: "vSaved", church: "vChurch", more: "vMore", hymn: "vHymn", kisah: "vKisah" };
-  var NAMES = { home: "beranda", search: "cari", kata: "kata", read: "baca", saved: "tersimpan", church: "gereja", more: "lainnya", hymn: "nyanyian", kisah: "kisah" };
+  var VIEWS = { home: "vHome", search: "vSearch", read: "vRead", saved: "vSaved", church: "vChurch", more: "vMore", hymn: "vHymn", kisah: "vKisah", about: "vAbout" };
+  var NAMES = { home: "beranda", search: "cari", kata: "kata", read: "baca", saved: "tersimpan", church: "gereja", more: "lainnya", hymn: "nyanyian", kisah: "kisah", about: "tentang" };
   function go(v) { var h = NAMES[v]; if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
   function openRef(b, c, v, v2) { var h = BOOKS[b].a + "-" + c + (v ? "-" + v + (v2 && v2 >= v ? "-" + v2 : "") : ""); if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
   function showView(v, tabV) {
@@ -588,6 +588,7 @@ var ORN = {
     if (h === "gereja" && FEATURE_CHURCH) { showView("church"); renderChurch(); window.scrollTo(0, 0); return; }
     if (h === "tersimpan" || h === "sorotan") { showView("saved", "more"); renderSaved(); window.scrollTo(0, 0); return; }
     if (h === "kisah" || h.indexOf("kisah/") === 0) { var kp = h.split("/"); showView("kisah", "more"); renderKisah(kp[1] || "", kp[2] || ""); return; }
+    if (h === "tentang") { showView("about", "more"); window.scrollTo(0, 0); return; }
     if (h === "lainnya") { showView("more"); renderMore(); window.scrollTo(0, 0); return; }
     if (h === "nyanyian" || h.indexOf("nyanyian/") === 0) { var hp = h.split("/"); showView("hymn", "more"); renderHymn(hp[1] || "", hp[2] || ""); return; }
     if (h === "baca") { var last = lsGet("evo.last", { b: 0, c: 1 }); if (!BOOKS[last.b] || !BOOKS[last.b].ch[last.c - 1]) last = { b: 0, c: 1 }; showView("read"); renderChapter(last.b, last.c, 0); return; }
@@ -888,6 +889,18 @@ var ORN = {
   function navHash(h) { if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
   var MUSIC_I = '<svg class="ico" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>';
   var MARK_I = '<svg class="ico" viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>';
+  var INFO_I = '<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg>';
+  $("abBack").onclick = function () { navHash("lainnya"); };
+  /* Bahasa aplikasi (evo.lang) — hanya tampilan; bahasa isi & versi Alkitab terpisah. */
+  (function () {
+    var cur = "id"; try { cur = localStorage.getItem("evo.lang") === "en" ? "en" : "id"; } catch (e) {}
+    Array.prototype.forEach.call($("langSeg").querySelectorAll("button"), function (b) { b.setAttribute("aria-pressed", String(b.dataset.l === cur)); });
+    $("langSeg").onclick = function (e) {
+      var b = e.target.closest("[data-l]"); if (!b || b.dataset.l === cur) return;
+      try { localStorage.setItem("evo.lang", b.dataset.l); } catch (x) {}
+      location.reload();
+    };
+  })();
   var GEAR_I = '<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
   var CHEV_R = '<svg class="ico chev" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg>';
   function renderMore() {
@@ -896,7 +909,8 @@ var ORN = {
       ["nyanyian", MUSIC_I, "Nyanyian", (kat ? "Madah Bakti dan Puji Syukur" : "Kidung Jemaat, Pelengkap Kidung Jemaat, dan Nyanyikanlah Kidung Baru") + ", serta himne klasik berbahasa Inggris"],
       ["kisah", KS_I, "Kisah", kat ? "Orang kudus sepanjang tahun, perumpamaan Yesus, dan tokoh Alkitab" : "Perumpamaan Yesus dan tokoh Alkitab"],
       ["tersimpan", MARK_I, "Tersimpan", "Ayat tersimpan, sorotan, dan Jurnal Doa"],
-      ["@set", GEAR_I, "Pengaturan", "Ukuran huruf, tema warna, kalender, dan tradisi gereja"]
+      ["@set", GEAR_I, "Pengaturan", "Ukuran huruf, tema warna, bahasa, kalender, dan tradisi gereja"],
+      ["tentang", INFO_I, "Tentang & Kredit", "Lisensi Alkitab, layanan, dan sumber konten"]
     ];
     $("moreBody").innerHTML = '<div class="morelist">' + rows.map(function (r) {
       return '<button class="morerow" type="button" data-more="' + r[0] + '"><span class="mi">' + r[1] + "</span><span class=\"mt\"><b>" + r[2] + "</b><small>" + r[3] + "</small></span>" + CHEV_R + "</button>";

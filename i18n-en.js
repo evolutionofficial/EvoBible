@@ -39,6 +39,12 @@
     days: {"Senin": "Monday", "Selasa": "Tuesday", "Rabu": "Wednesday", "Kamis": "Thursday", "Jumat": "Friday", "Sabtu": "Saturday", "Minggu": "Sunday"},
     pat: pat,
     exact: {
+      "Bahasa aplikasi": "App language",
+      "Tentang & Kredit": "About & Credits",
+      "Lisensi Alkitab, layanan, dan sumber konten": "Bible licenses, services, and content sources",
+      "Ukuran huruf, tema warna, bahasa, kalender, dan tradisi gereja": "Text size, color theme, language, calendar, and church tradition",
+      "Teks Alkitab": "Bible text",
+      "Tanpa internet": "Offline",
       "Kisah": "Stories",
       "Orang Kudus": "Saints",
       "Perumpamaan": "Parables",
