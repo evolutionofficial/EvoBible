@@ -1,6 +1,7 @@
 wrangler.jsonc
 .assetsignore
 README.md
+ARCHITECTURE.md
 .github
 .git
 supabase
