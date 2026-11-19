@@ -11,7 +11,7 @@
 // Bump VERSION whenever the site files change so that devices download
 // a fresh cache and drop the old one.
 
-const VERSION = "v89";
+const VERSION = "v90";
 const VER_CACHE = "evobible-versi-1";
 const CACHE = "evobible-" + VERSION;
 
@@ -19,6 +19,15 @@ const PRECACHE = [
   "./",
   "index.html",
   "styles.css",
+  "app-core.js",
+  "app-church.js",
+  "app-seasons.js",
+  "app-hymns.js",
+  "app-stories.js",
+  "app-reader.js",
+  "app-tts.js",
+  "app-account.js",
+  "app-tabs.js",
   "app.js",
   "gambar.js",
   "vendor/supabase.js",
