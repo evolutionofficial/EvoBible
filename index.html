@@ -18,7 +18,7 @@
 <!-- Sembunyikan kerangka HTML kosong sampai app.js selesai menyiapkan tampilan (hindari kilasan layar lama). Cadangan: tampil otomatis setelah 4 detik. -->
 <style>html:not(.ready) body{visibility:hidden}</style>
 <noscript><style>html:not(.ready) body{visibility:visible}</style></noscript>
-<script>setTimeout(function(){document.documentElement.classList.add("ready")},4000)</script>
+<script>try{if(JSON.parse(localStorage.getItem("evo.set")).lite)document.documentElement.setAttribute("data-lite","1")}catch(e){}setTimeout(function(){document.documentElement.classList.add("ready")},4000)</script>
 </head>
 <body>
 <!-- BERANDA -->
@@ -239,6 +239,8 @@
       <div class="stepper"><button id="fsDown" aria-label="Perkecil huruf">A−</button><output id="fsOut">19</output><button id="fsUp" aria-label="Perbesar huruf">A+</button></div></div>
     <div class="row"><span class="lbl">Tema warna</span>
       <div class="seg" id="themeSeg"><button data-t="auto" aria-pressed="true">Otomatis</button><button data-t="light" aria-pressed="false">Terang</button><button data-t="dark" aria-pressed="false">Gelap</button></div></div>
+    <div class="row"><span class="lbl">Mode hemat (HP spek rendah)</span>
+      <div class="seg" id="liteSeg"><button data-k="off" aria-pressed="true">Mati</button><button data-k="on" aria-pressed="false">Nyala</button></div></div>
     <div class="row"><span class="lbl">Bahasa aplikasi</span>
       <div class="seg" id="langSeg" data-noi18n><button data-l="id" aria-pressed="true">Indonesia</button><button data-l="en" aria-pressed="false">English</button></div></div>
     <div class="row"><span class="lbl">Kalender gerejawi</span>

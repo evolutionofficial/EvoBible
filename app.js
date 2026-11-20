@@ -547,10 +547,13 @@ var ORN = {
     $("fsOut").textContent = settings.fs;
     if (settings.theme === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", settings.theme);
     Array.prototype.forEach.call($("themeSeg").children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.t === settings.theme)); });
+    if (settings.lite) document.documentElement.setAttribute("data-lite", "1"); else document.documentElement.removeAttribute("data-lite");
+    Array.prototype.forEach.call($("liteSeg").children, function (b) { b.setAttribute("aria-pressed", String((b.dataset.k === "on") === !!settings.lite)); });
     syncSeasonUI(); applySeason();
   }
   $("fsDown").onclick = function () { settings.fs = Math.max(14, settings.fs - 1); lsSet("evo.set", settings); applySettings(); };
   $("fsUp").onclick = function () { settings.fs = Math.min(30, settings.fs + 1); lsSet("evo.set", settings); applySettings(); };
+  $("liteSeg").onclick = function (e) { var k = e.target.dataset && e.target.dataset.k; if (!k) return; settings.lite = k === "on"; lsSet("evo.set", settings); applySettings(); };
   $("themeSeg").onclick = function (e) { var t = e.target.dataset && e.target.dataset.t; if (!t) return; settings.theme = t; lsSet("evo.set", settings); applySettings(); };
 
   /* ---------- sheets ---------- */
