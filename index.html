@@ -15,6 +15,10 @@
 <meta name="apple-mobile-web-app-title" content="EvoBible">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="stylesheet" href="styles.css">
+<!-- Sembunyikan kerangka HTML kosong sampai app.js selesai menyiapkan tampilan (hindari kilasan layar lama). Cadangan: tampil otomatis setelah 4 detik. -->
+<style>html:not(.ready) body{visibility:hidden}</style>
+<noscript><style>html:not(.ready) body{visibility:visible}</style></noscript>
+<script>setTimeout(function(){document.documentElement.classList.add("ready")},4000)</script>
 </head>
 <body>
 <!-- BERANDA -->
@@ -164,7 +168,7 @@
   <button class="tab tab-c" data-v="search" aria-label="Renungan"><svg class="ico" viewBox="0 0 24 24"><path class="x-sh" d="M12 3.5v17M6.8 8.6h10.4" transform="translate(0 1.1)"/><path class="x-hi" d="M12 3.5v17M6.8 8.6h10.4" transform="translate(0 -.7)"/><path d="M12 3.5v17M6.8 8.6h10.4"/></svg>Renungan</button>
   <button class="tab" data-v="kata"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Cari</button>
   <button class="tab" data-v="more"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/></svg>Lainnya</button>
-  <button class="tab" data-v="church"><svg class="ico" viewBox="0 0 24 24"><path d="M12 2v5M9.5 4.5h5"/><path d="M12 7 6 11v10h12V11z"/><path d="M10 21v-5a2 2 0 0 1 4 0v5"/><path d="M3 21h18"/></svg>Gereja</button>
+  <button class="tab" data-v="church" hidden><svg class="ico" viewBox="0 0 24 24"><path d="M12 2v5M9.5 4.5h5"/><path d="M12 7 6 11v10h12V11z"/><path d="M10 21v-5a2 2 0 0 1 4 0v5"/><path d="M3 21h18"/></svg>Gereja</button>
 </div></nav>
 
 <div class="pvbar" id="pvbar" hidden><div class="in">
