@@ -182,7 +182,7 @@
   };
   // Sakelar fitur: ubah menjadi true untuk menampilkan kembali tab Gereja (kodenya tetap ada).
   var FEATURE_CHURCH = false;
-  if (!FEATURE_CHURCH) { document.querySelector('.tab[data-v="church"]').hidden = true; $("chSeg").parentNode.hidden = true; }
+  if (!FEATURE_CHURCH) { document.querySelector('.tab[data-v="church"]').hidden = true; $("chSeg").parentNode.hidden = true; } else { document.querySelector('.tab[data-v="church"]').hidden = false; }
   var CH = Object.assign({ trad: null, kat: "all", prot: "all", rad: 5, place: null }, lsGet("evo.church", {}));
   CH.q = ""; CH.dq = ""; CH.items = []; CH.status = "idle"; CH.shown = 40;
   function saveCH() { lsSet("evo.church", { trad: CH.trad, kat: CH.kat, prot: CH.prot, rad: CH.rad, place: CH.place }); }
@@ -2265,4 +2265,5 @@ kandil:'<path d="M12 21.5V9M8 21.5h8M12 9c-1.3 0-2.2-1-2.2-2.3C9.8 5 12 2.5 12 2
   applySettings();
   route();
   renderAkun();
+  document.documentElement.classList.add("ready");
 })();
