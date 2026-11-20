@@ -6,8 +6,8 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 // Teks ayat selalu diambil dari sumber resmi di server, bukan dari klien.
 // Isi cerita tidak disimpan; hanya hitungan kredit yang dicatat (sama seperti function `cari`).
 
-const ORIGIN_RE = /^https:\/\/([a-z0-9]+-)?evobible\.evolution-official-id\.workers\.dev$|^https:\/\/evobible[a-z0-9-]*\.pages\.dev$|^https:\/\/evolutionofficial\.github\.io$|^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
-const DEFAULT_ORIGIN = "https://evobible.evolution-official-id.workers.dev";
+const ORIGIN_RE = /^https:\/\/([a-z0-9]+-)?evobible\.evolution-official-id\.workers\.dev$|^https:\/\/(www\.)?evobible\.my\.id$|^https:\/\/evobible[a-z0-9-]*\.pages\.dev$|^https:\/\/evolutionofficial\.github\.io$|^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+const DEFAULT_ORIGIN = "https://evobible.my.id";
 const BIBLE_URL = Deno.env.get("BIBLE_URL") ?? "https://raw.githubusercontent.com/evolutionofficial/evobible/main/data.js";
 const MODEL = Deno.env.get("GEMINI_DOA_MODEL") ?? Deno.env.get("GEMINI_MODEL") ?? "gemini-flash-lite-latest";
 const KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
