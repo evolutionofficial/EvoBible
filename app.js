@@ -565,8 +565,8 @@ var ORN = {
   $("btnSet2").onclick = function () { show("shSet"); };
 
   /* ---------- routing ---------- */
-  var VIEWS = { home: "vHome", search: "vSearch", read: "vRead", saved: "vSaved", church: "vChurch", more: "vMore", hymn: "vHymn", kisah: "vKisah", about: "vAbout" };
-  var NAMES = { home: "beranda", search: "cari", kata: "kata", read: "baca", saved: "tersimpan", church: "gereja", more: "lainnya", hymn: "nyanyian", kisah: "kisah", about: "tentang" };
+  var VIEWS = { home: "vHome", search: "vSearch", read: "vRead", saved: "vSaved", church: "vChurch", more: "vMore", hymn: "vHymn", kisah: "vKisah", about: "vAbout", ibadah: "vIbadah" };
+  var NAMES = { home: "beranda", search: "cari", kata: "kata", read: "baca", saved: "tersimpan", church: "gereja", more: "lainnya", hymn: "nyanyian", kisah: "kisah", about: "tentang", ibadah: "ibadah" };
   function go(v) { var h = NAMES[v]; if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
   function openRef(b, c, v, v2) { var h = BOOKS[b].a + "-" + c + (v ? "-" + v + (v2 && v2 >= v ? "-" + v2 : "") : ""); if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
   function showView(v, tabV) {
@@ -583,7 +583,9 @@ var ORN = {
     if (m) {
       for (var i = 0; i < BOOKS.length; i++) if (BOOKS[i].a === m[1]) {
         var c = Math.min(Math.max(1, +m[2]), BOOKS[i].ch.length), v = m[3] ? Math.min(+m[3], BOOKS[i].ch[c - 1].v.length) : 0;
-        showView("read"); renderChapter(i, c, v, m[4] ? Math.min(+m[4], BOOKS[i].ch[c - 1].v.length) : 0); return;
+        var v2 = m[4] ? Math.min(+m[4], BOOKS[i].ch[c - 1].v.length) : 0;
+        if (window.EvoIbadah) EvoIbadah.onRef(i, c, v, v2);
+        showView("read"); renderChapter(i, c, v, v2); return;
       }
     }
     if (h === "cari") { setSearchTab("tema"); showView("search"); renderSearch(); window.scrollTo(0, 0); return; }
@@ -591,6 +593,7 @@ var ORN = {
     if (h === "gereja" && FEATURE_CHURCH) { showView("church"); renderChurch(); window.scrollTo(0, 0); return; }
     if (h === "tersimpan" || h === "sorotan") { showView("saved", "more"); renderSaved(); window.scrollTo(0, 0); return; }
     if (h === "kisah" || h.indexOf("kisah/") === 0) { var kp = h.split("/"); showView("kisah", "more"); renderKisah(kp[1] || "", kp[2] || ""); return; }
+    if (h === "ibadah" || h.indexOf("ibadah/") === 0) { showView("ibadah", "more"); if (window.EvoIbadah) EvoIbadah.render(h.split("/")[1] || ""); window.scrollTo(0, 0); return; }
     if (h === "tentang") { showView("about", "more"); window.scrollTo(0, 0); return; }
     if (h === "lainnya") { showView("more"); renderMore(); window.scrollTo(0, 0); return; }
     if (h === "nyanyian" || h.indexOf("nyanyian/") === 0) { var hp = h.split("/"); showView("hymn", "more"); renderHymn(hp[1] || "", hp[2] || ""); return; }
@@ -989,6 +992,7 @@ var ORN = {
   /* ---------- Lainnya ---------- */
   function navHash(h) { if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
   var MUSIC_I = '<svg class="ico" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>';
+  var IB_I = '<svg class="ico" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg>';
   var MARK_I = '<svg class="ico" viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>';
   var INFO_I = '<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg>';
   $("abBack").onclick = function () { navHash("lainnya"); };
@@ -1009,6 +1013,7 @@ var ORN = {
     var rows = [
       ["nyanyian", MUSIC_I, "Nyanyian", (kat ? "Madah Bakti dan Puji Syukur" : "Kidung Jemaat, Pelengkap Kidung Jemaat, dan Nyanyikanlah Kidung Baru") + ", serta himne klasik berbahasa Inggris"],
       ["kisah", KS_I, "Kisah", kat ? "Orang kudus sepanjang tahun, perumpamaan Yesus, dan tokoh Alkitab" : "Perumpamaan Yesus dan tokoh Alkitab"],
+      ["ibadah", IB_I, "Catatan Ibadah", "Rekam khotbah, salin ke tulisan, dan ringkasan otomatis"],
       ["tersimpan", MARK_I, "Tersimpan", "Ayat tersimpan, sorotan, dan Jurnal Doa"],
       ["@set", GEAR_I, "Pengaturan", "Ukuran huruf, tema warna, bahasa, dan kalender gereja"],
       ["tentang", INFO_I, "Tentang & Kredit", "Lisensi Alkitab, layanan, dan sumber konten"]
@@ -2178,7 +2183,7 @@ kandil:'<path d="M12 21.5V9M8 21.5h8M12 9c-1.3 0-2.2-1-2.2-2.3C9.8 5 12 2.5 12 2
       if (tr === "katolik" || tr === "protestan") { if (settings.cal !== tr) { settings.cal = tr; lsSet("evo.set", settings); syncSeasonUI(); refreshSeason(); } }
       else askTradisi();
       return Promise.all(jobs);
-    }).then(function () { syncing = false; renderAkun(); markChapter(); if (S.view === "saved") renderSaved(); }, function () { syncing = false; renderAkun(); toast("Sinkron akun belum berhasil. Akan dicoba lagi saat aplikasi dibuka."); });
+    }).then(function () { syncing = false; renderAkun(); markChapter(); if (S.view === "saved") renderSaved(); if (window.EvoIbadah) EvoIbadah.sync(); }, function () { syncing = false; renderAkun(); toast("Sinkron akun belum berhasil. Akan dicoba lagi saat aplikasi dibuka."); });
   }
   if (sb) {
     sb.auth.onAuthStateChange(function (ev, session) {
@@ -2190,6 +2195,8 @@ kandil:'<path d="M12 21.5V9M8 21.5h8M12 9c-1.3 0-2.2-1-2.2-2.3C9.8 5 12 2.5 12 2
     window.addEventListener("online", function () { if (user) syncAll(); });
     fetch(SB_URL + "/auth/v1/settings", { headers: { apikey: SB_KEY } }).then(function (r) { return r.json(); }).then(function (j) { googleOn = !!(j && j.external && j.external.google); renderAkun(); if (S.view === "saved") renderSaved(); }, noop);
   }
+
+  if (window.EvoIbadah) EvoIbadah.init({ $: $, esc: esc, toast: toast, go: navHash, openRef: openRef, uuid: uuid, devId: devId, BOOKS: BOOKS, lang: rmLang, sb: function () { return sb; }, user: function () { return user; } });
 
   /* ---------- tombol Back (Android / aplikasi terpasang) dan swipe-back ----------
      Pola sama dengan Evo Lirik: Back menutup panel, lalu naik ke Beranda, dan di Beranda bertanya "Keluar?".

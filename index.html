@@ -131,6 +131,12 @@
   <main class="inner sbody" id="moreBody"></main>
 </section>
 
+<!-- CATATAN IBADAH -->
+<section id="vIbadah" class="view" hidden>
+  <header class="bar"><div class="inner sv-head hy-head" style="padding-top:6px"><button class="ib" id="ibBack" type="button" aria-label="Kembali"><svg class="ico" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button><h1 id="ibTitle">Catatan Ibadah</h1></div></header>
+  <main class="inner sbody" id="ibBody"></main>
+</section>
+
 <!-- TENTANG -->
 <section id="vAbout" class="view" hidden>
   <header class="bar"><div class="inner sv-head hy-head" style="padding-top:6px"><button class="ib" id="abBack" type="button" aria-label="Kembali"><svg class="ico" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button><h1>Tentang &amp; Kredit</h1></div></header>
@@ -142,6 +148,8 @@
     </div>
     <h3>Renungan</h3>
     <div data-noi18n><p>Saat Anda menekan Renungan, cerita Anda dikirim ke server kami dan ke layanan Google Gemini untuk dipilihkan ayat serta disusunkan renungan dan doa. Kami tidak menyimpan cerita itu. Jangan menulis nama atau data pribadi. Jika Anda bercerita lewat tombol mikrofon, suara Anda diubah menjadi tulisan oleh layanan pengenal suara bawaan HP atau browser (misalnya Google atau Apple). Jurnal Doa hanya tersimpan di HP ini.</p></div>
+    <h3>Catatan Ibadah</h3>
+    <div data-noi18n><p>Saat Anda merekam khotbah, audio disimpan sementara di HP ini. Setelah sesi diakhiri, audio dikirim ke server kami dan ke layanan Google Gemini untuk disalin ke tulisan dan diringkas, lalu dihapus dari HP setelah berhasil. Kami tidak menyimpan audionya. Transkrip dan ringkasan tersimpan di HP ini dan, jika Anda masuk dengan Google, di akun Anda. Mintalah izin gereja sebelum merekam, dan jangan merekam percakapan pribadi.</p></div>
     <h3>Tanpa internet</h3>
     <div data-noi18n><p>Setelah dibuka sekali dengan internet, seluruh Alkitab tersimpan di HP dan bisa dibaca kapan saja. Tombol Renungan memakai internet. Jika internet putus atau penuh, aplikasi tetap menampilkan ayat yang dipilih dari HP Anda.</p><p>Ayat tersimpan, sorotan, Jurnal Doa, dan pengaturan hanya tersimpan di HP ini.</p></div>
     <h3>Kisah</h3>
@@ -163,6 +171,8 @@
   <main class="inner sbody" id="hyBody"></main>
 </section>
 
+<div id="ibPill" class="ibpill" hidden><button type="button" class="ibp-main" aria-label="Sedang merekam, buka Catatan Ibadah"><i class="ibdot"></i><span id="ibpT">0:00</span></button><button type="button" class="ibp-blk" data-ibp="black" aria-label="Layar hitam"><svg class="ico" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button></div>
+<div id="ibBlack" class="ibblack" hidden><div id="ibbT" class="ibbt"></div></div>
 <nav class="tabbar" aria-label="Menu utama"><div class="inner" id="tabs">
   <button class="tab" data-v="home"><svg class="ico" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>Beranda</button>
   <button class="tab" data-v="read"><svg class="ico" viewBox="0 0 24 24"><path d="M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2z"/><path d="M12 6v14"/></svg>Baca</button>
@@ -294,6 +304,7 @@
 <script src="engine-core.js"></script>
 <script src="vendor/supabase.js"></script>
 <script src="gambar.js"></script>
+<script src="ibadah.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

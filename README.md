@@ -12,6 +12,7 @@ EvoBible adalah Alkitab Indonesia (Alkitab Yang Terbuka, AYT) yang bisa dicari a
 - `index.html`: halaman utama
 - `styles.css`: tampilan
 - `app.js`: logika aplikasi dan pembaca
+- `ibadah.js`: Catatan Ibadah (rekam khotbah, layar hitam, antrean salin, ringkasan)
 - `engine-core.js`: mesin pencarian dasar
 - `engine.js`: kamus tema (50 tema)
 - `data.js`: teks Alkitab AYT
@@ -27,11 +28,16 @@ Situs ditayangkan lewat GitHub Pages dari branch `main`, dengan folder root seba
 ## Backend
 
 - Project Supabase: **evobible** (ref `ddydxagduxhzzsrlwgkd`)
-- Fungsi Edge: **cari**, **doa**, **suara** (suara → teks lewat Gemini: rujukan ayat untuk cari ayat, dan mode `cerita` untuk mikrofon Renungan di iPhone/Safari; Android/Chrome memakai pengenal suara bawaan browser)
+- Fungsi Edge: **cari**, **doa**, **ibadah** (Catatan Ibadah: audio → transkrip per potongan 5 menit, lalu ringkasan, lewat Gemini), **suara** (suara → teks lewat Gemini: rujukan ayat untuk cari ayat, dan mode `cerita` untuk mikrofon Renungan di iPhone/Safari; Android/Chrome memakai pengenal suara bawaan browser)
 - Tabel **pemakaian**: menyimpan hitungan pemakaian harian untuk batas kuota.
+- Tabel **ibadah**: Catatan Ibadah milik pengguna yang masuk dengan Google (judul, ringkasan, transkrip; audio tidak pernah disimpan). Tanpa login, catatan hanya ada di HP (IndexedDB).
 - Rahasia `GEMINI_API_KEY` diisi di Dashboard Supabase > Edge Functions > Secrets.
 - Opsional: `GEMINI_MODEL`, `PER_DEVICE_DAILY` (12), `GLOBAL_DAILY` (350).
 - Workflow `.github/workflows/keepalive.yml` memanggil fungsi `cari` tiap 3 hari agar project tidak dijeda karena tidak aktif.
+
+## Catatan Ibadah
+
+Menu Lainnya › Catatan Ibadah. Mulai sesi merekam audio (potongan 5 menit disimpan di IndexedDB selagi merekam), layar bisa dihitamkan penuh (Wake Lock menjaga layar tetap menyala; di iPhone aplikasi perlu dipasang ke Layar Utama). Saat sesi diakhiri, tiap potongan disalin ke teks lewat function `ibadah`, lalu diringkas; audio dihapus setelah berhasil. Ayat yang dibuka selama sesi dicatat beserta menitnya. Tombol Impor rekaman menerima berkas audio hingga ±14 MB (mis. dari Voice Memos). Kalau offline, sesi menunggu dan disalin otomatis saat online.
 
 ## Memperbarui
 
