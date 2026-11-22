@@ -1197,7 +1197,7 @@ body.autoscroll main.inner { padding-bottom: 96px; }
 .ssub { margin: 0 0 20px; color: var(--muted); font-size: 16px; line-height: 1.5; max-width: 28rem; text-wrap: pretty; }
 .sbox { position: relative; }
 .sta { position: relative; isolation: isolate; border-radius: 24px; --l1: var(--pb); --l2: var(--s2, #5fd0ff); --l3: #ffffff; }
-.sta textarea { display: block; width: 100%; min-height: 168px; resize: none; padding: 18px 46px 18px 20px; border: 0; border-radius: 24px; outline: 0;
+.sta textarea { box-sizing: border-box; display: block; width: 100%; height: 140px; min-height: 140px; resize: none; padding: 18px 46px 18px 20px; border: 0; border-radius: 24px; outline: 0;
   font: inherit; font-family: var(--read); font-size: 19px; line-height: 1.55; color: var(--fg);
   background-color: var(--glass-hi); background-image: var(--glass-sheen); box-shadow: var(--glass-sh);
   -webkit-backdrop-filter: blur(22px) saturate(160%); backdrop-filter: blur(22px) saturate(160%); }
@@ -1621,7 +1621,7 @@ body.tbhide .player, body.tbhide .asbar, body.tbhide .selbar, body.tbhide .pvbar
 .ctitle { margin: 0 0 6px; font-family: var(--read); font-weight: 600; font-size: 2rem; line-height: 1.15; text-align: center; }
 .cwrap .ssub { text-align: center; }
 .cwrap .sbox { margin-top: 14px; }
-.cwrap .sta textarea { min-height: 96px; }
+.cwrap .sta textarea { min-height: 140px; }
 .ccard .cj { display: block; margin: 2px 0 4px; font-size: 16px; }
 .ccard .cs { margin: 0 0 6px; color: var(--fg); font-size: 14.5px; line-height: 1.5; }
 .ccard .rref { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
