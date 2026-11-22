@@ -1612,8 +1612,10 @@ body.tbhide .player, body.tbhide .asbar, body.tbhide .selbar, body.tbhide .pvbar
 /* ---- Cari Kisah ---- */
 .cwrap { padding-top: 14px; padding-bottom: 24px; }
 .cseg { margin: 0 auto 14px; display: flex; width: fit-content; }
-#sSeg { display: none; margin-top: 22px; }
-#vSearch.kata:not(.has) #sSeg { display: flex; }
+#sSeg { display: none; }
+#vSearch.kata #sSeg { display: flex; }
+/* Tab Cari (kata) dan Cari Kisah: sakelar di posisi yang sama, selalu di paling atas */
+#vSearch.kata .shero { justify-content: flex-start; min-height: 0; padding-top: 14px; }
 .ctitle { margin: 4px 0 6px; font-family: var(--read); font-weight: 600; font-size: 2rem; line-height: 1.15; text-align: center; }
 .cwrap .ssub { text-align: center; }
 .cwrap .sbox { margin-top: 14px; }
