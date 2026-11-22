@@ -1646,3 +1646,4 @@ h1, h2, h3, h4, .tab, .btn, .chip, .seg button, .tabs2 button, .morerow b, .cat 
 .verse, .vt, .vr, .rtext, .ccard .cs, .ccard .alasan { text-transform: none; }
 button:not(.schip):not(.ccard):not(.rcard):not([data-q]) { text-transform: capitalize; }
 button small, button p, .kcard .kr { text-transform: none; }
+.cont small { text-transform: capitalize; }
