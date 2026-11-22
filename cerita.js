@@ -154,7 +154,7 @@
   function build() {
     V.innerHTML = '<div class="inner cwrap"><div class="cseg seg" role="group" aria-label="Jenis pencarian"><button type="button" data-g="kata" aria-pressed="false">Kata persis</button><button type="button" data-g="cerita" aria-pressed="true">Kisah Alkitab</button></div>' +
       '<h1 class="ctitle">Cari Kisah</h1><p class="ssub">Ingat ceritanya tapi lupa ayatnya? Tulis saja dengan kata-katamu sendiri.</p>' +
-      '<form class="sbox" id="cForm" role="search"><div class="sta"><input id="cq" type="search" maxlength="200" autocomplete="off" enterkeyhint="search" placeholder="mis. Yesus menampakkan diri di Perjanjian Lama" aria-label="Cari kisah di Alkitab"></div><button type="submit" class="sgo" aria-label="Cari"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button></form>' +
+      '<form class="sbox" id="cForm" role="search"><div class="sta"><textarea id="cq" rows="3" maxlength="200" autocomplete="off" enterkeyhint="search" placeholder="mis. Yesus menampakkan diri di Perjanjian Lama" aria-label="Cari kisah di Alkitab"></textarea></div><button type="submit" class="sgo" aria-label="Cari"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button></form>' +
       '<div class="schips" id="cChips">' + SUG.map(function (s) { return '<button type="button" class="schip" data-q="' + ctx.esc(s) + '">' + ctx.esc(s) + "</button>"; }).join("") + '</div><div id="cBody"></div></div>';
     V.addEventListener("click", function (e) {
       var t;
@@ -165,6 +165,7 @@
     });
     V.addEventListener("keydown", function (e) { if ((e.key === "Enter" || e.key === " ") && e.target.classList && e.target.classList.contains("ccard")) { e.preventDefault(); e.target.click(); } });
     V.querySelector("#cForm").onsubmit = function (e) { e.preventDefault(); var q = V.querySelector("#cq").value; V.querySelector("#cq").blur(); run(q); };
+    V.querySelector("#cq").addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); V.querySelector("#cForm").requestSubmit(); } });
     V.querySelector("#cq").addEventListener("input", function () { if (!this.value.trim() && ST.q) run(""); });
   }
   window.EvoCerita = {
