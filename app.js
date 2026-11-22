@@ -737,6 +737,104 @@ var ORN = {
   $("q").addEventListener("input", function () { S.q = $("q").value; S.ai = null; S.pendingAI = false; syncMode(); if (!S.q.trim() && S.sub) { S.sub = false; S.theme = null; renderSearch(); } });
   $("sForm").onsubmit = function (e) { e.preventDefault(); S.q = $("q").value; if (!S.q.trim()) return; $("q").blur(); S.sub = true; S.theme = null; window.scrollTo(0, 0); S.ai = null; S.pr = null; S.pendingAI = S.mode === "tema"; renderSearch(); };
   $("qclr").onclick = function () { $("q").value = ""; S.q = ""; S.sub = false; S.theme = null; syncMode(); renderSearch(); };
+  /* Mikrofon Renungan (tab salib): cerita diucapkan lalu menjadi tulisan di kotak Renungan.
+     - Android/Chrome: pengenal suara bawaan browser (gratis, teks muncul langsung).
+     - iPhone/iPad/Safari: pengenal bawaan tidak dipakai (mikrofon tidak dilepas), jadi direkam sendiri (WAV 16 kHz, maks 60 detik)
+       lalu dikenali di server (function `suara`, mode "cerita"). Mikrofon dilepas begitu rekaman selesai. */
+  var RM_SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var RM_APPLE = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) || (/AppleWebKit/.test(navigator.userAgent) && !/Chrome|CriOS|Chromium|Edg|Android/.test(navigator.userAgent));
+  var RM_REC = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && (window.AudioContext || window.webkitAudioContext));
+  var RM_WAY = RM_SR && !RM_APPLE ? "web" : RM_REC ? "rec" : "";
+  var RMIC = { st: "idle", r: null, want: false, base: "", stream: null, ctx: null, src: null, node: null, buf: [], rate: 48000, t0: 0, talk: 0, quiet: 0, timer: 0 };
+  function rmLang() { var cl = ""; try { cl = localStorage.getItem("evo.clang") || ""; } catch (e) {} return cl === "en" ? "en" : "id"; }
+  function rmUi(st) {
+    RMIC.st = st; var b = $("qmic"), on = st === "rec" || st === "web";
+    b.classList.toggle("on", on); b.classList.toggle("busy", st === "sending"); b.disabled = st === "sending";
+    b.setAttribute("aria-pressed", String(on)); b.setAttribute("aria-label", on ? "Berhenti mendengarkan" : st === "sending" ? "Mengenali suara" : "Bicara");
+  }
+  function rmBase() { var v = $("q").value.replace(/\s+$/, ""); RMIC.base = v ? v + " " : ""; }
+  function rmPut(t) { $("q").value = (RMIC.base + t).replace(/\s+/g, " ").replace(/^ /, "").slice(0, 500); $("q").dispatchEvent(new Event("input")); }
+  // jalur 1: pengenal suara bawaan browser. Di Android mode continuous suka mengulang teks, jadi dipakai sesi pendek yang disambung otomatis.
+  function rmWeb() {
+    var r; try { r = new RM_SR(); } catch (e) { toast("Mikrofon tidak tersedia di HP ini"); return; }
+    r.lang = rmLang() === "en" ? "en-US" : "id-ID"; r.continuous = !/Android/i.test(navigator.userAgent); r.interimResults = true; r.maxAlternatives = 1;
+    rmBase(); RMIC.want = true;
+    r.onresult = function (e) { var t = ""; for (var i = 0; i < e.results.length; i++) t += e.results[i][0].transcript; rmPut(t); };
+    r.onerror = function (e) {
+      var c = e && e.error;
+      if (c === "not-allowed" || c === "service-not-allowed") toast("Izin mikrofon belum diberikan");
+      else if (c === "network") toast("Mikrofon perlu internet");
+      else if (c === "audio-capture") toast("Mikrofon tidak ditemukan");
+      RMIC.want = false;
+    };
+    r.onend = function () { if (RMIC.r !== r) return; RMIC.r = null; if (RMIC.want && S.view === "search") rmWeb(); else rmUi("idle"); };
+    RMIC.r = r;
+    try { r.start(); rmUi("web"); } catch (e) { RMIC.r = null; RMIC.want = false; rmUi("idle"); }
+  }
+  // jalur 2: rekam sendiri lalu dikenali server
+  function rmRelease() {
+    clearInterval(RMIC.timer);
+    try { RMIC.node && RMIC.node.disconnect(); } catch (e) {}
+    try { RMIC.src && RMIC.src.disconnect(); } catch (e) {}
+    try { RMIC.stream && RMIC.stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+    try { RMIC.ctx && RMIC.ctx.close(); } catch (e) {}
+    RMIC.node = RMIC.src = RMIC.stream = RMIC.ctx = null;
+  }
+  function rmFinish(spoke) {
+    var chunks = RMIC.buf, rate = RMIC.rate; RMIC.buf = []; rmRelease();
+    if (!spoke) { rmUi("idle"); toast("Tidak terdengar suara"); return; }
+    var wav; try { wav = micWav(chunks, rate); } catch (e) { rmUi("idle"); toast("Suara belum bisa dikenali"); return; }
+    rmUi("sending"); rmBase();
+    fetch(API_SUARA, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ a: wav, m: "audio/wav", d: devId, k: "cerita", lang: rmLang() }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        rmUi("idle");
+        if (!j || !j.ok) { toast(j && j.sebab === "batas" ? "Batas suara hari ini sudah habis" : "Suara belum bisa dikenali"); return; }
+        if (!String(j.teks || "").trim()) { toast("Tidak terdengar suara"); return; }
+        rmPut(String(j.teks).trim());
+      })
+      .catch(function () { rmUi("idle"); toast("Mikrofon perlu internet"); });
+  }
+  function rmRec() {
+    if (T.on) stopTTS();
+    RMIC.buf = []; RMIC.talk = 0; RMIC.quiet = 0; rmUi("rec");
+    var AC = window.AudioContext || window.webkitAudioContext, ctx = new AC(); RMIC.ctx = ctx;
+    try { ctx.resume(); } catch (e) {}
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }).then(function (stream) {
+      if (RMIC.st !== "rec" || RMIC.ctx !== ctx) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+      RMIC.stream = stream; RMIC.rate = ctx.sampleRate; RMIC.t0 = Date.now();
+      var src = ctx.createMediaStreamSource(stream), node = ctx.createScriptProcessor(4096, 1, 1); RMIC.src = src; RMIC.node = node;
+      node.onaudioprocess = function (e) {
+        if (RMIC.st !== "rec") return;
+        var d = e.inputBuffer.getChannelData(0); RMIC.buf.push(new Float32Array(d));
+        var sum = 0; for (var i = 0; i < d.length; i += 4) sum += d[i] * d[i]; var rms = Math.sqrt(sum / (d.length / 4));
+        if (rms > 0.025) { RMIC.talk++; RMIC.quiet = 0; } else if (RMIC.talk) RMIC.quiet += d.length / RMIC.rate;
+      };
+      src.connect(node); node.connect(ctx.destination);
+      RMIC.timer = setInterval(function () {
+        if (RMIC.st !== "rec") return;
+        var el = (Date.now() - RMIC.t0) / 1000;
+        if (RMIC.talk >= 3 && RMIC.quiet > 3) rmFinish(true);        // selesai bercerita (jeda 3 detik)
+        else if (el > 60) rmFinish(true);                         // batas 60 detik
+        else if (!RMIC.talk && el > 8) rmFinish(false);             // diam saja
+      }, 200);
+    }).catch(function (e) {
+      rmRelease(); rmUi("idle");
+      toast(e && (e.name === "NotAllowedError" || e.name === "SecurityError") ? "Izin mikrofon belum diberikan" : "Mikrofon tidak bisa dipakai");
+    });
+  }
+  function rmStop(send) {
+    if (RMIC.st === "web") { RMIC.want = false; if (RMIC.r) { try { RMIC.r.stop(); } catch (e) {} } else rmUi("idle"); }
+    else if (RMIC.st === "rec") { if (send) rmFinish(RMIC.talk > 0); else { RMIC.buf = []; rmRelease(); rmUi("idle"); } }
+  }
+  if (RM_WAY) {
+    $("qmic").hidden = false;
+    $("qmic").onclick = function () { if (RMIC.st === "idle") { if (RM_WAY === "web") rmWeb(); else rmRec(); } else rmStop(true); };
+    $("sForm").addEventListener("submit", function () { rmStop(false); });
+    $("qclr").addEventListener("click", function () { rmStop(false); });
+    window.addEventListener("hashchange", function () { rmStop(false); });
+    document.addEventListener("visibilitychange", function () { if (document.hidden) rmStop(false); });
+  }
 
   function parseRef(q) {
     var m = /^\s*([1-3]?\s*[a-zA-Z][a-zA-Z.\s-]*?)\s*(\d+)(?:\s*[:.\s]\s*(\d+))?\s*$/.exec(q);

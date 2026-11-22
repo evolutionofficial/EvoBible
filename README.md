@@ -27,7 +27,7 @@ Situs ditayangkan lewat GitHub Pages dari branch `main`, dengan folder root seba
 ## Backend
 
 - Project Supabase: **evobible** (ref `ddydxagduxhzzsrlwgkd`)
-- Fungsi Edge: **cari**
+- Fungsi Edge: **cari**, **doa**, **suara** (suara → teks lewat Gemini: rujukan ayat untuk cari ayat, dan mode `cerita` untuk mikrofon Renungan di iPhone/Safari; Android/Chrome memakai pengenal suara bawaan browser)
 - Tabel **pemakaian**: menyimpan hitungan pemakaian harian untuk batas kuota.
 - Rahasia `GEMINI_API_KEY` diisi di Dashboard Supabase > Edge Functions > Secrets.
 - Opsional: `GEMINI_MODEL`, `PER_DEVICE_DAILY` (12), `GLOBAL_DAILY` (350).
