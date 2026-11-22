@@ -1617,7 +1617,7 @@ body.tbhide .player, body.tbhide .asbar, body.tbhide .selbar, body.tbhide .pvbar
 .ctitle { margin: 4px 0 6px; font-family: var(--read); font-weight: 600; font-size: 2rem; line-height: 1.15; text-align: center; }
 .cwrap .ssub { text-align: center; }
 .cwrap .sbox { margin-top: 14px; }
-.cwrap .sta input { width: 100%; padding: 13px 14px; font-size: 16px; background: transparent; border: 0; outline: 0; color: var(--fg); }
+.cwrap .sta textarea { min-height: 96px; }
 .ccard .cj { display: block; margin: 2px 0 4px; font-size: 16px; }
 .ccard .cs { margin: 0 0 6px; color: var(--fg); font-size: 14.5px; line-height: 1.5; }
 .ccard .rref { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
