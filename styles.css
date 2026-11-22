@@ -1600,3 +1600,35 @@ body.tbhide .player, body.tbhide .asbar, body.tbhide .selbar, body.tbhide .pvbar
 .ibblack[hidden] { display: none; }
 .ibbt { color: #2b2b2b; font-size: 15px; font-variant-numeric: tabular-nums; pointer-events: none; }
 .ibpill[hidden] { display: none; }
+
+/* ---- Beranda: fitur unik ---- */
+.hfeat { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.hf { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 14px 14px 12px; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; min-width: 0; }
+.hf:hover { border-color: var(--accent); }
+.hf .hfi { display: grid; place-items: center; width: 34px; height: 34px; margin-bottom: 4px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.hf b { font-size: 15.5px; font-weight: 700; }
+.hf small { color: var(--muted); font-size: 12.5px; line-height: 1.35; }
+.hf .hfg { margin-top: 8px; font-size: 13px; font-weight: 700; color: var(--accent); }
+/* ---- Cari Kisah ---- */
+.cwrap { padding-top: 14px; padding-bottom: 24px; }
+.cseg { margin: 0 auto 14px; display: flex; width: fit-content; }
+#sSeg { display: none; margin-top: 22px; }
+#vSearch.kata:not(.has) #sSeg { display: flex; }
+.ctitle { margin: 4px 0 6px; font-family: var(--read); font-weight: 600; font-size: 2rem; line-height: 1.15; text-align: center; }
+.cwrap .ssub { text-align: center; }
+.cwrap .sbox { margin-top: 14px; }
+.cwrap .sta input { width: 100%; padding: 13px 14px; font-size: 16px; background: transparent; border: 0; outline: 0; color: var(--fg); }
+.ccard .cj { display: block; margin: 2px 0 4px; font-size: 16px; }
+.ccard .cs { margin: 0 0 6px; color: var(--fg); font-size: 14.5px; line-height: 1.5; }
+.ccard .rref { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ctaf, .csug { padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
+.ctaf { background: color-mix(in srgb, #c98a1b 18%, transparent); color: #9a6a0a; }
+.csug { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+[data-theme="dark"] .ctaf { color: #e6b45a; }
+.cchips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.cchip { padding: 2px 9px; border-radius: 999px; font-size: 12px; color: var(--muted); border: 1px solid var(--line); }
+.cnote { margin: 10px 2px; color: var(--muted); font-size: 13.5px; line-height: 1.5; }
+.cnote.cai { color: var(--accent); }
+.cnote.cfoot { font-size: 12.5px; }
+.cmore { width: 100%; margin-top: 4px; }
+#vCerita.has .ctitle, #vCerita.has .ssub, #vCerita.has .schips { display: none; }

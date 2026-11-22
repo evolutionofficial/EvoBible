@@ -565,8 +565,8 @@ var ORN = {
   $("btnSet2").onclick = function () { show("shSet"); };
 
   /* ---------- routing ---------- */
-  var VIEWS = { home: "vHome", search: "vSearch", read: "vRead", saved: "vSaved", church: "vChurch", more: "vMore", hymn: "vHymn", kisah: "vKisah", about: "vAbout", ibadah: "vIbadah" };
-  var NAMES = { home: "beranda", search: "cari", kata: "kata", read: "baca", saved: "tersimpan", church: "gereja", more: "lainnya", hymn: "nyanyian", kisah: "kisah", about: "tentang", ibadah: "ibadah" };
+  var VIEWS = { home: "vHome", search: "vSearch", read: "vRead", saved: "vSaved", church: "vChurch", more: "vMore", hymn: "vHymn", kisah: "vKisah", about: "vAbout", ibadah: "vIbadah", cerita: "vCerita" };
+  var NAMES = { home: "beranda", search: "cari", kata: "kata", read: "baca", saved: "tersimpan", church: "gereja", more: "lainnya", hymn: "nyanyian", kisah: "kisah", about: "tentang", ibadah: "ibadah", cerita: "cerita" };
   function go(v) { var h = NAMES[v]; if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
   function openRef(b, c, v, v2) { var h = BOOKS[b].a + "-" + c + (v ? "-" + v + (v2 && v2 >= v ? "-" + v2 : "") : ""); if (location.hash.slice(1) === h) route(); else if (NAV_REPLACE) { curHash = "#" + h; history.replaceState(history.state, "", curHash); route(); } else location.hash = h; }
   function showView(v, tabV) {
@@ -594,6 +594,7 @@ var ORN = {
     if (h === "tersimpan" || h === "sorotan") { showView("saved", "more"); renderSaved(); window.scrollTo(0, 0); return; }
     if (h === "kisah" || h.indexOf("kisah/") === 0) { var kp = h.split("/"); showView("kisah", "more"); renderKisah(kp[1] || "", kp[2] || ""); return; }
     if (h === "ibadah" || h.indexOf("ibadah/") === 0) { showView("ibadah", "more"); if (window.EvoIbadah) EvoIbadah.render(h.split("/")[1] || ""); window.scrollTo(0, 0); return; }
+    if (h === "cerita" || h.indexOf("cerita/") === 0) { showView("cerita", "kata"); if (window.EvoCerita) EvoCerita.render(h.indexOf("/") > 0 ? h.slice(h.indexOf("/") + 1) : null); window.scrollTo(0, 0); return; }
     if (h === "tentang") { showView("about", "more"); window.scrollTo(0, 0); return; }
     if (h === "lainnya") { showView("more"); renderMore(); window.scrollTo(0, 0); return; }
     if (h === "nyanyian" || h.indexOf("nyanyian/") === 0) { var hp = h.split("/"); showView("hymn", "more"); renderHymn(hp[1] || "", hp[2] || ""); return; }
@@ -693,6 +694,7 @@ var ORN = {
     if ((t = e.target.closest("[data-mkimg]"))) { var vb = $("votd"), vt = vb.querySelector(".vt"), vr = vb.querySelector(".vr"); if (window.EvoGambar) EvoGambar.open({ text: vt ? vt.textContent : "", ref: vr ? vr.textContent : "", toast: toast }); return; }
     if ((t = e.target.closest("[data-ses]"))) { var su = sesUsed(); if (su) { S.histOpen = t.dataset.ses === "hist"; startSearch(su.q); } return; }
     if ((t = e.target.closest("[data-kat]"))) { var kg = katToday(); if (!kg) return; if (t.dataset.kat === "copy") copyText(katText(kg, 0) + "\n\n" + kg.label + " (AYT)"); else openRef(kg.b, kg.c, kg.v1, kg.v2); return; }
+    if ((t = e.target.closest("[data-go]"))) { navHash(t.dataset.go); return; }
     if ((t = e.target.closest("[data-cat]"))) { openCat(+t.dataset.cat); return; }
     if ((t = e.target.closest("[data-tema]"))) { openTheme(t.dataset.tema); return; }
     if ((t = e.target.closest("[data-act]"))) { var id = +t.dataset.id; if (t.dataset.act === "copy") copyText(verseCopy(id)); else openRef(bOf[id], cOf[id], vOf[id]); return; }
@@ -727,6 +729,7 @@ var ORN = {
     var list = kata ? SG_KATA.map(function (k) { return [k, k]; }) : SG_TEMA;
     $("sChips").innerHTML = list.map(function (x) { return '<button type="button" class="schip" data-q="' + esc(x[1]) + '">' + esc(x[0]) + "</button>"; }).join("");
   }
+  $("sSeg").onclick = function (e) { var t = e.target.closest("[data-g]"); if (t && t.dataset.g === "cerita") navHash("cerita"); };
   $("sChips").onclick = function (e) {
     var t = e.target.closest("[data-q]"); if (!t) return;
     S.q = t.dataset.q; $("q").value = S.q; S.sub = true; S.theme = null; S.ai = null; S.pr = null; S.pendingAI = S.mode === "tema"; renderSearch(); window.scrollTo(0, 0);
@@ -2196,6 +2199,7 @@ kandil:'<path d="M12 21.5V9M8 21.5h8M12 9c-1.3 0-2.2-1-2.2-2.3C9.8 5 12 2.5 12 2
     fetch(SB_URL + "/auth/v1/settings", { headers: { apikey: SB_KEY } }).then(function (r) { return r.json(); }).then(function (j) { googleOn = !!(j && j.external && j.external.google); renderAkun(); if (S.view === "saved") renderSaved(); }, noop);
   }
 
+  if (window.EvoCerita) EvoCerita.init({ $: $, esc: esc, go: navHash, openRef: openRef, devId: devId, BOOKS: BOOKS, lang: rmLang, parseRef: parseRef });
   if (window.EvoIbadah) EvoIbadah.init({ $: $, esc: esc, toast: toast, go: navHash, openRef: openRef, uuid: uuid, devId: devId, BOOKS: BOOKS, lang: rmLang, sb: function () { return sb; }, user: function () { return user; } });
 
   /* ---------- tombol Back (Android / aplikasi terpasang) dan swipe-back ----------

@@ -12,6 +12,7 @@ EvoBible adalah Alkitab Indonesia (Alkitab Yang Terbuka, AYT) yang bisa dicari a
 - `index.html`: halaman utama
 - `styles.css`: tampilan
 - `app.js`: logika aplikasi dan pembaca
+- `cerita.js`: Cari Kisah (cari kisah/tokoh Alkitab dari deskripsi; katalog `cerita/pl.json` & `pb.json` dibangun dari `tools/cerita-src/*.txt` dengan `python3 tools/cerita-build.py`, yang memeriksa semua rujukan terhadap AYT)
 - `ibadah.js`: Catatan Ibadah (rekam khotbah, layar hitam, antrean salin, ringkasan)
 - `engine-core.js`: mesin pencarian dasar
 - `engine.js`: kamus tema (50 tema)
@@ -28,7 +29,7 @@ Situs ditayangkan lewat GitHub Pages dari branch `main`, dengan folder root seba
 ## Backend
 
 - Project Supabase: **evobible** (ref `ddydxagduxhzzsrlwgkd`)
-- Fungsi Edge: **cari**, **doa**, **ibadah** (Catatan Ibadah: audio → transkrip per potongan 5 menit, lalu ringkasan, lewat Gemini), **suara** (suara → teks lewat Gemini: rujukan ayat untuk cari ayat, dan mode `cerita` untuk mikrofon Renungan di iPhone/Safari; Android/Chrome memakai pengenal suara bawaan browser)
+- Fungsi Edge: **cari**, **doa**, **kisah** (Cari Kisah: menyusun ulang kandidat katalog dan menyarankan rujukan, lewat Gemini), **ibadah** (Catatan Ibadah: audio → transkrip per potongan 5 menit, lalu ringkasan, lewat Gemini), **suara** (suara → teks lewat Gemini: rujukan ayat untuk cari ayat, dan mode `cerita` untuk mikrofon Renungan di iPhone/Safari; Android/Chrome memakai pengenal suara bawaan browser)
 - Tabel **pemakaian**: menyimpan hitungan pemakaian harian untuk batas kuota.
 - Tabel **ibadah**: Catatan Ibadah milik pengguna yang masuk dengan Google (judul, ringkasan, transkrip; audio tidak pernah disimpan). Tanpa login, catatan hanya ada di HP (IndexedDB).
 - Rahasia `GEMINI_API_KEY` diisi di Dashboard Supabase > Edge Functions > Secrets.

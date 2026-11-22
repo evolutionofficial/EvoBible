@@ -35,6 +35,10 @@
     <article class="votd" id="votd" aria-label="Ayat hari ini"></article>
     <button class="kcard" id="kisahToday" type="button" hidden></button>
     <button class="cont big" id="cont"></button>
+    <div class="hfeat" id="hFeat">
+      <button class="hf" type="button" data-go="ibadah"><span class="hfi"><svg class="ico" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></span><b>Catatan Ibadah</b><small>Rekam khotbah, jadi catatan otomatis</small><span class="hfg">Mulai sesi</span></button>
+      <button class="hf" type="button" data-go="cerita"><span class="hfi"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8.5 11h5M11 8.5v5"/></svg></span><b>Cari Kisah</b><small>Ingat ceritanya, lupa ayatnya? Cari di sini</small><span class="hfg">Cari kisah</span></button>
+    </div>
     <div class="finder-wrap" id="finderHome"></div>
     <section class="feel" aria-labelledby="feelH">
       <h2 id="feelH">Bagaimana Harimu?</h2>
@@ -51,6 +55,9 @@
   </main>
 </section>
 
+<!-- CARI KISAH -->
+<section id="vCerita" class="view" hidden></section>
+
 <!-- CARI -->
 <section id="vSearch" class="view" hidden>
   <div class="inner shero" id="sHero">
@@ -65,6 +72,7 @@
       <button type="submit" class="sgo" id="sGo" aria-label="Renungan"><svg class="ico" viewBox="0 0 24 24"><path class="x-sh" d="M12 3.5v17M6.8 8.6h10.4" transform="translate(0 1.1)"/><path class="x-hi" d="M12 3.5v17M6.8 8.6h10.4" transform="translate(0 -.7)"/><path d="M12 3.5v17M6.8 8.6h10.4"/></svg></button>
     </form>
     <div class="schips" id="sChips"></div>
+    <div class="cseg seg" id="sSeg" role="group" aria-label="Jenis pencarian"><button type="button" data-g="kata" aria-pressed="true">Kata persis</button><button type="button" data-g="cerita" aria-pressed="false">Kisah Alkitab</button></div>
     <div hidden><div class="seg" id="mode"><button data-m="tema" aria-pressed="true">Rekomendasi</button><button data-m="kata" aria-pressed="false">Kata persis</button></div></div>
   </div>
   <main class="inner sbody" id="sBody"></main>
@@ -150,6 +158,8 @@
     <div data-noi18n><p>Saat Anda menekan Renungan, cerita Anda dikirim ke server kami dan ke layanan Google Gemini untuk dipilihkan ayat serta disusunkan renungan dan doa. Kami tidak menyimpan cerita itu. Jangan menulis nama atau data pribadi. Jika Anda bercerita lewat tombol mikrofon, suara Anda diubah menjadi tulisan oleh layanan pengenal suara bawaan HP atau browser (misalnya Google atau Apple). Jurnal Doa hanya tersimpan di HP ini.</p></div>
     <h3>Catatan Ibadah</h3>
     <div data-noi18n><p>Saat Anda merekam khotbah, audio disimpan sementara di HP ini. Setelah sesi diakhiri, audio dikirim ke server kami dan ke layanan Google Gemini untuk disalin ke tulisan dan diringkas, lalu dihapus dari HP setelah berhasil. Kami tidak menyimpan audionya. Transkrip dan ringkasan tersimpan di HP ini dan, jika Anda masuk dengan Google, di akun Anda. Mintalah izin gereja sebelum merekam, dan jangan merekam percakapan pribadi.</p></div>
+    <h3>Cari Kisah</h3>
+    <div data-noi18n><p>Pencarian kisah Alkitab pertama-tama memakai katalog di HP ini. Jika ada internet, kata pencarian Anda beserta daftar kisah kandidat dikirim ke server kami dan ke layanan Google Gemini untuk disusun ulang; kami tidak menyimpan kata pencarian itu. Jangan menulis data pribadi. Katalog kisah disusun dengan bantuan AI dan masih draf; kaitan yang bertanda Tafsiran adalah penafsiran Kristen, bukan keterangan langsung teks. Periksa ayatnya sebelum dipakai untuk mengajar.</p></div>
     <h3>Tanpa internet</h3>
     <div data-noi18n><p>Setelah dibuka sekali dengan internet, seluruh Alkitab tersimpan di HP dan bisa dibaca kapan saja. Tombol Renungan memakai internet. Jika internet putus atau penuh, aplikasi tetap menampilkan ayat yang dipilih dari HP Anda.</p><p>Ayat tersimpan, sorotan, Jurnal Doa, dan pengaturan hanya tersimpan di HP ini.</p></div>
     <h3>Kisah</h3>
@@ -305,6 +315,7 @@
 <script src="vendor/supabase.js"></script>
 <script src="gambar.js"></script>
 <script src="ibadah.js"></script>
+<script src="cerita.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
