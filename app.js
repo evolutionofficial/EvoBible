@@ -724,7 +724,7 @@ var ORN = {
     var kata = S.mode === "kata", v = $("vSearch");
     v.classList.toggle("has", !!(S.sub && S.q.trim()) || !!S.theme); v.classList.toggle("kata", kata);
     $("sForm").classList.toggle("ai", !kata);
-    $("sTitle").textContent = kata ? "Cari di Alkitab" : "Renungan " + sesNow().s.n.toLowerCase();
+    $("sTitle").textContent = kata ? "Cari di Alkitab" : "Renungan " + sesNow().s.n;
     $("sSub").textContent = kata ? "Temukan ayat dari kata yang kamu ingat." : "Ceritakan isi hatimu, Firman menyertaimu.";
     var list = kata ? SG_KATA.map(function (k) { return [k, k]; }) : SG_TEMA;
     $("sChips").innerHTML = list.map(function (x) { return '<button type="button" class="schip" data-q="' + esc(x[1]) + '">' + esc(x[0]) + "</button>"; }).join("");
