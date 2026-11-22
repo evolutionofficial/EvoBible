@@ -68,7 +68,7 @@
     res.sort(function (a, b) { return b.s - a.s || a.e.o - b.e.o; });
     /* mode tokoh: satu nama yang cocok dengan banyak kisah -> semua kisahnya, urut Alkitab */
     var tk = "";
-    if (ws.length <= 2) {
+    if (ws.length === 1) {
       var cnt = {};
       ws.forEach(function (w) { if (w.length < 4) { cnt[w] = 0; return; } var n = 0; C.forEach(function (e) { if (e._t.some(function (t) { return t === w || t.indexOf(w + " ") === 0 || t.indexOf(" " + w) >= 0; })) n++; }); cnt[w] = n >= 0.3 * (X.df[stem(w)] || 1) ? n : 0; });
       var bw = ""; ws.forEach(function (w) { if (cnt[w] >= 3 && (!bw || cnt[w] > cnt[bw])) bw = w; });
