@@ -1636,3 +1636,6 @@ body.tbhide .player, body.tbhide .asbar, body.tbhide .selbar, body.tbhide .pvbar
 .cnote.cfoot { font-size: 12.5px; }
 .cmore { width: 100%; margin-top: 4px; }
 #vCerita.has .ctitle, #vCerita.has .ssub, #vCerita.has .schips { display: none; }
+
+/* Subjudul pencarian: satu baris, sama di tiga halaman */
+#vSearch .shero .ssub, .cwrap .ssub { max-width: none; font-size: 14.5px; line-height: 1.4; text-align: center; margin: 0 auto 20px; white-space: nowrap; }
